@@ -4,10 +4,10 @@ import kotlin.math.roundToInt
 
 interface Value {
 
-    val metatable: Table?
+    var metatable: Table?
 
     data class Number(val value: Double) : Value {
-        override val metatable = Companion.metatable
+        override var metatable: Table? = Companion.metatable
 
         companion object {
             val NAN = Number(Double.NaN)
@@ -24,7 +24,7 @@ interface Value {
     }
 
     data class String(val value: kotlin.String) : Value {
-        override val metatable = Companion.metatable
+        override var metatable: Table? = Companion.metatable
 
         companion object {
             val metatable = Table(mutableMapOf())
@@ -32,7 +32,7 @@ interface Value {
     }
 
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
-        override val metatable = Companion.metatable
+        override var metatable: Table? = Companion.metatable
 
         companion object {
             val TRUE = Boolean(true)
@@ -46,18 +46,29 @@ interface Value {
         override fun toString(): kotlin.String = "Boolean(value=$value)"
     }
 
-    data class Table(val value: MutableMap<Value, Value>, override val metatable: Table? = null) : Value,
+    data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = null) : Value,
         MutableMap<Value, Value> by value {
         operator fun get(key: kotlin.String) = value[String(key)]
         operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
     }
 
-    data class Array(val value: MutableList<Value>, override val metatable: Table? = null) : Value,
+    data class Array(val value: MutableList<Value>, override var metatable: Table? = null) : Value,
         MutableList<Value> by value
 
     data object Null : Value {
-        override val metatable = null
+        override var metatable: Table? = null
     }
+}
+
+interface CallableValue : Value {
+
+    interface Executor {
+        fun step(state: State): Boolean
+    }
+
+    fun call(): Executor
+
+    val arity: Int
 }
 
 fun Value.lookUp(key: Value): Value? {
@@ -74,3 +85,5 @@ fun Value.lookUp(key: Value): Value? {
     }
     return this.metatable?.lookUp(key)
 }
+
+fun Value?.orNull() = this ?: Value.Null

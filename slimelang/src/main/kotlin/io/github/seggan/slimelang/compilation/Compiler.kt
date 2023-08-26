@@ -13,7 +13,7 @@ class Compiler {
     fun compileCode(name: String, code: AstNode.Program): Chunk {
         val statements = code.statements
         val (insns, spans) = compileStatements(statements).unzip()
-        return Chunk(name, insns, spans)
+        return Chunk(name, insns, 0, spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
