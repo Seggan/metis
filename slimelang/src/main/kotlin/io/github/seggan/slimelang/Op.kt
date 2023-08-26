@@ -1,4 +1,4 @@
-package io.github.seggan.slimelang.parsing
+package io.github.seggan.slimelang
 
 enum class BinOp {
     PLUS,

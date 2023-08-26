@@ -6,6 +6,8 @@ import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
+import io.github.seggan.slimelang.BinOp
+import io.github.seggan.slimelang.UnOp
 import io.github.seggan.slimelang.Visibility
 import io.github.seggan.slimelang.runtime.Value
 
@@ -44,6 +46,7 @@ class SlParser : Grammar<AstNode.Program>() {
     val closeBracket by literalToken("]")
 
     val comma by literalToken(",")
+    val semicolon by literalToken(";")
     val dot by literalToken(".")
     val plus by literalToken("+")
     val minus by literalToken("-")
@@ -151,13 +154,12 @@ class SlParser : Grammar<AstNode.Program>() {
     val varAssign by id * -eq * expr map { (id, expr) -> AstNode.VarAssign(id.text, expr, id.span + expr.span) }
 
     val statement: Parser<AstNode.Statement> by varDecl or varAssign or expr
-    val statements by oneOrMore(statement)
+    val statements by separatedTerms(statement, zeroOrMore(semicolon), true)
 
-    override val rootParser by optional(statements) map {
-        val statements = it.orEmpty()
+    override val rootParser by statements map {
         AstNode.Program(
-            statements,
-            statements.fold(Span(Int.MAX_VALUE, 0)) { acc, stmt -> acc + stmt.span }
+            it,
+            it.fold(Span(Int.MAX_VALUE, 0)) { acc, stmt -> acc + stmt.span }
         )
     }
 }

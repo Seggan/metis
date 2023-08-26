@@ -1,5 +1,6 @@
 plugins {
     application
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 group = "io.github.seggan"
