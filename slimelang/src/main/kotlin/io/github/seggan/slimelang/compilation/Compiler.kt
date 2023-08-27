@@ -5,6 +5,7 @@ import io.github.seggan.slimelang.parsing.AstNode
 import io.github.seggan.slimelang.parsing.Span
 import io.github.seggan.slimelang.runtime.Chunk
 import io.github.seggan.slimelang.runtime.Insn
+import io.github.seggan.slimelang.runtime.Value
 
 class Compiler {
 
@@ -22,7 +23,7 @@ class Compiler {
 
     private fun compileStatement(statement: AstNode.Statement): List<FullInsn> {
         return when (statement) {
-            is AstNode.Expression -> compileExpression(statement)
+            is AstNode.Expression -> compileExpression(statement) + (Insn.Pop to statement.span)
             is AstNode.VarDecl -> compileVarDecl(statement)
             is AstNode.Break -> TODO()
             is AstNode.Continue -> TODO()
@@ -44,7 +45,23 @@ class Compiler {
             }
 
             is AstNode.Call -> TODO()
-            is AstNode.Index -> TODO()
+            is AstNode.Index -> buildList {
+                addAll(compileExpression(expression.expr))
+                val index = expression.index
+                if (index is AstNode.Literal) {
+                    val value = index.value
+                    if (value is Value.Number && (value.value % 1.0) == 0.0) {
+                        add(Insn.ListIndexImm(value.value.toInt()) to index.span)
+                        return@buildList
+                    } else if (value is Value.String) {
+                        add(Insn.IndexImm(value.value) to index.span)
+                        return@buildList
+                    }
+                }
+                addAll(compileExpression(index))
+                add(Insn.Index to expression.span)
+            }
+
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
             is AstNode.UnaryOp -> listOf(Insn.UnaryOp(expression.op) to expression.span)
             is AstNode.Var -> {

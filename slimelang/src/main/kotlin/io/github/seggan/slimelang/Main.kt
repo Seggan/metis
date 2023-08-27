@@ -1,17 +1,20 @@
 package io.github.seggan.slimelang
 
-import com.github.h0tk3y.betterParse.grammar.parseToEnd
-import io.github.seggan.slimelang.compilation.Compiler
-import io.github.seggan.slimelang.parsing.SlParser
-import io.github.seggan.slimelang.runtime.State
+import io.github.seggan.slimelang.errors.SlException
+import io.github.seggan.slimelang.errors.report
+import io.github.seggan.slimelang.parsing.Lexer
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
 internal fun main(args: Array<String>) {
     val code = Path(args[0]).readText()
-    val parser = SlParser()
-    val ast = parser.parseToEnd(code)
-    println(ast)
+    val lexer = Lexer(code)
+    try {
+        println(lexer.lex())
+    } catch (e: SlException) {
+        println(e.report(code, args[0]))
+    }
+    /*
     val compiler = Compiler()
     val chunk = compiler.compileCode("<string>", ast)
     println(chunk)
@@ -21,4 +24,6 @@ internal fun main(args: Array<String>) {
     }
     println(state.stack)
     println(state.globals)
+
+     */
 }

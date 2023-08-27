@@ -11,7 +11,6 @@ repositories {
 }
 
 dependencies {
-    api("com.github.h0tk3y.betterParse:better-parse:0.4.4")
     testImplementation(kotlin("test"))
 }
 

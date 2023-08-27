@@ -13,7 +13,7 @@ sealed interface AstNode {
     data class Block(val statements: List<Statement>, override val span: Span) : AstNode
 
     sealed interface Statement : AstNode
-    data class VarAssign(val name: String, val value: Expression, override val span: Span) : Statement
+    data class VarAssign(val target: Expression, val value: Expression, override val span: Span) : Statement
     data class VarDecl(
         val visibility: Visibility,
         val name: String,

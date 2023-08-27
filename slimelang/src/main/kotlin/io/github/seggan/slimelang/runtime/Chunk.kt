@@ -44,11 +44,13 @@ class Chunk(
                     is Insn.GetLocal -> TODO()
                     is Insn.Index -> state.index()
                     is Insn.IndexImm -> state.indexImm(insn.key)
+                    is Insn.ListIndexImm -> state.listIndexImm(insn.key)
                     is Insn.Pop -> state.stack.pop()
                     is Insn.Push -> state.stack.push(insn.value)
                     is Insn.Set -> state.set()
                     is Insn.SetImm -> state.setImm(insn.key, insn.allowNew)
                     is Insn.UnaryOp -> TODO()
+                    is Insn.Call -> TODO()
                 }
             } catch (e: SlRuntimeException) {
                 e.span = spans[ip - 1]

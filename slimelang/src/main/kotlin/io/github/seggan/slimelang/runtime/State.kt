@@ -35,6 +35,12 @@ class State {
         return false
     }
 
+    @Suppress("ControlFlowWithEmptyBody")
+    fun runTillComplete() {
+        while (!step()) {
+        }
+    }
+
     fun index() {
         val index = stack.pop()
         val value = stack.pop()
@@ -44,6 +50,15 @@ class State {
     fun indexImm(key: String) {
         val value = stack.pop()
         stack.push(value.lookUp(Value.String(key)).orNull())
+    }
+
+    fun listIndexImm(key: Int) {
+        val value = stack.pop()
+        if (value is Value.Array) {
+            stack.push(value.getOrNull(key) ?: Value.Null)
+        } else {
+            stack.push(value.lookUp(Value.Number(key.toDouble())).orNull())
+        }
     }
 
     fun set() {
