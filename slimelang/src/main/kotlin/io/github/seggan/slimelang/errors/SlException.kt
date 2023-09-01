@@ -19,8 +19,8 @@ fun SlException.report(code: String, filename: String): String {
     val locationString = StringBuilder(span.length)
     locationString.append(" ".repeat(pos))
     locationString.append("^")
-    if (span.length > 0) {
-        locationString.append("~".repeat(span.length - 1))
+    if (span.length > 1) {
+        locationString.append("~".repeat(span.length - 2))
         locationString.append("^")
     }
     return """

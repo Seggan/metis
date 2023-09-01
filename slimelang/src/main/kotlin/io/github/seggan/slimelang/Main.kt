@@ -3,14 +3,17 @@ package io.github.seggan.slimelang
 import io.github.seggan.slimelang.errors.SlException
 import io.github.seggan.slimelang.errors.report
 import io.github.seggan.slimelang.parsing.Lexer
+import io.github.seggan.slimelang.parsing.Parser
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
 internal fun main(args: Array<String>) {
     val code = Path(args[0]).readText()
-    val lexer = Lexer(code)
     try {
-        println(lexer.lex())
+        val toks = Lexer(code).lex()
+        println(toks)
+        val ast = Parser(toks).parse()
+        println(ast)
     } catch (e: SlException) {
         println(e.report(code, args[0]))
     }

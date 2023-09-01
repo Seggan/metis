@@ -1,6 +1,7 @@
 package io.github.seggan.slimelang.parsing
 
 import org.intellij.lang.annotations.Language
+import java.util.*
 
 class Lexer(private val code: String) {
 
@@ -40,9 +41,6 @@ class Lexer(private val code: String) {
         text("*", Token.Type.STAR)
         text("/", Token.Type.SLASH)
         text("%", Token.Type.PERCENT)
-        regex("[a-zA-Z_][a-zA-Z0-9_]*", Token.Type.IDENTIFIER)
-        regex("[0-9]+(\\.[0-9]+)?(e[0-9]+(\\.[0-9]+)?)?", Token.Type.NUMBER)
-        matchers.add(TokenMatcher.StringLiteral())
         keyword("if", Token.Type.IF)
         keyword("else", Token.Type.ELSE)
         keyword("elif", Token.Type.ELIF)
@@ -52,6 +50,9 @@ class Lexer(private val code: String) {
         keyword("break", Token.Type.BREAK)
         keyword("continue", Token.Type.CONTINUE)
         keyword("return", Token.Type.RETURN)
+        keyword("and", Token.Type.AND)
+        keyword("or", Token.Type.OR)
+        keyword("not", Token.Type.NOT)
         keyword("fun", Token.Type.FUN)
         keyword("global", Token.Type.GLOBAL)
         keyword("local", Token.Type.LOCAL)
@@ -59,6 +60,9 @@ class Lexer(private val code: String) {
         regex("//.*\\n", Token.Type.COMMENT)
         regex("/\\*.*?\\*/", Token.Type.COMMENT)
         regex("\\s+", Token.Type.WHITESPACE)
+        regex("[0-9]+(\\.[0-9]+)?(e[0-9]+(\\.[0-9]+)?)?", Token.Type.NUMBER)
+        regex("[a-zA-Z_][a-zA-Z0-9_]*", Token.Type.IDENTIFIER)
+        matchers.add(TokenMatcher.StringLiteral())
     }
 
     private var pos = 0
@@ -67,20 +71,20 @@ class Lexer(private val code: String) {
         val tokens = mutableListOf<Token>()
         val code = StringBuilder(this.code)
         while (code.isNotEmpty()) {
-            var matched = false
+            val matched = mutableListOf<Token>()
             for (matcher in matchers) {
                 val match = matcher.parse(code, pos)
                 if (match != null) {
-                    if (matcher.type != Token.Type.WHITESPACE) {
-                        tokens.add(Token(matcher.type, match, Span(pos, pos + match.length)))
-                    }
-                    pos += match.length
-                    code.delete(0, match.length)
-                    matched = true
-                    break
+                    matched.add(Token(matcher.type, match, Span(pos, pos + match.length)))
                 }
             }
-            if (!matched) throw ParseException("Unknown token", Span(pos, pos))
+            val bestMatch = matched.maxByOrNull { it.text.length } ?: throw ParseException(
+                "Unexpected character '${code[0]}'",
+                Span(pos, pos + 1)
+            )
+            tokens.add(bestMatch)
+            pos += bestMatch.text.length
+            code.delete(0, bestMatch.text.length)
         }
         return tokens
     }
@@ -185,11 +189,19 @@ data class Token(val type: Type, val text: String, val span: Span) {
         FOR,
         IN,
         RETURN,
+        AND,
+        OR,
+        NOT,
         BREAK,
         CONTINUE,
         FUN,
         GLOBAL,
         LOCAL,
-        END,
+        END;
+
+        operator fun plus(other: Type): EnumSet<Type> = EnumSet.of(this, other)
     }
 }
+
+operator fun EnumSet<Token.Type>.plus(other: Token.Type): EnumSet<Token.Type> =
+    EnumSet.copyOf(this).apply { add(other) }
