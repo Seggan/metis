@@ -1,6 +1,6 @@
-package io.github.seggan.slimelang.runtime
+package io.github.seggan.metis.runtime
 
-import io.github.seggan.slimelang.parsing.Span
+import io.github.seggan.metis.parsing.Span
 
 class Chunk(
     val name: String,
@@ -52,7 +52,7 @@ class Chunk(
                     is Insn.UnaryOp -> TODO()
                     is Insn.Call -> TODO()
                 }
-            } catch (e: SlRuntimeException) {
+            } catch (e: MetisRuntimeException) {
                 e.span = spans[ip - 1]
                 throw e
             }

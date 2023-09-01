@@ -1,2 +1,2 @@
 rootProject.name = "slimecomputing"
-include("slimelang")
+include("metis")

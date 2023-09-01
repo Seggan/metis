@@ -1,7 +1,7 @@
-package io.github.seggan.slimelang.runtime
+package io.github.seggan.metis.runtime
 
-import io.github.seggan.slimelang.BinOp
-import io.github.seggan.slimelang.UnOp
+import io.github.seggan.metis.BinOp
+import io.github.seggan.metis.UnOp
 
 sealed interface Insn {
     data class Push(val value: Value) : Insn

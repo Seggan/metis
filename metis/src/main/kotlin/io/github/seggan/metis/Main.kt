@@ -1,9 +1,9 @@
-package io.github.seggan.slimelang
+package io.github.seggan.metis
 
-import io.github.seggan.slimelang.errors.SlException
-import io.github.seggan.slimelang.errors.report
-import io.github.seggan.slimelang.parsing.Lexer
-import io.github.seggan.slimelang.parsing.Parser
+import io.github.seggan.metis.errors.MetisException
+import io.github.seggan.metis.errors.report
+import io.github.seggan.metis.parsing.Lexer
+import io.github.seggan.metis.parsing.Parser
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
@@ -14,7 +14,7 @@ internal fun main(args: Array<String>) {
         println(toks)
         val ast = Parser(toks).parse()
         println(ast)
-    } catch (e: SlException) {
+    } catch (e: MetisException) {
         println(e.report(code, args[0]))
     }
     /*

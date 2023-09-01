@@ -1,4 +1,4 @@
-package io.github.seggan.slimelang.runtime
+package io.github.seggan.metis.runtime
 
 import kotlin.math.roundToInt
 
@@ -70,7 +70,7 @@ class State {
         } else if (target is Value.Array && index is Value.Number) {
             target[index.value.roundToInt()] = value
         } else {
-            throw SlRuntimeException("Cannot set index on non-table or non-array")
+            throw MetisRuntimeException("Cannot set index on non-table or non-array")
         }
     }
 
@@ -82,10 +82,10 @@ class State {
             if (allowNew || target.containsKey(key)) {
                 target[key] = value
             } else {
-                throw SlRuntimeException("Cannot set index on non-table")
+                throw MetisRuntimeException("Cannot set index on non-table")
             }
         } else {
-            throw SlRuntimeException("Cannot set index on non-table")
+            throw MetisRuntimeException("Cannot set index on non-table")
         }
     }
 }

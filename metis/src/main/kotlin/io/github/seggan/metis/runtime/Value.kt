@@ -1,4 +1,4 @@
-package io.github.seggan.slimelang.runtime
+package io.github.seggan.metis.runtime
 
 import kotlin.math.roundToInt
 

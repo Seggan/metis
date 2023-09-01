@@ -1,11 +1,11 @@
-package io.github.seggan.slimelang.compilation
+package io.github.seggan.metis.compilation
 
-import io.github.seggan.slimelang.Visibility
-import io.github.seggan.slimelang.parsing.AstNode
-import io.github.seggan.slimelang.parsing.Span
-import io.github.seggan.slimelang.runtime.Chunk
-import io.github.seggan.slimelang.runtime.Insn
-import io.github.seggan.slimelang.runtime.Value
+import io.github.seggan.metis.Visibility
+import io.github.seggan.metis.parsing.AstNode
+import io.github.seggan.metis.parsing.Span
+import io.github.seggan.metis.runtime.Chunk
+import io.github.seggan.metis.runtime.Insn
+import io.github.seggan.metis.runtime.Value
 
 class Compiler {
 

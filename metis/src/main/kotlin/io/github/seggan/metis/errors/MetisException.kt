@@ -1,10 +1,10 @@
-package io.github.seggan.slimelang.errors
+package io.github.seggan.metis.errors
 
-import io.github.seggan.slimelang.parsing.Span
+import io.github.seggan.metis.parsing.Span
 
-abstract class SlException(message: String, var span: Span? = null) : RuntimeException(message)
+abstract class MetisException(message: String, var span: Span? = null) : RuntimeException(message)
 
-fun SlException.report(code: String, filename: String): String {
+fun MetisException.report(code: String, filename: String): String {
     val span = span ?: return "Error in $filename: ${message ?: "Unknown error"}"
     val lines = code.split("\n")
     var pos = span.start

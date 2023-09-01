@@ -1,4 +1,4 @@
-package io.github.seggan.slimelang
+package io.github.seggan.metis
 
 enum class Visibility {
     GLOBAL,

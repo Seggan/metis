@@ -1,4 +1,4 @@
-package io.github.seggan.slimelang.parsing
+package io.github.seggan.metis.parsing
 
 import kotlin.math.max
 import kotlin.math.min

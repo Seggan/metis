@@ -1,9 +1,9 @@
-package io.github.seggan.slimelang.parsing
+package io.github.seggan.metis.parsing
 
-import io.github.seggan.slimelang.BinOp
-import io.github.seggan.slimelang.UnOp
-import io.github.seggan.slimelang.Visibility
-import io.github.seggan.slimelang.runtime.Value
+import io.github.seggan.metis.BinOp
+import io.github.seggan.metis.UnOp
+import io.github.seggan.metis.Visibility
+import io.github.seggan.metis.runtime.Value
 
 sealed interface AstNode {
 

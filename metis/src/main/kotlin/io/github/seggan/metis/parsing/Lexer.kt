@@ -1,4 +1,4 @@
-package io.github.seggan.slimelang.parsing
+package io.github.seggan.metis.parsing
 
 import org.intellij.lang.annotations.Language
 import java.util.*
