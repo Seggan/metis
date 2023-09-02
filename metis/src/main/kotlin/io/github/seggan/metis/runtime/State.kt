@@ -2,7 +2,8 @@ package io.github.seggan.metis.runtime
 
 import kotlin.math.roundToInt
 
-class State {
+class State(val isChildState: Boolean = false) {
+
     val globals = Value.Table(mutableMapOf())
 
     val stack = Stack()
@@ -20,24 +21,24 @@ class State {
         callStack.addLast(chunk)
     }
 
-    fun step(): Boolean {
+    fun step(): StepResult {
         if (currentExecutor == null) {
             if (callStack.isEmpty()) {
-                return true
+                return StepResult.FINISHED
             }
             val chunk = callStack.removeLast()
             currentExecutor = chunk.call()
         }
         val executor = currentExecutor!!
-        if (executor.step(this)) {
+        if (executor.step(this) == StepResult.FINISHED) {
             currentExecutor = null
         }
-        return false
+        return StepResult.CONTINUE
     }
 
     @Suppress("ControlFlowWithEmptyBody")
     fun runTillComplete() {
-        while (!step()) {
+        while (step() != StepResult.FINISHED) {
         }
     }
 

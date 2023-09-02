@@ -63,7 +63,7 @@ interface Value {
 interface CallableValue : Value {
 
     interface Executor {
-        fun step(state: State): Boolean
+        fun step(state: State): StepResult
     }
 
     fun call(): Executor

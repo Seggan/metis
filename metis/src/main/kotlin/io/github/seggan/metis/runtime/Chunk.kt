@@ -35,8 +35,8 @@ class Chunk(
     private inner class ChunkExecutor : CallableValue.Executor {
         private var ip = 0
 
-        override fun step(state: State): Boolean {
-            if (ip >= insns.size) return true
+        override fun step(state: State): StepResult {
+            if (ip >= insns.size) return StepResult.FINISHED
             try {
                 when (val insn = insns[ip++]) {
                     is Insn.BinaryOp -> TODO()
@@ -56,7 +56,7 @@ class Chunk(
                 e.span = spans[ip - 1]
                 throw e
             }
-            return false
+            return StepResult.CONTINUE
         }
     }
 }
