@@ -18,5 +18,6 @@ sealed interface Insn {
     data class IndexImm(val key: String) : Insn
     data class ListIndexImm(val key: Int) : Insn
     data class SetImm(val key: String, val allowNew: Boolean = true) : Insn
-    data object Call : Insn
+    data class Call(val nargs: Int) : Insn
+    data object Return : Insn
 }

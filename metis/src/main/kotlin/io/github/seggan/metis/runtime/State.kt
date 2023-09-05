@@ -1,5 +1,6 @@
 package io.github.seggan.metis.runtime
 
+import io.github.seggan.metis.runtime.intrinsics.Intrinsics
 import kotlin.math.roundToInt
 
 class State(val isChildState: Boolean = false) {
@@ -8,30 +9,32 @@ class State(val isChildState: Boolean = false) {
 
     val stack = Stack()
 
-    private val callStack = ArrayDeque<Chunk>()
-    private var currentExecutor: CallableValue.Executor? = null
+    private val callStack = ArrayDeque<CallFrame>()
+
+    companion object {
+        init {
+            Intrinsics.registerDefault()
+        }
+    }
 
     init {
         globals["true"] = Value.Boolean.TRUE
         globals["false"] = Value.Boolean.FALSE
         globals["null"] = Value.Null
+
+        for ((name, value) in Intrinsics.intrinsics) {
+            globals[name] = value
+        }
     }
 
     fun loadChunk(chunk: Chunk) {
-        callStack.addLast(chunk)
+        stack.push(chunk)
     }
 
     fun step(): StepResult {
-        if (currentExecutor == null) {
-            if (callStack.isEmpty()) {
-                return StepResult.FINISHED
-            }
-            val chunk = callStack.removeLast()
-            currentExecutor = chunk.call()
-        }
-        val executor = currentExecutor!!
-        if (executor.step(this) == StepResult.FINISHED) {
-            currentExecutor = null
+        if (callStack.isEmpty()) return StepResult.FINISHED
+        if (callStack.peek().executing.step(this) == StepResult.FINISHED) {
+            callStack.removeLast()
         }
         return StepResult.CONTINUE
     }
@@ -89,11 +92,61 @@ class State(val isChildState: Boolean = false) {
             throw MetisRuntimeException("Cannot set index on non-table")
         }
     }
+
+    fun call(nargs: Int) {
+        val callable = stack.pop()
+        if (callable is CallableValue) {
+            callValue(callable, nargs)
+        } else {
+            val possiblyCallable = callable.lookUp(Value.String("__call__"))
+            if (possiblyCallable is CallableValue) {
+                callValue(possiblyCallable, nargs)
+            } else {
+                throw MetisRuntimeException("Cannot call non-callable")
+            }
+        }
+    }
+
+    private fun callValue(value: CallableValue, nargs: Int) {
+        val stackBottom = stack.size - nargs
+        val (reqArgs, isVarargs) = value.arity
+        var argc = nargs
+        while (argc < reqArgs) {
+            stack.push(Value.Null)
+            argc++
+        }
+        if (!isVarargs) {
+            while (argc > reqArgs) {
+                stack.pop()
+                argc--
+            }
+        }
+        callStack.push(CallFrame(value.call(argc), stackBottom))
+    }
+
+    fun unwindStack() {
+        while (stack.size > callStack.peek().stackBottom) {
+            stack.pop()
+        }
+    }
 }
+
+fun State.callGlobal(name: String, nargs: Int) {
+    stack.push(globals[name].orNull())
+    call(nargs)
+}
+
+private data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int)
 
 typealias Stack = ArrayDeque<Value>
 
-fun Stack.push(value: Value) = this.addLast(value)
-fun Stack.pop() = this.removeLast()
-fun Stack.peek() = this.last()
-fun Stack.getFromTop(index: Int) = this[this.size - index - 1]
+fun <E> ArrayDeque<E>.push(value: E) = this.addLast(value)
+fun <E> ArrayDeque<E>.pop() = this.removeLast()
+fun <E> ArrayDeque<E>.popn(n: Int): List<E> {
+    val list = ArrayDeque<E>(n)
+    repeat(n) { list.addFirst(this.removeLast()) }
+    return list
+}
+
+fun <E> ArrayDeque<E>.peek() = this.last()
+fun <E> ArrayDeque<E>.getFromTop(index: Int): E = this[this.size - index - 1]

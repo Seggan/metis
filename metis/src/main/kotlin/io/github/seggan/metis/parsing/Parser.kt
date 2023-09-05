@@ -76,8 +76,9 @@ class Parser(tokens: List<Token>) {
             expr = when (op.type) {
                 OPEN_PAREN -> {
                     val args = mutableListOf<AstNode.Expression>()
-                    while (tryConsume(CLOSE_PAREN) == null) {
+                    while (true) {
                         args.add(parseExpression())
+                        if (tryConsume(CLOSE_PAREN) != null) break
                         consume(COMMA)
                     }
                     AstNode.Call(expr, args, op.span + previous.span)

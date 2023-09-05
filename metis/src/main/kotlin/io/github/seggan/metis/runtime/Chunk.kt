@@ -5,13 +5,13 @@ import io.github.seggan.metis.parsing.Span
 class Chunk(
     val name: String,
     val insns: List<Insn>,
-    override val arity: Int,
+    override val arity: Arity,
     val spans: List<Span>
 ) : CallableValue {
 
     override var metatable: Value.Table? = null
 
-    override fun call(): CallableValue.Executor = ChunkExecutor()
+    override fun call(nargs: Int): CallableValue.Executor = ChunkExecutor()
 
     override fun toString(): String {
         return buildString {
@@ -50,7 +50,13 @@ class Chunk(
                     is Insn.Set -> state.set()
                     is Insn.SetImm -> state.setImm(insn.key, insn.allowNew)
                     is Insn.UnaryOp -> TODO()
-                    is Insn.Call -> TODO()
+                    is Insn.Call -> state.call(insn.nargs)
+                    is Insn.Return -> {
+                        val value = state.stack.pop()
+                        state.unwindStack()
+                        state.stack.push(value)
+                        return StepResult.FINISHED
+                    }
                 }
             } catch (e: MetisRuntimeException) {
                 e.span = spans[ip - 1]

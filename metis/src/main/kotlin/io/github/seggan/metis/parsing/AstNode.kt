@@ -9,7 +9,6 @@ sealed interface AstNode {
 
     val span: Span
 
-    data class Program(val statements: List<Statement>, override val span: Span) : AstNode
     data class Block(val statements: List<Statement>, override val span: Span) : AstNode
 
     sealed interface Statement : AstNode

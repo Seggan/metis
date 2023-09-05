@@ -1,5 +1,7 @@
 package io.github.seggan.metis.runtime
 
+import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
+import java.math.BigDecimal
 import kotlin.math.roundToInt
 
 interface Value {
@@ -20,6 +22,16 @@ interface Value {
             val NEGATIVE_ONE = Number(-1.0)
 
             val metatable = Table(mutableMapOf())
+
+            init {
+                metatable["__str__"] = OneShotFunction(Arity.ONE) {
+                    stack.push(
+                        String(
+                            BigDecimal(stack.pop().convertTo<Number>().value).stripTrailingZeros().toPlainString()
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -28,6 +40,10 @@ interface Value {
 
         companion object {
             val metatable = Table(mutableMapOf())
+
+            init {
+                metatable["__str__"] = OneShotFunction(Arity.ONE) {}
+            }
         }
     }
 
@@ -41,6 +57,12 @@ interface Value {
             val metatable = Table(mutableMapOf())
 
             fun from(value: kotlin.Boolean) = if (value) TRUE else FALSE
+
+            init {
+                metatable["__str__"] = OneShotFunction(Arity.ONE) {
+                    stack.push(String(if (stack.pop().convertTo<Boolean>().value) "true" else "false"))
+                }
+            }
         }
 
         override fun toString(): kotlin.String = "Boolean(value=$value)"
@@ -66,9 +88,17 @@ interface CallableValue : Value {
         fun step(state: State): StepResult
     }
 
-    fun call(): Executor
+    fun call(nargs: Int): Executor
 
-    val arity: Int
+    val arity: Arity
+}
+
+data class Arity(val required: Int, val isVarargs: Boolean = false) {
+    companion object {
+        val ZERO = Arity(0)
+        val ONE = Arity(1)
+        val VARARGS = Arity(0, true)
+    }
 }
 
 fun Value.lookUp(key: Value): Value? {
@@ -86,4 +116,13 @@ fun Value.lookUp(key: Value): Value? {
     return this.metatable?.lookUp(key)
 }
 
+fun Value.lookUp(key: kotlin.String): Value? = lookUp(Value.String(key))
+
 fun Value?.orNull() = this ?: Value.Null
+
+inline fun <reified T : Value> Value.convertTo(): T {
+    if (this is T) {
+        return this
+    }
+    throw MetisRuntimeException("Cannot convert $this to ${T::class.simpleName}")
+}

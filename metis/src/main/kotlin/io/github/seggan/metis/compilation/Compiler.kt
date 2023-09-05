@@ -3,18 +3,18 @@ package io.github.seggan.metis.compilation
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
+import io.github.seggan.metis.runtime.Arity
 import io.github.seggan.metis.runtime.Chunk
 import io.github.seggan.metis.runtime.Insn
 import io.github.seggan.metis.runtime.Value
 
-class Compiler {
+class Compiler(extraLocals: List<String> = emptyList()) {
 
-    private val localStack = ArrayDeque<List<String>>()
+    private val localStack = ArrayDeque(extraLocals)
 
-    fun compileCode(name: String, code: AstNode.Program): Chunk {
-        val statements = code.statements
-        val (insns, spans) = compileStatements(statements).unzip()
-        return Chunk(name, insns, 0, spans)
+    fun compileCode(name: String, code: List<AstNode.Statement>): Chunk {
+        val (insns, spans) = compileStatements(code).unzip()
+        return Chunk(name, insns, Arity.ZERO, spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -44,7 +44,16 @@ class Compiler {
                 add(Insn.BinaryOp(expression.op) to expression.span)
             }
 
-            is AstNode.Call -> TODO()
+            is AstNode.Call -> buildList {
+                var nargs = 0
+                expression.args.forEach { arg ->
+                    addAll(compileExpression(arg))
+                    nargs++
+                }
+                addAll(compileExpression(expression.expr))
+                add(Insn.Call(nargs) to expression.span)
+            }
+
             is AstNode.Index -> buildList {
                 addAll(compileExpression(expression.expr))
                 val index = expression.index
