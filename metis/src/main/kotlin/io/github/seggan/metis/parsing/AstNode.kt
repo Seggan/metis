@@ -3,7 +3,7 @@ package io.github.seggan.metis.parsing
 import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.values.Value
 
 sealed interface AstNode {
 

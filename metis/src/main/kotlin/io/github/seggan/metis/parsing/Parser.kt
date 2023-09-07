@@ -4,7 +4,7 @@ import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.Token.Type.*
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.values.Value
 import java.util.*
 
 class Parser(tokens: List<Token>) {

@@ -2,6 +2,7 @@ package io.github.seggan.metis.runtime
 
 import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp
+import io.github.seggan.metis.runtime.values.Value
 
 sealed interface Insn {
     data class Push(val value: Value) : Insn

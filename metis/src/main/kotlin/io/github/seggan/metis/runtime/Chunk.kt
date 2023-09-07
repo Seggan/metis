@@ -1,6 +1,9 @@
 package io.github.seggan.metis.runtime
 
 import io.github.seggan.metis.parsing.Span
+import io.github.seggan.metis.runtime.values.Arity
+import io.github.seggan.metis.runtime.values.CallableValue
+import io.github.seggan.metis.runtime.values.Value
 
 class Chunk(
     val name: String,

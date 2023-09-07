@@ -4,6 +4,7 @@ import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.intrinsics.Intrinsics
 import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
+import io.github.seggan.metis.runtime.values.*
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.roundToInt
@@ -53,7 +54,7 @@ class State(val isChildState: Boolean = false) {
                 callStack.removeLast()
             }
         } catch (e: MetisException) {
-            if (e.span === null) {
+            if (e.span == null) {
                 e.span = callStack.peek().span
             }
             throw e
@@ -118,11 +119,11 @@ class State(val isChildState: Boolean = false) {
     fun call(nargs: Int, span: Span? = null) {
         val callable = stack.pop()
         if (callable is CallableValue) {
-            callValue(callable, nargs)
+            callValue(callable, nargs, span)
         } else {
             val possiblyCallable = callable.lookUp(Value.String("__call__"))
             if (possiblyCallable is CallableValue) {
-                callValue(possiblyCallable, nargs)
+                callValue(possiblyCallable, nargs, span)
             } else {
                 throw MetisRuntimeException("Cannot call non-callable")
             }

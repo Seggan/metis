@@ -2,7 +2,12 @@
 
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.runtime.*
+import io.github.seggan.metis.runtime.MetisRuntimeException
+import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.popAs
+import io.github.seggan.metis.runtime.push
+import io.github.seggan.metis.runtime.values.Arity
+import io.github.seggan.metis.runtime.values.Value
 import java.io.OutputStream
 
 private val outStreamMetatable = Value.Table(mutableMapOf()).also { table ->

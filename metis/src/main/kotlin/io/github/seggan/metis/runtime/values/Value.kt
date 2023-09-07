@@ -1,7 +1,8 @@
-package io.github.seggan.metis.runtime
+package io.github.seggan.metis.runtime.values
 
-import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
-import java.math.BigDecimal
+import io.github.seggan.metis.runtime.MetisRuntimeException
+import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.StepResult
 import kotlin.math.roundToInt
 
 interface Value {
@@ -9,6 +10,7 @@ interface Value {
     var metatable: Table?
 
     data class Number(val value: Double) : Value {
+
         override var metatable: Table? = Companion.metatable
 
         companion object {
@@ -22,28 +24,15 @@ interface Value {
             val NEGATIVE_ONE = Number(-1.0)
 
             val metatable = Table(mutableMapOf())
-
-            init {
-                metatable["__str__"] = OneShotFunction(Arity.ONE) {
-                    stack.push(
-                        String(
-                            BigDecimal(stack.pop().convertTo<Number>().value).stripTrailingZeros().toPlainString()
-                        )
-                    )
-                }
-            }
         }
     }
 
     data class String(val value: kotlin.String) : Value {
+
         override var metatable: Table? = Companion.metatable
 
         companion object {
-            val metatable = Table(mutableMapOf())
-
-            init {
-                metatable["__str__"] = OneShotFunction(Arity.ONE) {}
-            }
+            val metatable = initString()
         }
     }
 
@@ -57,12 +46,6 @@ interface Value {
             val metatable = Table(mutableMapOf())
 
             fun from(value: kotlin.Boolean) = if (value) TRUE else FALSE
-
-            init {
-                metatable["__str__"] = OneShotFunction(Arity.ONE) {
-                    stack.push(String(if (stack.pop().convertTo<Boolean>().value) "true" else "false"))
-                }
-            }
         }
 
         override fun toString(): kotlin.String = "Boolean(value=$value)"
@@ -153,5 +136,5 @@ inline fun <reified T : Value> Value.convertTo(): T {
     if (this is T) {
         return this
     }
-    throw MetisRuntimeException("Cannot convert $this to ${T::class.simpleName}")
+    throw MetisRuntimeException("Cannot convert ${this::class.simpleName} to ${T::class.simpleName}")
 }
