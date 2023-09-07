@@ -26,6 +26,7 @@ sealed interface AstNode {
         val elseBody: Block?,
         override val span: Span
     ) : Statement
+
     data class While(val condition: Expression, val body: Block, override val span: Span) : Statement
     data class For(val name: String, val range: Expression, val body: Block, override val span: Span) : Statement
     data class Do(val body: Block, override val span: Span) : Statement
@@ -36,6 +37,13 @@ sealed interface AstNode {
     data class Var(val name: String, override val span: Span) : Expression
     data class Call(val expr: Expression, val args: List<Expression>, override val span: Span) : Expression
     data class Index(val expr: Expression, val index: Expression, override val span: Span) : Expression
+    data class ColonCall(
+        val expr: Expression,
+        val name: String,
+        val args: List<Expression>,
+        override val span: Span
+    ) : Expression
+
     data class BinaryOp(
         val left: Expression,
         val op: BinOp,
@@ -43,6 +51,7 @@ sealed interface AstNode {
     ) : Expression {
         override val span = left.span + right.span
     }
+
     data class UnaryOp(val op: UnOp, val expr: Expression, override val span: Span) : Expression
     data class Literal(val value: Value, override val span: Span) : Expression
 }

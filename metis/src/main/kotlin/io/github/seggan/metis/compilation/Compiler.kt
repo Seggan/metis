@@ -71,6 +71,18 @@ class Compiler(extraLocals: List<String> = emptyList()) {
                 add(Insn.Index to expression.span)
             }
 
+            is AstNode.ColonCall -> buildList {
+                var nargs = 0
+                addAll(compileExpression(expression.expr))
+                expression.args.forEach { arg ->
+                    addAll(compileExpression(arg))
+                    nargs++
+                }
+                add(Insn.CopyUnder(nargs) to expression.span)
+                add(Insn.IndexImm(expression.name) to expression.span)
+                add(Insn.Call(nargs + 1) to expression.span)
+            }
+
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
             is AstNode.UnaryOp -> listOf(Insn.UnaryOp(expression.op) to expression.span)
             is AstNode.Var -> {

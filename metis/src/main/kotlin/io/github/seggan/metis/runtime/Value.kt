@@ -77,6 +77,17 @@ interface Value {
     data class Array(val value: MutableList<Value>, override var metatable: Table? = null) : Value,
         MutableList<Value> by value
 
+    data class Bytes(val value: ByteArray, override var metatable: Table? = null) : Value {
+        override fun equals(other: Any?): kotlin.Boolean {
+            if (this === other) return true
+            return other is Bytes && value.contentEquals(other.value)
+        }
+
+        override fun hashCode() = value.contentHashCode()
+    }
+
+    data class Native(val value: Any, override var metatable: Table? = null) : Value
+
     data object Null : Value {
         override var metatable: Table? = null
     }
@@ -107,10 +118,28 @@ fun Value.lookUp(key: Value): Value? {
         if (value != null) {
             return value
         }
-    } else if (this is Value.Array && key is Value.Number) {
-        val value = this.getOrNull(key.value.roundToInt())
-        if (value != null) {
-            return value
+    } else if (key is Value.Number) {
+        when (this) {
+            is Value.Array -> {
+                val value = this.getOrNull(key.value.roundToInt())
+                if (value != null) {
+                    return value
+                }
+            }
+
+            is Value.String -> {
+                val value = this.value.getOrNull(key.value.roundToInt())
+                if (value != null) {
+                    return Value.String(value.toString())
+                }
+            }
+
+            is Value.Bytes -> {
+                val value = this.value.getOrNull(key.value.roundToInt())
+                if (value != null) {
+                    return Value.Number(value.toDouble())
+                }
+            }
         }
     }
     return this.metatable?.lookUp(key)

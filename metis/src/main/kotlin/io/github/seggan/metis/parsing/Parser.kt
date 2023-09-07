@@ -72,17 +72,9 @@ class Parser(tokens: List<Token>) {
     private fun parsePostfix(): AstNode.Expression {
         var expr = parsePrimary()
         while (true) {
-            val op = tryConsume(OPEN_PAREN, OPEN_BRACKET, DOT) ?: break
+            val op = tryConsume(OPEN_PAREN, OPEN_BRACKET, DOT, COLON) ?: break
             expr = when (op.type) {
-                OPEN_PAREN -> {
-                    val args = mutableListOf<AstNode.Expression>()
-                    while (true) {
-                        args.add(parseExpression())
-                        if (tryConsume(CLOSE_PAREN) != null) break
-                        consume(COMMA)
-                    }
-                    AstNode.Call(expr, args, op.span + previous.span)
-                }
+                OPEN_PAREN -> AstNode.Call(expr, parseArgList(), op.span + previous.span)
 
                 OPEN_BRACKET -> {
                     val index = parseExpression()
@@ -99,16 +91,43 @@ class Parser(tokens: List<Token>) {
                     )
                 }
 
+                COLON -> {
+                    val name = consume(IDENTIFIER).text
+                    consume(OPEN_PAREN)
+                    AstNode.ColonCall(
+                        expr,
+                        name,
+                        parseArgList(),
+                        op.span + previous.span
+                    )
+                }
+
                 else -> throw AssertionError()
             }
         }
         return expr
     }
 
+    private fun parseArgList(): List<AstNode.Expression> {
+        val args = mutableListOf<AstNode.Expression>()
+        while (true) {
+            if (tryConsume(CLOSE_PAREN) != null) break
+            args.add(parseExpression())
+            if (tryConsume(CLOSE_PAREN) != null) break
+            consume(COMMA)
+        }
+        return args
+    }
+
     private fun parsePrimary(): AstNode.Expression {
-        val token = consume(STRING, NUMBER, OPEN_PAREN, IDENTIFIER)
+        val token = consume(STRING, BYTES, NUMBER, OPEN_PAREN, IDENTIFIER)
         return when (token.type) {
-            STRING -> AstNode.Literal(Value.String(token.text), token.span)
+            STRING -> AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1)), token.span)
+            BYTES -> AstNode.Literal(
+                Value.Bytes(token.text.substring(1, token.text.length - 1).encodeToByteArray()),
+                token.span
+            )
+
             NUMBER -> AstNode.Literal(Value.Number(token.text.toDouble()), token.span)
             OPEN_PAREN -> parseExpression().also { consume(CLOSE_PAREN) }
             IDENTIFIER -> AstNode.Var(token.text, token.span)

@@ -1,6 +1,11 @@
 package io.github.seggan.metis.runtime
 
+import io.github.seggan.metis.MetisException
+import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.intrinsics.Intrinsics
+import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
+import java.io.InputStream
+import java.io.OutputStream
 import kotlin.math.roundToInt
 
 class State(val isChildState: Boolean = false) {
@@ -10,6 +15,10 @@ class State(val isChildState: Boolean = false) {
     val stack = Stack()
 
     private val callStack = ArrayDeque<CallFrame>()
+
+    var stdout: OutputStream = System.out
+    var stderr: OutputStream = System.err
+    var stdin: InputStream = System.`in`
 
     companion object {
         init {
@@ -25,6 +34,12 @@ class State(val isChildState: Boolean = false) {
         for ((name, value) in Intrinsics.intrinsics) {
             globals[name] = value
         }
+
+        val io = Value.Table(mutableMapOf())
+        io["stdout"] = wrapOutStream(this, stdout)
+        io["stderr"] = wrapOutStream(this, stderr)
+
+        globals["io"] = io
     }
 
     fun loadChunk(chunk: Chunk) {
@@ -33,8 +48,15 @@ class State(val isChildState: Boolean = false) {
 
     fun step(): StepResult {
         if (callStack.isEmpty()) return StepResult.FINISHED
-        if (callStack.peek().executing.step(this) == StepResult.FINISHED) {
-            callStack.removeLast()
+        try {
+            if (callStack.peek().executing.step(this) == StepResult.FINISHED) {
+                callStack.removeLast()
+            }
+        } catch (e: MetisException) {
+            if (e.span === null) {
+                e.span = callStack.peek().span
+            }
+            throw e
         }
         return StepResult.CONTINUE
     }
@@ -93,7 +115,7 @@ class State(val isChildState: Boolean = false) {
         }
     }
 
-    fun call(nargs: Int) {
+    fun call(nargs: Int, span: Span? = null) {
         val callable = stack.pop()
         if (callable is CallableValue) {
             callValue(callable, nargs)
@@ -107,7 +129,7 @@ class State(val isChildState: Boolean = false) {
         }
     }
 
-    private fun callValue(value: CallableValue, nargs: Int) {
+    private fun callValue(value: CallableValue, nargs: Int, span: Span? = null) {
         val stackBottom = stack.size - nargs
         val (reqArgs, isVarargs) = value.arity
         var argc = nargs
@@ -121,7 +143,7 @@ class State(val isChildState: Boolean = false) {
                 argc--
             }
         }
-        callStack.push(CallFrame(value.call(argc), stackBottom))
+        callStack.push(CallFrame(value.call(argc), stackBottom, span))
     }
 
     fun unwindStack() {
@@ -136,7 +158,7 @@ fun State.callGlobal(name: String, nargs: Int) {
     call(nargs)
 }
 
-private data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int)
+private data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)
 
 typealias Stack = ArrayDeque<Value>
 
@@ -150,3 +172,10 @@ fun <E> ArrayDeque<E>.popn(n: Int): List<E> {
 
 fun <E> ArrayDeque<E>.peek() = this.last()
 fun <E> ArrayDeque<E>.getFromTop(index: Int): E = this[this.size - index - 1]
+
+fun Stack.push(value: Double) = this.push(Value.Number(value))
+fun Stack.push(value: String) = this.push(Value.String(value))
+fun Stack.push(value: Boolean) = this.push(Value.Boolean.from(value))
+fun Stack.push(value: Nothing?) = this.push(Value.Null)
+
+inline fun <reified T : Value> Stack.popAs(): T = this.pop().convertTo()

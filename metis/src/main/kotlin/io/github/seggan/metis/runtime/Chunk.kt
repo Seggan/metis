@@ -47,10 +47,11 @@ class Chunk(
                     is Insn.ListIndexImm -> state.listIndexImm(insn.key)
                     is Insn.Pop -> state.stack.pop()
                     is Insn.Push -> state.stack.push(insn.value)
+                    is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                     is Insn.Set -> state.set()
                     is Insn.SetImm -> state.setImm(insn.key, insn.allowNew)
                     is Insn.UnaryOp -> TODO()
-                    is Insn.Call -> state.call(insn.nargs)
+                    is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                     is Insn.Return -> {
                         val value = state.stack.pop()
                         state.unwindStack()

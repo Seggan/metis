@@ -6,6 +6,7 @@ import io.github.seggan.metis.UnOp
 sealed interface Insn {
     data class Push(val value: Value) : Insn
     data object Pop : Insn
+    data class CopyUnder(val index: Int) : Insn
 
     data class BinaryOp(val op: BinOp) : Insn
     data class UnaryOp(val op: UnOp) : Insn
