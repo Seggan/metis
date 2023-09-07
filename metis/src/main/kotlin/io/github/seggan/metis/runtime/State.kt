@@ -21,6 +21,11 @@ class State(val isChildState: Boolean = false) {
     var stderr: OutputStream = System.err
     var stdin: InputStream = System.`in`
 
+    val localsOffset: Int
+        get() = callStack.peek().stackBottom
+
+    var debugMode = false
+
     companion object {
         init {
             Intrinsics.registerDefault()
@@ -59,6 +64,9 @@ class State(val isChildState: Boolean = false) {
             }
             throw e
         }
+        if (debugMode) {
+            println(stack)
+        }
         return StepResult.CONTINUE
     }
 
@@ -81,10 +89,10 @@ class State(val isChildState: Boolean = false) {
 
     fun listIndexImm(key: Int) {
         val value = stack.pop()
-        if (value is Value.Array) {
+        if (value is Value.List) {
             stack.push(value.getOrNull(key) ?: Value.Null)
         } else {
-            stack.push(value.lookUp(Value.Number(key.toDouble())).orNull())
+            stack.push(value.lookUp(Value.Number.from(key.toDouble())).orNull())
         }
     }
 
@@ -94,7 +102,7 @@ class State(val isChildState: Boolean = false) {
         val target = stack.pop()
         if (target is Value.Table) {
             target[index] = value
-        } else if (target is Value.Array && index is Value.Number) {
+        } else if (target is Value.List && index is Value.Number) {
             target[index.value.roundToInt()] = value
         } else {
             throw MetisRuntimeException("Cannot set index on non-table or non-array")
@@ -174,7 +182,7 @@ fun <E> ArrayDeque<E>.popn(n: Int): List<E> {
 fun <E> ArrayDeque<E>.peek() = this.last()
 fun <E> ArrayDeque<E>.getFromTop(index: Int): E = this[this.size - index - 1]
 
-fun Stack.push(value: Double) = this.push(Value.Number(value))
+fun Stack.push(value: Double) = this.push(Value.Number.from(value))
 fun Stack.push(value: String) = this.push(Value.String(value))
 fun Stack.push(value: Boolean) = this.push(Value.Boolean.from(value))
 fun Stack.push(value: Nothing?) = this.push(Value.Null)

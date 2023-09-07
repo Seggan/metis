@@ -9,16 +9,18 @@ sealed interface AstNode {
 
     val span: Span
 
-    data class Block(val statements: List<Statement>, override val span: Span) : AstNode
-
     sealed interface Statement : AstNode
-    data class VarAssign(val target: Expression, val value: Expression, override val span: Span) : Statement
+    data class Block(val statements: List<Statement>, override val span: Span) : Statement,
+        List<Statement> by statements
+
+    data class VarAssign(val target: AssignTarget, val value: Expression, override val span: Span) : Statement
     data class VarDecl(
         val visibility: Visibility,
         val name: String,
         val value: Expression,
         override val span: Span
     ) : Statement
+
     data class Return(val value: Expression, override val span: Span) : Statement
     data class If(
         val condition: Expression,
@@ -34,9 +36,10 @@ sealed interface AstNode {
     data class Continue(override val span: Span) : Statement
 
     sealed interface Expression : Statement
-    data class Var(val name: String, override val span: Span) : Expression
+    sealed interface AssignTarget : Expression
+    data class Var(val name: String, override val span: Span) : Expression, AssignTarget
     data class Call(val expr: Expression, val args: List<Expression>, override val span: Span) : Expression
-    data class Index(val expr: Expression, val index: Expression, override val span: Span) : Expression
+    data class Index(val expr: Expression, val index: Expression, override val span: Span) : Expression, AssignTarget
     data class ColonCall(
         val expr: Expression,
         val name: String,
@@ -54,4 +57,5 @@ sealed interface AstNode {
 
     data class UnaryOp(val op: UnOp, val expr: Expression, override val span: Span) : Expression
     data class Literal(val value: Value, override val span: Span) : Expression
+    data class FunctionDef(val args: List<String>, val body: Block, override val span: Span) : Expression
 }

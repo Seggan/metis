@@ -18,12 +18,10 @@ internal fun main(args: Array<String>) {
         val chunk = compiler.compileCode("<string>", ast)
         println(chunk)
         val state = State()
+        //state.debugMode = true
         state.loadChunk(chunk)
         state.call(0)
         state.runTillComplete()
-        println("---")
-        println(state.stack)
-        println(state.globals)
     } catch (e: MetisException) {
         println(e.report(code, args[0]))
     }

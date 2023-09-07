@@ -5,7 +5,12 @@ import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.runtime.values.Value
 
 sealed interface Insn {
-    data class Push(val value: Value) : Insn
+    data class Push(val value: Value) : Insn {
+        override fun toString(): String {
+            return "Push:\n" + value.toString().prependIndent("  ")
+        }
+    }
+
     data object Pop : Insn
     data class CopyUnder(val index: Int) : Insn
 
@@ -13,7 +18,7 @@ sealed interface Insn {
     data class UnaryOp(val op: UnOp) : Insn
 
     data object GetGlobals : Insn
-    data class GetLocal(val name: String) : Insn
+    data class GetLocal(val index: Int) : Insn
 
     data object Index : Insn
     data object Set : Insn

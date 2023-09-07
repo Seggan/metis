@@ -54,9 +54,10 @@ class Lexer(private val code: String) {
         keyword("and", Token.Type.AND)
         keyword("or", Token.Type.OR)
         keyword("not", Token.Type.NOT)
-        keyword("fun", Token.Type.FUN)
+        keyword("fn", Token.Type.FN)
         keyword("global", Token.Type.GLOBAL)
         keyword("local", Token.Type.LOCAL)
+        keyword("do", Token.Type.DO)
         keyword("end", Token.Type.END)
         regex("//.*\\n", Token.Type.COMMENT)
         regex("/\\*.*?\\*/", Token.Type.COMMENT)
@@ -209,9 +210,10 @@ data class Token(val type: Type, val text: String, val span: Span) {
         NOT,
         BREAK,
         CONTINUE,
-        FUN,
+        FN,
         GLOBAL,
         LOCAL,
+        DO,
         END;
 
         operator fun plus(other: Type): EnumSet<Type> = EnumSet.of(this, other)

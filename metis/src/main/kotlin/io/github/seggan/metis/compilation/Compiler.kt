@@ -8,9 +8,15 @@ import io.github.seggan.metis.runtime.Insn
 import io.github.seggan.metis.runtime.values.Arity
 import io.github.seggan.metis.runtime.values.Value
 
-class Compiler(extraLocals: List<String> = emptyList()) {
+class Compiler(extraLocals: List<String>, private val enclosingCompiler: Compiler?) {
 
-    private val localStack = ArrayDeque(extraLocals)
+    constructor() : this(emptyList(), null)
+
+    private val localStack = ArrayDeque<MutableList<String>>()
+
+    init {
+        localStack.addFirst(extraLocals.toMutableList())
+    }
 
     fun compileCode(name: String, code: List<AstNode.Statement>): Chunk {
         val (insns, spans) = compileStatements(code).unzip()
@@ -19,6 +25,15 @@ class Compiler(extraLocals: List<String> = emptyList()) {
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
         return statements.flatMap(::compileStatement)
+    }
+
+    private fun compileBlock(block: AstNode.Block): List<FullInsn> {
+        localStack.addFirst(mutableListOf())
+        val ret = compileStatements(block).toMutableList()
+        for (local in localStack.removeFirst()) {
+            ret.add(Insn.Pop to block.span)
+        }
+        return ret
     }
 
     private fun compileStatement(statement: AstNode.Statement): List<FullInsn> {
@@ -30,9 +45,10 @@ class Compiler(extraLocals: List<String> = emptyList()) {
             is AstNode.Do -> TODO()
             is AstNode.For -> TODO()
             is AstNode.If -> TODO()
-            is AstNode.Return -> TODO()
+            is AstNode.Return -> compileExpression(statement.value) + (Insn.Return to statement.span)
             is AstNode.VarAssign -> TODO()
             is AstNode.While -> TODO()
+            is AstNode.Block -> compileBlock(statement)
         }
     }
 
@@ -87,28 +103,49 @@ class Compiler(extraLocals: List<String> = emptyList()) {
             is AstNode.UnaryOp -> listOf(Insn.UnaryOp(expression.op) to expression.span)
             is AstNode.Var -> {
                 val name = expression.name
-                for (scope in localStack) {
-                    if (name in scope) {
-                        return listOf(Insn.GetLocal(name) to expression.span)
-                    }
+                val index = resolveLocal(name)
+                if (index != -1) {
+                    return listOf(Insn.GetLocal(index) to expression.span)
                 }
                 listOf(
                     Insn.GetGlobals to expression.span,
-                    Insn.IndexImm(expression.name) to expression.span
+                    Insn.IndexImm(name) to expression.span
                 )
             }
+
+            is AstNode.FunctionDef -> compileFunctionDef(expression)
         }
     }
 
+    private fun compileFunctionDef(fn: AstNode.FunctionDef): List<FullInsn> {
+        val compiler = Compiler(fn.args, this)
+        val chunk = compiler.compileCode("<function>", fn.body)
+        return listOf(Insn.Push(chunk) to fn.span)
+    }
+
+    private fun resolveLocal(name: String): Int {
+        var index = localStack.sumOf { it.size }
+        for (scope in localStack) {
+            for (local in scope) {
+                index--
+                if (name == local) {
+                    return index
+                }
+            }
+        }
+        return -1
+    }
+
     private fun compileVarDecl(decl: AstNode.VarDecl): List<FullInsn> {
-        if (decl.visibility == Visibility.GLOBAL) {
-            return buildList {
+        return if (decl.visibility == Visibility.GLOBAL) {
+            buildList {
                 add(Insn.GetGlobals to decl.span)
                 addAll(compileExpression(decl.value))
                 add(Insn.SetImm(decl.name) to decl.span)
             }
         } else {
-            TODO()
+            localStack.first().add(decl.name)
+            compileExpression(decl.value)
         }
     }
 }

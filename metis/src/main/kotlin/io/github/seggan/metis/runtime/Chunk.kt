@@ -41,10 +41,11 @@ class Chunk(
         override fun step(state: State): StepResult {
             if (ip >= insns.size) return StepResult.FINISHED
             try {
-                when (val insn = insns[ip++]) {
+                val insn = insns[ip++]
+                when (insn) {
                     is Insn.BinaryOp -> TODO()
                     is Insn.GetGlobals -> state.stack.push(state.globals)
-                    is Insn.GetLocal -> TODO()
+                    is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
                     is Insn.Index -> state.index()
                     is Insn.IndexImm -> state.indexImm(insn.key)
                     is Insn.ListIndexImm -> state.listIndexImm(insn.key)
@@ -61,6 +62,9 @@ class Chunk(
                         state.stack.push(value)
                         return StepResult.FINISHED
                     }
+                }
+                if (state.debugMode) {
+                    println(insn)
                 }
             } catch (e: MetisRuntimeException) {
                 e.span = spans[ip - 1]

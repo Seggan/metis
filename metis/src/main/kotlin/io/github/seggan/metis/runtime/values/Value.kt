@@ -9,7 +9,7 @@ interface Value {
 
     var metatable: Table?
 
-    data class Number(val value: Double) : Value {
+    class Number private constructor(val value: Double) : Value {
 
         override var metatable: Table? = Companion.metatable
 
@@ -17,13 +17,31 @@ interface Value {
             val NAN = Number(Double.NaN)
             val POS_INF = Number(Double.POSITIVE_INFINITY)
             val NEG_INF = Number(Double.NEGATIVE_INFINITY)
-            val ZERO = Number(0.0)
-            val ONE = Number(1.0)
-            val TWO = Number(2.0)
-            val TEN = Number(10.0)
-            val NEGATIVE_ONE = Number(-1.0)
 
             val metatable = Table(mutableMapOf())
+
+            private const val CACHE_SIZE = 128
+            private val cache = Array(CACHE_SIZE * 2) {
+                Number(it - CACHE_SIZE.toDouble())
+            }
+
+            fun from(value: Double): Number {
+                if (value % 1 == 0.0 && value <= CACHE_SIZE && value >= -CACHE_SIZE) {
+                    return cache[(value + CACHE_SIZE).toInt()]
+                }
+                return Number(value)
+            }
+        }
+
+        override fun equals(other: Any?): kotlin.Boolean {
+            if (this === other) return true
+            return other is Number && other.value == value
+        }
+
+        override fun hashCode() = value.hashCode()
+
+        override fun toString(): kotlin.String {
+            return "Number(value=$value)"
         }
     }
 
@@ -57,7 +75,7 @@ interface Value {
         operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
     }
 
-    data class Array(val value: MutableList<Value>, override var metatable: Table? = null) : Value,
+    data class List(val value: MutableList<Value>, override var metatable: Table? = null) : Value,
         MutableList<Value> by value
 
     data class Bytes(val value: ByteArray, override var metatable: Table? = null) : Value {
@@ -103,7 +121,7 @@ fun Value.lookUp(key: Value): Value? {
         }
     } else if (key is Value.Number) {
         when (this) {
-            is Value.Array -> {
+            is Value.List -> {
                 val value = this.getOrNull(key.value.roundToInt())
                 if (value != null) {
                     return value
@@ -120,7 +138,7 @@ fun Value.lookUp(key: Value): Value? {
             is Value.Bytes -> {
                 val value = this.value.getOrNull(key.value.roundToInt())
                 if (value != null) {
-                    return Value.Number(value.toDouble())
+                    return Value.Number.from(value.toDouble())
                 }
             }
         }
@@ -128,7 +146,7 @@ fun Value.lookUp(key: Value): Value? {
     return this.metatable?.lookUp(key)
 }
 
-fun Value.lookUp(key: kotlin.String): Value? = lookUp(Value.String(key))
+fun Value.lookUp(key: String): Value? = lookUp(Value.String(key))
 
 fun Value?.orNull() = this ?: Value.Null
 

@@ -32,11 +32,35 @@ class Parser(tokens: List<Token>) {
         return statements
     }
 
+    private fun parseBlock(): AstNode.Block {
+        val result = mutableListOf<AstNode.Statement>()
+        val startSpan = previous.span
+        while (tryConsume(END) == null) {
+            result.add(parseStatement())
+        }
+        return AstNode.Block(result, startSpan + previous.span)
+    }
+
     private fun parseStatement(): AstNode.Statement {
         if (tryConsume(GLOBAL, LOCAL) != null) return parseVarDecl()
-        val expr = tryParse(::parseExpression)
-        if (expr != null) {
-            return expr
+        val pexpr = tryParse(::parseExpression)
+        if (pexpr != null) {
+            return pexpr
+        }
+        if (tryConsume(FN) != null) {
+            val startSpan = previous.span
+            val target = parseAssignTarget()
+            val fn = parseFunctionDef(startSpan)
+            if (target is AstNode.Var) {
+                return AstNode.VarDecl(Visibility.GLOBAL, target.name, fn, fn.span)
+            }
+            return AstNode.VarAssign(target, fn, fn.span)
+        }
+        if (tryConsume(DO) != null) return parseBlock()
+        if (tryConsume(RETURN) != null) {
+            val startSpan = previous.span
+            val expr = tryParse(::parseExpression) ?: AstNode.Literal(Value.Null, startSpan)
+            return AstNode.Return(expr, startSpan + expr.span)
         }
         throw ParseException("Unknown statement", current.span)
     }
@@ -69,12 +93,13 @@ class Parser(tokens: List<Token>) {
         return parsePostfix()
     }
 
-    private fun parsePostfix(): AstNode.Expression {
+    private fun parsePostfix(allowCalls: Boolean = true): AstNode.Expression {
         var expr = parsePrimary()
+        val allowed = arrayOf(OPEN_BRACKET, DOT, COLON) + if (allowCalls) arrayOf(OPEN_PAREN) else arrayOf()
         while (true) {
-            val op = tryConsume(OPEN_PAREN, OPEN_BRACKET, DOT, COLON) ?: break
+            val op = tryConsume(*allowed) ?: break
             expr = when (op.type) {
-                OPEN_PAREN -> AstNode.Call(expr, parseArgList(), op.span + previous.span)
+                OPEN_PAREN -> AstNode.Call(expr, parseArgList(::parseExpression), op.span + previous.span)
 
                 OPEN_BRACKET -> {
                     val index = parseExpression()
@@ -83,7 +108,7 @@ class Parser(tokens: List<Token>) {
                 }
 
                 DOT -> {
-                    val name = consume(IDENTIFIER)
+                    val name = parseId()
                     AstNode.Index(
                         expr,
                         AstNode.Literal(Value.String(name.text), name.span),
@@ -92,12 +117,12 @@ class Parser(tokens: List<Token>) {
                 }
 
                 COLON -> {
-                    val name = consume(IDENTIFIER).text
+                    val name = parseId().text
                     consume(OPEN_PAREN)
                     AstNode.ColonCall(
                         expr,
                         name,
-                        parseArgList(),
+                        parseArgList(::parseExpression),
                         op.span + previous.span
                     )
                 }
@@ -108,11 +133,11 @@ class Parser(tokens: List<Token>) {
         return expr
     }
 
-    private fun parseArgList(): List<AstNode.Expression> {
-        val args = mutableListOf<AstNode.Expression>()
+    private inline fun <T> parseArgList(subParser: () -> T): List<T> {
+        val args = mutableListOf<T>()
         while (true) {
             if (tryConsume(CLOSE_PAREN) != null) break
-            args.add(parseExpression())
+            args.add(subParser())
             if (tryConsume(CLOSE_PAREN) != null) break
             consume(COMMA)
         }
@@ -120,19 +145,41 @@ class Parser(tokens: List<Token>) {
     }
 
     private fun parsePrimary(): AstNode.Expression {
-        val token = consume(STRING, BYTES, NUMBER, OPEN_PAREN, IDENTIFIER)
+        val token = consume(STRING, BYTES, NUMBER, OPEN_PAREN, IDENTIFIER, FN)
         return when (token.type) {
-            STRING -> AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1)), token.span)
+            STRING -> AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1).intern()), token.span)
             BYTES -> AstNode.Literal(
                 Value.Bytes(token.text.substring(1, token.text.length - 1).encodeToByteArray()),
                 token.span
             )
 
-            NUMBER -> AstNode.Literal(Value.Number(token.text.toDouble()), token.span)
+            NUMBER -> AstNode.Literal(Value.Number.from(token.text.toDouble()), token.span)
             OPEN_PAREN -> parseExpression().also { consume(CLOSE_PAREN) }
             IDENTIFIER -> AstNode.Var(token.text, token.span)
+            FN -> parseFunctionDef(token.span)
             else -> throw AssertionError()
         }
+    }
+
+    private fun parseFunctionDef(startSpan: Span): AstNode.FunctionDef {
+        consume(OPEN_PAREN)
+        val args = parseArgList { parseId().text }
+        var block = when (consume(COLON, EQUALS).type) {
+            COLON -> parseBlock()
+            EQUALS -> {
+                val expr = parseExpression()
+                val ret = AstNode.Return(expr, expr.span)
+                AstNode.Block(listOf(ret), expr.span)
+            }
+
+            else -> throw AssertionError()
+        }
+        if (block.lastOrNull() !is AstNode.Return) {
+            val nodes = block.toMutableList()
+            nodes.add(AstNode.Return(AstNode.Literal(Value.Null, block.span), block.span))
+            block = AstNode.Block(nodes, block.span)
+        }
+        return AstNode.FunctionDef(args, block, startSpan + block.span)
     }
 
     private inline fun parseBinOp(next: () -> AstNode.Expression, types: Map<Token.Type, BinOp>): AstNode.Expression {
@@ -151,7 +198,7 @@ class Parser(tokens: List<Token>) {
     private fun parseVarDecl(): AstNode.VarDecl {
         val startSpan = previous.span
         val visibility = if (previous.type == GLOBAL) Visibility.GLOBAL else Visibility.LOCAL
-        val name = consume(IDENTIFIER).text
+        val name = parseId().text
         consume(EQUALS)
         val value = tryParse(::parseExpression)
         val endSpan = value?.span ?: current.span
@@ -161,6 +208,16 @@ class Parser(tokens: List<Token>) {
             value ?: AstNode.Literal(Value.Null, endSpan),
             startSpan + endSpan
         )
+    }
+
+    private fun parseAssignTarget(): AstNode.AssignTarget {
+        val target = parsePostfix(false)
+        if (target is AstNode.AssignTarget) return target
+        throw ParseException("Invalid variable/function assignment target", target.span)
+    }
+
+    private fun parseId(): Token {
+        return consume(IDENTIFIER) // can add soft keywords
     }
 
     private fun tryConsume(vararg types: Token.Type): Token? {
