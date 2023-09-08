@@ -65,8 +65,11 @@ class State(val isChildState: Boolean = false) {
                 callStack.removeLast()
             }
         } catch (e: MetisException) {
-            if (e.span == null) {
-                e.span = callStack.peek().span
+            for (i in callStack.lastIndex downTo 0) {
+                val span = callStack[i].span
+                if (span != null) {
+                    e.addStackFrame(span)
+                }
             }
             throw e
         }
@@ -85,7 +88,7 @@ class State(val isChildState: Boolean = false) {
     fun runCode(name: String, code: String) {
         val lexer = Lexer(code)
         val parser = Parser(lexer.lex())
-        val compiler = Compiler()
+        val compiler = Compiler(name, code)
         loadChunk(compiler.compileCode(name, parser.parse()))
         call(0)
         runTillComplete()

@@ -14,8 +14,8 @@ internal fun main(args: Array<String>) {
         println(toks)
         val ast = Parser(toks).parse()
         println(ast)
-        val compiler = Compiler()
-        val chunk = compiler.compileCode("<string>", ast)
+        val compiler = Compiler(args[0], code)
+        val chunk = compiler.compileCode(args[0], ast)
         println(chunk)
         val state = State()
         //state.debugMode = true

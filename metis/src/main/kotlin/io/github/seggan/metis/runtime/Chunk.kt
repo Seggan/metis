@@ -9,8 +9,11 @@ class Chunk(
     val name: String,
     val insns: List<Insn>,
     override val arity: Arity,
-    val spans: List<Span>
+    spans: List<Span>,
+    val file: Pair<String, String>
 ) : CallableValue {
+
+    val spans = spans.map { it.copy(file = file) }
 
     override var metatable: Value.Table? = null
 
@@ -67,7 +70,7 @@ class Chunk(
                     println(insn)
                 }
             } catch (e: MetisRuntimeException) {
-                e.span = spans[ip - 1]
+                e.addStackFrame(spans[ip - 1])
                 throw e
             }
             return StepResult.CONTINUE

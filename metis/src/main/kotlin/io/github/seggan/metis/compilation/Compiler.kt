@@ -8,9 +8,13 @@ import io.github.seggan.metis.runtime.Insn
 import io.github.seggan.metis.runtime.values.Arity
 import io.github.seggan.metis.runtime.values.Value
 
-class Compiler(private val args: List<String>, private val enclosingCompiler: Compiler?) {
+class Compiler private constructor(
+    private val file: Pair<String, String>,
+    private val args: List<String>,
+    private val enclosingCompiler: Compiler?
+) {
 
-    constructor() : this(emptyList(), null)
+    constructor(filename: String, file: String) : this(filename to file, emptyList(), null)
 
     private val localStack = ArrayDeque<ArrayDeque<String>>()
 
@@ -20,7 +24,7 @@ class Compiler(private val args: List<String>, private val enclosingCompiler: Co
 
     fun compileCode(name: String, code: List<AstNode.Statement>): Chunk {
         val (insns, spans) = compileStatements(code).unzip()
-        return Chunk(name, insns, Arity(args.size), spans)
+        return Chunk(name, insns, Arity(args.size), spans, file)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -118,7 +122,7 @@ class Compiler(private val args: List<String>, private val enclosingCompiler: Co
     }
 
     private fun compileFunctionDef(fn: AstNode.FunctionDef): List<FullInsn> {
-        val compiler = Compiler(fn.args, this)
+        val compiler = Compiler(file, fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
         return listOf(Insn.Push(chunk) to fn.span)
     }
