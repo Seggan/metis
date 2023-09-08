@@ -51,12 +51,7 @@ class State(val isChildState: Boolean = false) {
         globals["io"] = io
 
         val core = State::class.java.classLoader.getResource("core.metis")!!.readText()
-        val lexer = Lexer(core)
-        val parser = Parser(lexer.lex())
-        val compiler = Compiler()
-        loadChunk(compiler.compileCode("core", parser.parse()))
-        call(0)
-        runTillComplete()
+        runCode("core", core)
     }
 
     fun loadChunk(chunk: Chunk) {
@@ -85,6 +80,15 @@ class State(val isChildState: Boolean = false) {
     fun runTillComplete() {
         while (step() != StepResult.FINISHED) {
         }
+    }
+
+    fun runCode(name: String, code: String) {
+        val lexer = Lexer(code)
+        val parser = Parser(lexer.lex())
+        val compiler = Compiler()
+        loadChunk(compiler.compileCode(name, parser.parse()))
+        call(0)
+        runTillComplete()
     }
 
     fun index() {
