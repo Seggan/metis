@@ -8,19 +8,19 @@ import io.github.seggan.metis.runtime.Insn
 import io.github.seggan.metis.runtime.values.Arity
 import io.github.seggan.metis.runtime.values.Value
 
-class Compiler(extraLocals: List<String>, private val enclosingCompiler: Compiler?) {
+class Compiler(private val args: List<String>, private val enclosingCompiler: Compiler?) {
 
     constructor() : this(emptyList(), null)
 
-    private val localStack = ArrayDeque<MutableList<String>>()
+    private val localStack = ArrayDeque<ArrayDeque<String>>()
 
     init {
-        localStack.addFirst(extraLocals.toMutableList())
+        localStack.addFirst(ArrayDeque(args))
     }
 
     fun compileCode(name: String, code: List<AstNode.Statement>): Chunk {
         val (insns, spans) = compileStatements(code).unzip()
-        return Chunk(name, insns, Arity.ZERO, spans)
+        return Chunk(name, insns, Arity(args.size), spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -28,7 +28,7 @@ class Compiler(extraLocals: List<String>, private val enclosingCompiler: Compile
     }
 
     private fun compileBlock(block: AstNode.Block): List<FullInsn> {
-        localStack.addFirst(mutableListOf())
+        localStack.addFirst(ArrayDeque())
         val ret = compileStatements(block).toMutableList()
         for (local in localStack.removeFirst()) {
             ret.add(Insn.Pop to block.span)
@@ -144,7 +144,7 @@ class Compiler(extraLocals: List<String>, private val enclosingCompiler: Compile
                 add(Insn.SetImm(decl.name) to decl.span)
             }
         } else {
-            localStack.first().add(decl.name)
+            localStack.first().addFirst(decl.name)
             compileExpression(decl.value)
         }
     }

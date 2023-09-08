@@ -1,6 +1,9 @@
 package io.github.seggan.metis.runtime
 
 import io.github.seggan.metis.MetisException
+import io.github.seggan.metis.compilation.Compiler
+import io.github.seggan.metis.parsing.Lexer
+import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.intrinsics.Intrinsics
 import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
@@ -42,10 +45,18 @@ class State(val isChildState: Boolean = false) {
         }
 
         val io = Value.Table(mutableMapOf())
-        io["stdout"] = wrapOutStream(this, stdout)
-        io["stderr"] = wrapOutStream(this, stderr)
+        io["stdout"] = wrapOutStream(stdout)
+        io["stderr"] = wrapOutStream(stderr)
 
         globals["io"] = io
+
+        val core = State::class.java.classLoader.getResource("core.metis")!!.readText()
+        val lexer = Lexer(core)
+        val parser = Parser(lexer.lex())
+        val compiler = Compiler()
+        loadChunk(compiler.compileCode("core", parser.parse()))
+        call(0)
+        runTillComplete()
     }
 
     fun loadChunk(chunk: Chunk) {

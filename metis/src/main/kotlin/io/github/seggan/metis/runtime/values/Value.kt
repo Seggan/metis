@@ -18,7 +18,7 @@ interface Value {
             val POS_INF = Number(Double.POSITIVE_INFINITY)
             val NEG_INF = Number(Double.NEGATIVE_INFINITY)
 
-            val metatable = Table(mutableMapOf())
+            val metatable = initNumber()
 
             private const val CACHE_SIZE = 128
             private val cache = Array(CACHE_SIZE * 2) {
@@ -61,7 +61,7 @@ interface Value {
             val TRUE = Boolean(true)
             val FALSE = Boolean(false)
 
-            val metatable = Table(mutableMapOf())
+            val metatable = initBoolean()
 
             fun from(value: kotlin.Boolean) = if (value) TRUE else FALSE
         }

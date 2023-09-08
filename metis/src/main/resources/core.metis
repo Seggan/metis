@@ -1,0 +1,9 @@
+fn str(x) = x:__str__()
+
+fn print(x):
+    local out = io.stdout
+    local s = str(x)
+    out:write(s:encode("UTF-8"))
+    out:write('\n')
+    out:flush()
+end
