@@ -2,7 +2,7 @@
 
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.runtime.MetisRuntimeException
+import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.values.Value
 import io.github.seggan.metis.runtime.values.convertTo
 import java.io.OutputStream

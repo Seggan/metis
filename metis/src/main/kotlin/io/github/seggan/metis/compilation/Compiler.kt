@@ -3,8 +3,8 @@ package io.github.seggan.metis.compilation
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
-import io.github.seggan.metis.runtime.Chunk
-import io.github.seggan.metis.runtime.Insn
+import io.github.seggan.metis.runtime.chunk.Chunk
+import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.values.Arity
 import io.github.seggan.metis.runtime.values.Value
 

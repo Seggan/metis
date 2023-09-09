@@ -1,8 +1,8 @@
 package io.github.seggan.metis.runtime.values
 
-import io.github.seggan.metis.runtime.MetisRuntimeException
+import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.State
-import io.github.seggan.metis.runtime.StepResult
+import io.github.seggan.metis.runtime.chunk.StepResult
 import kotlin.math.roundToInt
 
 interface Value {

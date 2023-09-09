@@ -1,7 +1,7 @@
 package io.github.seggan.metis.runtime.values
 
-import io.github.seggan.metis.runtime.Chunk
-import io.github.seggan.metis.runtime.MetisRuntimeException
+import io.github.seggan.metis.MetisRuntimeException
+import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.intrinsics.OneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.TwoArgFunction
 import io.github.seggan.metis.runtime.intrinsics.ZeroArgFunction

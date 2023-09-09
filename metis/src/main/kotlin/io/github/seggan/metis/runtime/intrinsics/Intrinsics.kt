@@ -1,7 +1,7 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.State
-import io.github.seggan.metis.runtime.StepResult
+import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.pop
 import io.github.seggan.metis.runtime.push
 import io.github.seggan.metis.runtime.values.Arity

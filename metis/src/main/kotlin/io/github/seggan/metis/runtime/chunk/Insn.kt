@@ -1,4 +1,4 @@
-package io.github.seggan.metis.runtime
+package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp

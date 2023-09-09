@@ -1,4 +1,4 @@
-package io.github.seggan.metis.runtime
+package io.github.seggan.metis.runtime.chunk
 
 enum class StepResult {
     CONTINUE,
