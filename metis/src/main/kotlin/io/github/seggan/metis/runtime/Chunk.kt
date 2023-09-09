@@ -4,6 +4,7 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.values.Arity
 import io.github.seggan.metis.runtime.values.CallableValue
 import io.github.seggan.metis.runtime.values.Value
+import io.github.seggan.metis.runtime.values.initChunk
 
 class Chunk(
     val name: String,
@@ -15,7 +16,11 @@ class Chunk(
 
     val spans = spans.map { it.copy(file = file) }
 
-    override var metatable: Value.Table? = null
+    override var metatable: Value.Table? = Companion.metatable
+
+    companion object {
+        private val metatable = initChunk()
+    }
 
     override fun call(nargs: Int): CallableValue.Executor = ChunkExecutor()
 

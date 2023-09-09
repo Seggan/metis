@@ -90,7 +90,7 @@ interface Value {
     data class Native(val value: Any, override var metatable: Table? = null) : Value
 
     data object Null : Value {
-        override var metatable: Table? = null
+        override var metatable: Table? = initNull()
     }
 }
 

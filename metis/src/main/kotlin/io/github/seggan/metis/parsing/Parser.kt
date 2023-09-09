@@ -164,16 +164,10 @@ class Parser(tokens: List<Token>) {
     private fun parseFunctionDef(startSpan: Span): AstNode.FunctionDef {
         consume(OPEN_PAREN)
         val args = parseArgList { parseId().text }
-        var block = when (consume(COLON, EQUALS).type) {
-            COLON -> parseBlock()
-            EQUALS -> {
-                val expr = parseExpression()
-                val ret = AstNode.Return(expr, expr.span)
-                AstNode.Block(listOf(ret), expr.span)
-            }
-
-            else -> throw AssertionError()
-        }
+        var block = if (tryConsume(EQUALS) != null) {
+            val expr = parseExpression()
+            AstNode.Block(listOf(AstNode.Return(expr, expr.span)), expr.span)
+        } else parseBlock()
         if (block.lastOrNull() !is AstNode.Return) {
             val nodes = block.toMutableList()
             nodes.add(AstNode.Return(AstNode.Literal(Value.Null, block.span), block.span))

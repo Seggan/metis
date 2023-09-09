@@ -42,6 +42,19 @@ class OneShotFunction(override val arity: Arity, private val fn: State.(Int) -> 
     }
 }
 
+class ZeroArgFunction(private val fn: () -> Value) : CallableValue {
+
+    override val arity = Arity.ZERO
+
+    override var metatable: Value.Table? = null
+    override fun call(nargs: Int): CallableValue.Executor = object : CallableValue.Executor {
+        override fun step(state: State): StepResult {
+            state.stack.push(fn())
+            return StepResult.FINISHED
+        }
+    }
+}
+
 class OneArgFunction(private val fn: (Value) -> Value) : CallableValue {
 
     override val arity = Arity.ONE
