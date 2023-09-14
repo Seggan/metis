@@ -21,7 +21,7 @@ class State(val isChildState: Boolean = false) {
 
     val stack = Stack()
 
-    private val callStack = ArrayDeque<CallFrame>()
+    internal val callStack = ArrayDeque<CallFrame>()
 
     var stdout: OutputStream = System.out
     var stderr: OutputStream = System.err
@@ -95,6 +95,7 @@ class State(val isChildState: Boolean = false) {
         loadChunk(compiler.compileCode(name, parser.parse()))
         call(0)
         runTillComplete()
+        stack.pop()
     }
 
     fun index() {
@@ -176,7 +177,7 @@ class State(val isChildState: Boolean = false) {
         callStack.push(CallFrame(value.call(argc), stackBottom, span))
     }
 
-    fun unwindStack() {
+    fun resetStack() {
         while (stack.size > callStack.peek().stackBottom) {
             stack.pop()
         }
@@ -188,7 +189,7 @@ fun State.callGlobal(name: String, nargs: Int) {
     call(nargs)
 }
 
-private data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)
+internal data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)
 
 typealias Stack = ArrayDeque<Value>
 

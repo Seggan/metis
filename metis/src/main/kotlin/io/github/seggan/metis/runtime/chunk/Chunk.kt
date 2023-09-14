@@ -15,6 +15,7 @@ class Chunk(
     val name: String,
     val insns: List<Insn>,
     override val arity: Arity,
+    val upvalues: List<Upvalue>,
     spans: List<Span>,
     val file: Pair<String, String>
 ) : CallableValue {
@@ -49,32 +50,40 @@ class Chunk(
     }
 
     private inner class ChunkExecutor : CallableValue.Executor {
+
         private var ip = 0
 
+        private var toReturn: Value? = null
+
         override fun step(state: State): StepResult {
-            if (ip >= insns.size) return StepResult.FINISHED
+            if (ip >= insns.size) {
+                if (toReturn != null) {
+                    state.stack.push(toReturn!!)
+                    return StepResult.FINISHED
+                }
+                state.stderr.write("Chunk finished without returning a value\n".toByteArray())
+                throw MetisRuntimeException("Chunk finished without returning a value")
+            }
             try {
                 val insn = insns[ip++]
                 when (insn) {
                     is Insn.BinaryOp -> TODO()
                     is Insn.GetGlobals -> state.stack.push(state.globals)
                     is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
+                    is Insn.GetUpvalue -> upvalues[insn.index].get(state)
                     is Insn.Index -> state.index()
                     is Insn.IndexImm -> state.indexImm(insn.key)
                     is Insn.ListIndexImm -> state.listIndexImm(insn.key)
                     is Insn.Pop -> state.stack.pop()
+                    is Insn.CloseUpvalue -> insn.upvalue.close(state)
                     is Insn.Push -> state.stack.push(insn.value)
                     is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                     is Insn.Set -> state.set()
                     is Insn.SetImm -> state.setImm(insn.key, insn.allowNew)
                     is Insn.UnaryOp -> TODO()
                     is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
-                    is Insn.Return -> {
-                        val value = state.stack.pop()
-                        state.unwindStack()
-                        state.stack.push(value)
-                        return StepResult.FINISHED
-                    }
+                    is Insn.Return -> toReturn = state.stack.pop()
+                    is Insn.Finish -> ip = insns.size
                 }
                 if (state.debugMode) {
                     println(insn)

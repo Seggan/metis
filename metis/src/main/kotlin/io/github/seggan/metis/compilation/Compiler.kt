@@ -5,6 +5,7 @@ import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.runtime.values.Arity
 import io.github.seggan.metis.runtime.values.Value
 
@@ -16,15 +17,23 @@ class Compiler private constructor(
 
     constructor(filename: String, file: String) : this(filename to file, emptyList(), null)
 
-    private val localStack = ArrayDeque<ArrayDeque<String>>()
+    private val localStack = ArrayDeque<Local>()
+    private val upvalues = mutableListOf<Upvalue>()
+
+    private val depth: Int = enclosingCompiler?.depth ?: 0
+
+    private var scope = 0
 
     init {
-        localStack.addFirst(ArrayDeque(args))
+        for ((i, arg) in args.withIndex()) {
+            localStack.addFirst(Local(arg, 0, i))
+        }
     }
 
     fun compileCode(name: String, code: List<AstNode.Statement>): Chunk {
+        check(scope >= 0) { "Cannot use a Compiler more than once" }
         val (insns, spans) = compileStatements(code).unzip()
-        return Chunk(name, insns, Arity(args.size), spans, file)
+        return Chunk(name, insns, Arity(args.size), upvalues, spans, file)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -32,12 +41,25 @@ class Compiler private constructor(
     }
 
     private fun compileBlock(block: AstNode.Block): List<FullInsn> {
-        localStack.addFirst(ArrayDeque())
-        val ret = compileStatements(block).toMutableList()
-        for (local in localStack.removeFirst()) {
-            ret.add(Insn.Pop to block.span)
+        scope++
+        return compileStatements(block) + exitScope(block.span)
+    }
+
+    private fun exitScope(span: Span): List<FullInsn> {
+        return buildList {
+            while (localStack.isNotEmpty()) {
+                val local = localStack.first()
+                if (local.scope == scope) {
+                    localStack.removeFirst()
+                    if (local.capturing != null) {
+                        add(Insn.CloseUpvalue(local.capturing!!) to span)
+                    } else {
+                        add(Insn.Pop to span)
+                    }
+                }
+            }
+            scope--
         }
-        return ret
     }
 
     private fun compileStatement(statement: AstNode.Statement): List<FullInsn> {
@@ -49,7 +71,15 @@ class Compiler private constructor(
             is AstNode.Do -> TODO()
             is AstNode.For -> TODO()
             is AstNode.If -> TODO()
-            is AstNode.Return -> compileExpression(statement.value) + (Insn.Return to statement.span)
+            is AstNode.Return -> buildList {
+                addAll(compileExpression(statement.value))
+                add(Insn.Return to statement.span)
+                while (localStack.isNotEmpty()) {
+                    addAll(exitScope(statement.span))
+                }
+                add(Insn.Finish to statement.span)
+            }
+
             is AstNode.VarAssign -> TODO()
             is AstNode.While -> TODO()
             is AstNode.Block -> compileBlock(statement)
@@ -107,9 +137,13 @@ class Compiler private constructor(
             is AstNode.UnaryOp -> listOf(Insn.UnaryOp(expression.op) to expression.span)
             is AstNode.Var -> {
                 val name = expression.name
-                val index = resolveLocal(name)
-                if (index != -1) {
-                    return listOf(Insn.GetLocal(index) to expression.span)
+                val local = resolveLocal(name)
+                if (local != null) {
+                    return listOf(Insn.GetLocal(local.index) to expression.span)
+                }
+                val upvalue = resolveUpvalue(name)
+                if (upvalue != null) {
+                    return listOf(Insn.GetUpvalue(upvalues.indexOf(upvalue)) to expression.span)
                 }
                 listOf(
                     Insn.GetGlobals to expression.span,
@@ -127,19 +161,6 @@ class Compiler private constructor(
         return listOf(Insn.Push(chunk) to fn.span)
     }
 
-    private fun resolveLocal(name: String): Int {
-        var index = localStack.sumOf { it.size }
-        for (scope in localStack) {
-            for (local in scope) {
-                index--
-                if (name == local) {
-                    return index
-                }
-            }
-        }
-        return -1
-    }
-
     private fun compileVarDecl(decl: AstNode.VarDecl): List<FullInsn> {
         return if (decl.visibility == Visibility.GLOBAL) {
             buildList {
@@ -148,10 +169,39 @@ class Compiler private constructor(
                 add(Insn.SetImm(decl.name) to decl.span)
             }
         } else {
-            localStack.first().addFirst(decl.name)
+            localStack.addFirst(Local(decl.name, scope, localStack.size))
             compileExpression(decl.value)
         }
+    }
+
+    private fun resolveLocal(name: String): Local? {
+        return localStack.firstOrNull { it.name == name }
+    }
+
+    private fun resolveUpvalue(name: String): Upvalue? {
+        val found = upvalues.firstOrNull { it.name == name }
+        if (found != null) return found
+        if (enclosingCompiler == null) return null
+        val local = enclosingCompiler.resolveLocal(name)
+        if (local != null) {
+            if (local.capturing == null) {
+                local.capturing = Upvalue(name, local.index, enclosingCompiler.depth)
+            }
+            val upvalue = local.capturing!!
+            upvalues.add(upvalue)
+            return upvalue
+        }
+        val resolved = enclosingCompiler.resolveUpvalue(name)
+        if (resolved != null) {
+            upvalues.add(resolved)
+            return resolved
+        }
+        return null
     }
 }
 
 private typealias FullInsn = Pair<Insn, Span>
+
+private data class ResolvedUpvalue(val upvalue: Upvalue, val index: Int)
+
+private data class Local(val name: String, val scope: Int, val index: Int, var capturing: Upvalue? = null)

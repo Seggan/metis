@@ -12,6 +12,7 @@ sealed interface Insn {
     }
 
     data object Pop : Insn
+    data class CloseUpvalue(val upvalue: Upvalue) : Insn
     data class CopyUnder(val index: Int) : Insn
 
     data class BinaryOp(val op: BinOp) : Insn
@@ -19,6 +20,11 @@ sealed interface Insn {
 
     data object GetGlobals : Insn
     data class GetLocal(val index: Int) : Insn
+    data class GetUpvalue(val index: Int) : Insn {
+        init {
+            require(index >= 0)
+        }
+    }
 
     data object Index : Insn
     data object Set : Insn
@@ -27,4 +33,5 @@ sealed interface Insn {
     data class SetImm(val key: String, val allowNew: Boolean = true) : Insn
     data class Call(val nargs: Int) : Insn
     data object Return : Insn
+    data object Finish : Insn
 }

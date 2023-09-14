@@ -29,7 +29,8 @@ class Parser(tokens: List<Token>) {
             statements.add(parseStatement())
             skip(SEMICOLON)
         }
-        return statements
+        val returnSpan = Span(0, tokens.lastOrNull()?.span?.end ?: 0)
+        return statements + AstNode.Return(AstNode.Literal(Value.Null, returnSpan), returnSpan)
     }
 
     private fun parseBlock(): AstNode.Block {
