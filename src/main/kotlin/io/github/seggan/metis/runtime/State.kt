@@ -9,11 +9,10 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.intrinsics.Intrinsics
+import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
 import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
-import io.github.seggan.metis.runtime.values.*
 import java.io.InputStream
 import java.io.OutputStream
-import kotlin.math.roundToInt
 
 class State(val isChildState: Boolean = false) {
 
@@ -99,50 +98,31 @@ class State(val isChildState: Boolean = false) {
     }
 
     fun index() {
-        val index = stack.pop()
-        val value = stack.pop()
-        stack.push(value.lookUp(index).orNull())
-    }
-
-    fun indexImm(key: String) {
-        val value = stack.pop()
-        stack.push(value.lookUp(Value.String(key)).orNull())
-    }
-
-    fun listIndexImm(key: Int) {
-        val value = stack.pop()
-        if (value is Value.List) {
-            stack.push(value.getOrNull(key) ?: Value.Null)
+        if (stack.peek() == Value.String("metatable")) {
+            stack.pop()
+            stack.push(stack.pop().metatable.orNull())
         } else {
-            stack.push(value.lookUp(Value.Number.from(key.toDouble())).orNull())
+            val getter = stack.getFromTop(1).lookUp(Value.String("__index__"))
+            if (getter is CallableValue) {
+                callValue(getter, 2)
+            } else {
+                throw MetisRuntimeException("Cannot index a non indexable value")
+            }
         }
     }
 
     fun set() {
-        val value = stack.pop()
-        val index = stack.pop()
-        val target = stack.pop()
-        if (target is Value.Table) {
-            target[index] = value
-        } else if (target is Value.List && index is Value.Number) {
-            target[index.value.roundToInt()] = value
+        if (stack.getFromTop(1) == Value.String("metatable")) {
+            val toSet = stack.pop().convertTo<Value.Table>()
+            stack.pop()
+            stack.pop().metatable = toSet
         } else {
-            throw MetisRuntimeException("Cannot set index on non-table or non-array")
-        }
-    }
-
-    fun setImm(key: String, allowNew: Boolean = true) {
-        val value = stack.pop()
-        val target = stack.pop()
-        if (target is Value.Table) {
-            val key = Value.String(key)
-            if (allowNew || target.containsKey(key)) {
-                target[key] = value
+            val setter = stack.getFromTop(2).lookUp(Value.String("__set__"))
+            if (setter is CallableValue) {
+                callValue(setter, 3)
             } else {
-                throw MetisRuntimeException("Cannot set index on non-table")
+                throw MetisRuntimeException("Cannot set index on a non indexable value")
             }
-        } else {
-            throw MetisRuntimeException("Cannot set index on non-table")
         }
     }
 
@@ -174,19 +154,13 @@ class State(val isChildState: Boolean = false) {
                 argc--
             }
         }
-        callStack.push(CallFrame(value.call(argc), stackBottom, span))
-    }
-
-    fun resetStack() {
-        while (stack.size > callStack.peek().stackBottom) {
-            stack.pop()
+        val executor = value.call(argc)
+        if (executor is OneShotFunction) {
+            executor.step(this)
+        } else {
+            callStack.push(CallFrame(executor, stackBottom, span))
         }
     }
-}
-
-fun State.callGlobal(name: String, nargs: Int) {
-    stack.push(globals[name].orNull())
-    call(nargs)
 }
 
 internal data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)

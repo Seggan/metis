@@ -1,9 +1,8 @@
-package io.github.seggan.metis.runtime.values
+package io.github.seggan.metis.runtime
 
 import io.github.seggan.metis.MetisRuntimeException
-import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
-import kotlin.math.roundToInt
+import io.github.seggan.metis.runtime.intrinsics.*
 
 interface Value {
 
@@ -69,22 +68,37 @@ interface Value {
         override fun toString(): kotlin.String = "Boolean(value=$value)"
     }
 
-    data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = null) : Value,
+    data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
         MutableMap<Value, Value> by value {
         operator fun get(key: kotlin.String) = value[String(key)]
         operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
+
+        companion object {
+            val EMPTY = Table(mutableMapOf())
+            private val metatable = initTable()
+        }
     }
 
-    data class List(val value: MutableList<Value>, override var metatable: Table? = null) : Value,
-        MutableList<Value> by value
+    data class List(val value: MutableList<Value>, override var metatable: Table? = Companion.metatable) : Value,
+        MutableList<Value> by value {
+        companion object {
+            val EMPTY = List(mutableListOf())
+            private val metatable = initList()
+        }
+    }
 
-    data class Bytes(val value: ByteArray, override var metatable: Table? = null) : Value {
+    data class Bytes(val value: ByteArray, override var metatable: Table? = Companion.metatable) : Value {
         override fun equals(other: Any?): kotlin.Boolean {
             if (this === other) return true
             return other is Bytes && value.contentEquals(other.value)
         }
 
         override fun hashCode() = value.contentHashCode()
+
+        companion object {
+            val EMPTY = Bytes(byteArrayOf())
+            private val metatable = initBytes()
+        }
     }
 
     data class Native(val value: Any, override var metatable: Table? = null) : Value
@@ -109,6 +123,8 @@ data class Arity(val required: Int, val isVarargs: Boolean = false) {
     companion object {
         val ZERO = Arity(0)
         val ONE = Arity(1)
+        val TWO = Arity(2)
+        val THREE = Arity(3)
         val VARARGS = Arity(0, true)
     }
 }
@@ -122,21 +138,21 @@ fun Value.lookUp(key: Value): Value? {
     } else if (key is Value.Number) {
         when (this) {
             is Value.List -> {
-                val value = this.getOrNull(key.value.roundToInt())
+                val value = this.getOrNull(key.intValue())
                 if (value != null) {
                     return value
                 }
             }
 
             is Value.String -> {
-                val value = this.value.getOrNull(key.value.roundToInt())
+                val value = this.value.getOrNull(key.intValue())
                 if (value != null) {
                     return Value.String(value.toString())
                 }
             }
 
             is Value.Bytes -> {
-                val value = this.value.getOrNull(key.value.roundToInt())
+                val value = this.value.getOrNull(key.intValue())
                 if (value != null) {
                     return Value.Number.from(value.toDouble())
                 }
@@ -148,6 +164,25 @@ fun Value.lookUp(key: Value): Value? {
 
 fun Value.lookUp(key: String): Value? = lookUp(Value.String(key))
 
+fun Value.set(key: Value, value: Value) {
+    if (this is Value.Table) {
+        this[key] = value
+    } else if (key is Value.Number) {
+        when (this) {
+            is Value.List -> {
+                this[key.intValue()] = value
+            }
+
+            is Value.Bytes -> {
+                this.value[key.intValue()] = value.intValue().toByte()
+            }
+        }
+    }
+    this.metatable?.set(key, value)
+}
+
+fun Value.set(key: String, value: Value) = set(Value.String(key), value)
+
 fun Value?.orNull() = this ?: Value.Null
 
 inline fun <reified T : Value> Value.convertTo(): T {
@@ -156,3 +191,6 @@ inline fun <reified T : Value> Value.convertTo(): T {
     }
     throw MetisRuntimeException("Cannot convert ${this::class.simpleName} to ${T::class.simpleName}")
 }
+
+fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
+fun Value.doubleValue() = this.convertTo<Value.Number>().value

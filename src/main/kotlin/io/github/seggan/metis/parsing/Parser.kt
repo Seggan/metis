@@ -4,7 +4,7 @@ import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.Token.Type.*
-import io.github.seggan.metis.runtime.values.Value
+import io.github.seggan.metis.runtime.Value
 import java.util.*
 
 class Parser(tokens: List<Token>) {
@@ -43,11 +43,9 @@ class Parser(tokens: List<Token>) {
     }
 
     private fun parseStatement(): AstNode.Statement {
-        if (tryConsume(GLOBAL, LOCAL) != null) return parseVarDecl()
-        val pexpr = tryParse(::parseExpression)
-        if (pexpr != null) {
-            return pexpr
-        }
+        tryParse(::parseVarDecl)?.let { return it }
+        tryParse(::parseVarAssign)?.let { return it }
+        tryParse(::parseExpression)?.let { return it }
         if (tryConsume(FN) != null) {
             val startSpan = previous.span
             val target = parseAssignTarget()
@@ -191,8 +189,8 @@ class Parser(tokens: List<Token>) {
     }
 
     private fun parseVarDecl(): AstNode.VarDecl {
-        val startSpan = previous.span
-        val visibility = if (previous.type == GLOBAL) Visibility.GLOBAL else Visibility.LOCAL
+        val start = consume(GLOBAL, LOCAL)
+        val visibility = if (start.type == GLOBAL) Visibility.GLOBAL else Visibility.LOCAL
         val name = parseId().text
         consume(EQUALS)
         val value = tryParse(::parseExpression)
@@ -201,8 +199,15 @@ class Parser(tokens: List<Token>) {
             visibility,
             name,
             value ?: AstNode.Literal(Value.Null, endSpan),
-            startSpan + endSpan
+            start.span + endSpan
         )
+    }
+
+    private fun parseVarAssign(): AstNode.VarAssign {
+        val name = parseAssignTarget()
+        consume(EQUALS)
+        val value = parseExpression()
+        return AstNode.VarAssign(name, value, name.span + value.span)
     }
 
     private fun parseAssignTarget(): AstNode.AssignTarget {

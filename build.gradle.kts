@@ -1,20 +1,23 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    kotlin("jvm") version "1.9.0" apply false
+    application
+    kotlin("jvm") version "1.9.0"
 }
 
 group = "io.github.seggan"
 version = "1.0-SNAPSHOT"
 
-subprojects {
-    repositories {
-        mavenCentral()
-    }
+repositories {
+    mavenCentral()
+}
 
-    apply(plugin = "kotlin")
+dependencies {
+    testImplementation(kotlin("test"))
+}
 
-    tasks.withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
+tasks.test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass.set("io.github.seggan.slimelang.MainKt")
 }

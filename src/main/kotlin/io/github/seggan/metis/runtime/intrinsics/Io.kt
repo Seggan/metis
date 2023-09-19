@@ -3,8 +3,8 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.MetisRuntimeException
-import io.github.seggan.metis.runtime.values.Value
-import io.github.seggan.metis.runtime.values.convertTo
+import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.convertTo
 import java.io.OutputStream
 
 private val outStreamMetatable = Value.Table(mutableMapOf()).also { table ->

@@ -2,14 +2,8 @@ package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.parsing.Span
-import io.github.seggan.metis.runtime.State
-import io.github.seggan.metis.runtime.getFromTop
-import io.github.seggan.metis.runtime.pop
-import io.github.seggan.metis.runtime.push
-import io.github.seggan.metis.runtime.values.Arity
-import io.github.seggan.metis.runtime.values.CallableValue
-import io.github.seggan.metis.runtime.values.Value
-import io.github.seggan.metis.runtime.values.initChunk
+import io.github.seggan.metis.runtime.*
+import io.github.seggan.metis.runtime.intrinsics.initChunk
 
 class Chunk(
     val name: String,
@@ -67,20 +61,19 @@ class Chunk(
             try {
                 val insn = insns[ip++]
                 when (insn) {
-                    is Insn.BinaryOp -> TODO()
                     is Insn.GetGlobals -> state.stack.push(state.globals)
                     is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
+                    is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.pop()
                     is Insn.GetUpvalue -> upvalues[insn.index].get(state)
+                    is Insn.SetUpvalue -> upvalues[insn.index].set(state)
                     is Insn.Index -> state.index()
-                    is Insn.IndexImm -> state.indexImm(insn.key)
-                    is Insn.ListIndexImm -> state.listIndexImm(insn.key)
+                    is Insn.Set -> state.set()
                     is Insn.Pop -> state.stack.pop()
                     is Insn.CloseUpvalue -> insn.upvalue.close(state)
                     is Insn.Push -> state.stack.push(insn.value)
                     is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
-                    is Insn.Set -> state.set()
-                    is Insn.SetImm -> state.setImm(insn.key, insn.allowNew)
                     is Insn.UnaryOp -> TODO()
+                    is Insn.BinaryOp -> TODO()
                     is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                     is Insn.Return -> toReturn = state.stack.pop()
                     is Insn.Finish -> ip = insns.size

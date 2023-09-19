@@ -1,4 +1,5 @@
 fn str(x) = x:__str__()
+fn len(x) = x:__len__()
 
 fn print(x)
     local out = io.stdout

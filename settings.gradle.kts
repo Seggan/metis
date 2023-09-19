@@ -1,2 +1,1 @@
-rootProject.name = "slimecomputing"
-include("metis")
+rootProject.name = "metis"

@@ -1,9 +1,9 @@
 package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.pop
 import io.github.seggan.metis.runtime.push
-import io.github.seggan.metis.runtime.values.Value
 
 data class Upvalue(
     val name: String,

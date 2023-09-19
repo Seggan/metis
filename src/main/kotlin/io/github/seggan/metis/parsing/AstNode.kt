@@ -3,7 +3,7 @@ package io.github.seggan.metis.parsing
 import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
-import io.github.seggan.metis.runtime.values.Value
+import io.github.seggan.metis.runtime.Value
 
 sealed interface AstNode {
 
@@ -31,7 +31,6 @@ sealed interface AstNode {
 
     data class While(val condition: Expression, val body: Block, override val span: Span) : Statement
     data class For(val name: String, val range: Expression, val body: Block, override val span: Span) : Statement
-    data class Do(val body: Block, override val span: Span) : Statement
     data class Break(override val span: Span) : Statement
     data class Continue(override val span: Span) : Statement
 

@@ -3,11 +3,11 @@ package io.github.seggan.metis.compilation
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
+import io.github.seggan.metis.runtime.Arity
+import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.chunk.Upvalue
-import io.github.seggan.metis.runtime.values.Arity
-import io.github.seggan.metis.runtime.values.Value
 
 class Compiler private constructor(
     private val file: Pair<String, String>,
@@ -40,17 +40,18 @@ class Compiler private constructor(
         return statements.flatMap(::compileStatement)
     }
 
-    private fun compileBlock(block: AstNode.Block): List<FullInsn> {
+    private fun compileBlock(block: AstNode.Block, remove: Boolean): List<FullInsn> {
         scope++
-        return compileStatements(block) + exitScope(block.span)
+        return compileStatements(block) + exitScope(block.span, remove)
     }
 
-    private fun exitScope(span: Span): List<FullInsn> {
+    private fun exitScope(span: Span, remove: Boolean): List<FullInsn> {
         return buildList {
-            while (localStack.isNotEmpty()) {
-                val local = localStack.first()
+            val it = localStack.iterator()
+            while (it.hasNext()) {
+                val local = it.next()
                 if (local.scope == scope) {
-                    localStack.removeFirst()
+                    if (remove) it.remove()
                     if (local.capturing != null) {
                         add(Insn.CloseUpvalue(local.capturing!!) to span)
                     } else {
@@ -66,23 +67,26 @@ class Compiler private constructor(
         return when (statement) {
             is AstNode.Expression -> compileExpression(statement) + (Insn.Pop to statement.span)
             is AstNode.VarDecl -> compileVarDecl(statement)
+            is AstNode.VarAssign -> compileVarAssign(statement)
             is AstNode.Break -> TODO()
             is AstNode.Continue -> TODO()
-            is AstNode.Do -> TODO()
             is AstNode.For -> TODO()
             is AstNode.If -> TODO()
             is AstNode.Return -> buildList {
                 addAll(compileExpression(statement.value))
                 add(Insn.Return to statement.span)
-                while (localStack.isNotEmpty()) {
-                    addAll(exitScope(statement.span))
+                for (local in localStack) {
+                    if (local.capturing != null) {
+                        add(Insn.CloseUpvalue(local.capturing!!) to statement.span)
+                    } else {
+                        add(Insn.Pop to statement.span)
+                    }
                 }
                 add(Insn.Finish to statement.span)
             }
 
-            is AstNode.VarAssign -> TODO()
             is AstNode.While -> TODO()
-            is AstNode.Block -> compileBlock(statement)
+            is AstNode.Block -> compileBlock(statement, false)
         }
     }
 
@@ -106,18 +110,7 @@ class Compiler private constructor(
 
             is AstNode.Index -> buildList {
                 addAll(compileExpression(expression.expr))
-                val index = expression.index
-                if (index is AstNode.Literal) {
-                    val value = index.value
-                    if (value is Value.Number && (value.value % 1.0) == 0.0) {
-                        add(Insn.ListIndexImm(value.value.toInt()) to index.span)
-                        return@buildList
-                    } else if (value is Value.String) {
-                        add(Insn.IndexImm(value.value) to index.span)
-                        return@buildList
-                    }
-                }
-                addAll(compileExpression(index))
+                addAll(compileExpression(expression.index))
                 add(Insn.Index to expression.span)
             }
 
@@ -129,7 +122,8 @@ class Compiler private constructor(
                     nargs++
                 }
                 add(Insn.CopyUnder(nargs) to expression.span)
-                add(Insn.IndexImm(expression.name) to expression.span)
+                add(Insn.Push(Value.String(expression.name)) to expression.span)
+                add(Insn.Index to expression.span)
                 add(Insn.Call(nargs + 1) to expression.span)
             }
 
@@ -137,17 +131,16 @@ class Compiler private constructor(
             is AstNode.UnaryOp -> listOf(Insn.UnaryOp(expression.op) to expression.span)
             is AstNode.Var -> {
                 val name = expression.name
-                val local = resolveLocal(name)
-                if (local != null) {
+                resolveLocal(name)?.let { local ->
                     return listOf(Insn.GetLocal(local.index) to expression.span)
                 }
-                val upvalue = resolveUpvalue(name)
-                if (upvalue != null) {
+                resolveUpvalue(name)?.let { upvalue ->
                     return listOf(Insn.GetUpvalue(upvalues.indexOf(upvalue)) to expression.span)
                 }
                 listOf(
                     Insn.GetGlobals to expression.span,
-                    Insn.IndexImm(name) to expression.span
+                    Insn.Push(Value.String(name)) to expression.span,
+                    Insn.Index to expression.span
                 )
             }
 
@@ -165,12 +158,42 @@ class Compiler private constructor(
         return if (decl.visibility == Visibility.GLOBAL) {
             buildList {
                 add(Insn.GetGlobals to decl.span)
+                add(Insn.Push(Value.String(decl.name)) to decl.span)
                 addAll(compileExpression(decl.value))
-                add(Insn.SetImm(decl.name) to decl.span)
+                add(Insn.Set to decl.span)
             }
         } else {
             localStack.addFirst(Local(decl.name, scope, localStack.size))
             compileExpression(decl.value)
+        }
+    }
+
+    private fun compileVarAssign(assign: AstNode.VarAssign): List<FullInsn> {
+        return when (val target = assign.target) {
+            is AstNode.Index -> buildList {
+                addAll(compileExpression(assign.value))
+                addAll(compileExpression(target.index))
+                addAll(compileExpression(target.expr))
+                add(Insn.Set to target.span)
+            }
+
+            is AstNode.Var -> buildList {
+                val name = target.name
+                resolveLocal(name)?.let { local ->
+                    addAll(compileExpression(assign.value))
+                    add(Insn.SetLocal(local.index) to target.span)
+                    return@buildList
+                }
+                resolveUpvalue(name)?.let { upvalue ->
+                    addAll(compileExpression(assign.value))
+                    add(Insn.SetUpvalue(upvalues.indexOf(upvalue)) to target.span)
+                    return@buildList
+                }
+                add(Insn.GetGlobals to target.span)
+                add(Insn.Push(Value.String(target.name)) to target.span)
+                addAll(compileExpression(assign.value))
+                add(Insn.Set to target.span)
+            }
         }
     }
 
