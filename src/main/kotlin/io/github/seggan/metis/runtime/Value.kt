@@ -68,14 +68,15 @@ interface Value {
         override fun toString(): kotlin.String = "Boolean(value=$value)"
     }
 
-    data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
+    class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
         MutableMap<Value, Value> by value {
+
         operator fun get(key: kotlin.String) = value[String(key)]
         operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
 
         companion object {
-            val EMPTY = Table(mutableMapOf())
             private val metatable = initTable()
+            val EMPTY = Table(mutableMapOf())
         }
     }
 
@@ -167,14 +168,17 @@ fun Value.lookUp(key: String): Value? = lookUp(Value.String(key))
 fun Value.set(key: Value, value: Value) {
     if (this is Value.Table) {
         this[key] = value
+        return
     } else if (key is Value.Number) {
         when (this) {
             is Value.List -> {
                 this[key.intValue()] = value
+                return
             }
 
             is Value.Bytes -> {
                 this.value[key.intValue()] = value.intValue().toByte()
+                return
             }
         }
     }

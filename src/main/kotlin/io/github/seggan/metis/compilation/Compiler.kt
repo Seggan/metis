@@ -137,11 +137,7 @@ class Compiler private constructor(
                 resolveUpvalue(name)?.let { upvalue ->
                     return listOf(Insn.GetUpvalue(upvalues.indexOf(upvalue)) to expression.span)
                 }
-                listOf(
-                    Insn.GetGlobals to expression.span,
-                    Insn.Push(Value.String(name)) to expression.span,
-                    Insn.Index to expression.span
-                )
+                listOf(Insn.GetGlobal(name) to expression.span)
             }
 
             is AstNode.FunctionDef -> compileFunctionDef(expression)
@@ -151,17 +147,12 @@ class Compiler private constructor(
     private fun compileFunctionDef(fn: AstNode.FunctionDef): List<FullInsn> {
         val compiler = Compiler(file, fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
-        return listOf(Insn.Push(chunk) to fn.span)
+        return listOf(Insn.PushClosure(chunk) to fn.span)
     }
 
     private fun compileVarDecl(decl: AstNode.VarDecl): List<FullInsn> {
         return if (decl.visibility == Visibility.GLOBAL) {
-            buildList {
-                add(Insn.GetGlobals to decl.span)
-                add(Insn.Push(Value.String(decl.name)) to decl.span)
-                addAll(compileExpression(decl.value))
-                add(Insn.Set to decl.span)
-            }
+            compileExpression(decl.value) + (Insn.SetGlobal(decl.name) to decl.span)
         } else {
             localStack.addFirst(Local(decl.name, scope, localStack.size))
             compileExpression(decl.value)
@@ -189,10 +180,8 @@ class Compiler private constructor(
                     add(Insn.SetUpvalue(upvalues.indexOf(upvalue)) to target.span)
                     return@buildList
                 }
-                add(Insn.GetGlobals to target.span)
-                add(Insn.Push(Value.String(target.name)) to target.span)
                 addAll(compileExpression(assign.value))
-                add(Insn.Set to target.span)
+                add(Insn.SetGlobal(name) to target.span)
             }
         }
     }

@@ -8,6 +8,7 @@ import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
+import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.runtime.intrinsics.Intrinsics
 import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
 import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
@@ -16,7 +17,7 @@ import java.io.OutputStream
 
 class State(val isChildState: Boolean = false) {
 
-    val globals = Value.Table(mutableMapOf())
+    val globals = mutableMapOf<String, Value>()
 
     val stack = Stack()
 
@@ -25,6 +26,8 @@ class State(val isChildState: Boolean = false) {
     var stdout: OutputStream = System.out
     var stderr: OutputStream = System.err
     var stdin: InputStream = System.`in`
+
+    internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
     val localsOffset: Int
         get() = callStack.peek().stackBottom
@@ -57,7 +60,7 @@ class State(val isChildState: Boolean = false) {
     }
 
     fun loadChunk(chunk: Chunk) {
-        stack.push(chunk)
+        stack.push(chunk.Instance(this))
     }
 
     fun step(): StepResult {
@@ -155,8 +158,18 @@ class State(val isChildState: Boolean = false) {
             }
         }
         val executor = value.call(argc)
-        if (executor is OneShotFunction) {
-            executor.step(this)
+        if (value is OneShotFunction) {
+            try {
+                executor.step(this)
+            } catch (e: MetisException) {
+                for (i in callStack.lastIndex downTo 0) {
+                    val span = callStack[i].span
+                    if (span != null) {
+                        e.addStackFrame(span)
+                    }
+                }
+                throw e
+            }
         } else {
             callStack.push(CallFrame(executor, stackBottom, span))
         }

@@ -6,7 +6,7 @@ import io.github.seggan.metis.runtime.chunk.Chunk
 import java.math.BigDecimal
 import java.nio.charset.Charset
 
-internal fun initString() = Value.Table(mutableMapOf()).also { table ->
+internal fun initString() = buildTable { table ->
     table["__str__"] = OneArgFunction { it }
     table["encode"] = TwoArgFunction { self, encoding ->
         val actualEncoding =
@@ -15,13 +15,13 @@ internal fun initString() = Value.Table(mutableMapOf()).also { table ->
     }
 }
 
-internal fun initNumber() = Value.Table(mutableMapOf()).also { table ->
+internal fun initNumber() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(BigDecimal(self.convertTo<Value.Number>().value).stripTrailingZeros().toPlainString())
     }
 }
 
-internal fun initBoolean() = Value.Table(mutableMapOf()).also { table ->
+internal fun initBoolean() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(self.convertTo<Value.Boolean>().value.toString())
     }
@@ -43,7 +43,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
     }
 }
 
-internal fun initList() = Value.Table(mutableMapOf()).also { table ->
+internal fun initList() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(self.convertTo<Value.List>().toString())
     }
@@ -59,7 +59,7 @@ internal fun initList() = Value.Table(mutableMapOf()).also { table ->
     }
 }
 
-internal fun initBytes() = Value.Table(mutableMapOf()).also { table ->
+internal fun initBytes() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8))
     }
@@ -79,7 +79,7 @@ internal fun initBytes() = Value.Table(mutableMapOf()).also { table ->
     }
 }
 
-internal fun initNull() = Value.Table(mutableMapOf()).also { table ->
+internal fun initNull() = buildTable { table ->
     table["__str__"] = OneArgFunction {
         Value.String("null")
     }
@@ -88,8 +88,16 @@ internal fun initNull() = Value.Table(mutableMapOf()).also { table ->
     }
 }
 
-internal fun initChunk() = Value.Table(mutableMapOf()).also { table ->
+internal fun initChunk() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
-        Value.String(self.convertTo<Chunk>().toString())
+        Value.String(self.convertTo<Chunk.Instance>().toString())
+    }
+}
+
+private inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
+    val map = mutableMapOf<String, Value>()
+    init(map)
+    return Value.Table(map.mapKeysTo(mutableMapOf()) { Value.String(it.key) }).also {
+        require(it.metatable != null)
     }
 }

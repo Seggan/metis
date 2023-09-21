@@ -8,21 +8,13 @@ import io.github.seggan.metis.runtime.intrinsics.initChunk
 class Chunk(
     val name: String,
     val insns: List<Insn>,
-    override val arity: Arity,
+    val arity: Arity,
     val upvalues: List<Upvalue>,
     spans: List<Span>,
     val file: Pair<String, String>
-) : CallableValue {
+) {
 
     val spans = spans.map { it.copy(file = file) }
-
-    override var metatable: Value.Table? = Companion.metatable
-
-    companion object {
-        private val metatable = initChunk()
-    }
-
-    override fun call(nargs: Int): CallableValue.Executor = ChunkExecutor()
 
     override fun toString(): String {
         return buildString {
@@ -43,49 +35,81 @@ class Chunk(
         }
     }
 
-    private inner class ChunkExecutor : CallableValue.Executor {
+    inner class Instance(state: State) : CallableValue {
 
-        private var ip = 0
+        override var metatable: Value.Table? = Companion.metatable
 
-        private var toReturn: Value? = null
+        override val arity = this@Chunk.arity
 
-        override fun step(state: State): StepResult {
-            if (ip >= insns.size) {
-                if (toReturn != null) {
-                    state.stack.push(toReturn!!)
-                    return StepResult.FINISHED
+        val upvalues = this@Chunk.upvalues.map { it.newInstance(state) }
+
+        override fun call(nargs: Int): CallableValue.Executor = ChunkExecutor()
+
+        override fun toString() = this@Chunk.toString()
+
+        private inner class ChunkExecutor : CallableValue.Executor {
+
+            private var ip = 0
+
+            private var toReturn: Value? = null
+
+            override fun step(state: State): StepResult {
+                if (ip >= insns.size) {
+                    if (toReturn != null) {
+                        state.stack.push(toReturn!!)
+                        return StepResult.FINISHED
+                    }
+                    state.stderr.write("Chunk finished without returning a value\n".toByteArray())
+                    throw MetisRuntimeException("Chunk finished without returning a value")
                 }
-                state.stderr.write("Chunk finished without returning a value\n".toByteArray())
-                throw MetisRuntimeException("Chunk finished without returning a value")
+                try {
+                    val insn = insns[ip++]
+                    when (insn) {
+                        is Insn.GetGlobal -> state.stack.push(state.globals[insn.name].orNull())
+                        is Insn.SetGlobal -> state.globals[insn.name] = state.stack.pop()
+                        is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
+                        is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.pop()
+                        is Insn.GetUpvalue -> upvalues[insn.index].get(state)
+                        is Insn.SetUpvalue -> upvalues[insn.index].set(state)
+                        is Insn.Index -> state.index()
+                        is Insn.Set -> state.set()
+                        is Insn.Pop -> state.stack.pop()
+                        is Insn.CloseUpvalue -> {
+                            val it = state.openUpvalues.iterator()
+                            var hasMet = false
+                            while (it.hasNext()) {
+                                val next = it.next()
+                                if (next.isInstanceOf(insn.upvalue)) {
+                                    check(!hasMet) { "Closed more than 2 upvalues" }
+                                    it.remove()
+                                    next.close(state)
+                                    hasMet = true
+                                }
+                            }
+                        }
+
+                        is Insn.Push -> state.stack.push(insn.value)
+                        is Insn.PushClosure -> state.stack.push(insn.chunk.Instance(state))
+                        is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
+                        is Insn.UnaryOp -> TODO()
+                        is Insn.BinaryOp -> TODO()
+                        is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
+                        is Insn.Return -> toReturn = state.stack.pop()
+                        is Insn.Finish -> ip = insns.size
+                    }
+                    if (state.debugMode) {
+                        println(insn)
+                    }
+                } catch (e: MetisRuntimeException) {
+                    e.addStackFrame(spans[ip - 1])
+                    throw e
+                }
+                return StepResult.CONTINUE
             }
-            try {
-                val insn = insns[ip++]
-                when (insn) {
-                    is Insn.GetGlobals -> state.stack.push(state.globals)
-                    is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
-                    is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.pop()
-                    is Insn.GetUpvalue -> upvalues[insn.index].get(state)
-                    is Insn.SetUpvalue -> upvalues[insn.index].set(state)
-                    is Insn.Index -> state.index()
-                    is Insn.Set -> state.set()
-                    is Insn.Pop -> state.stack.pop()
-                    is Insn.CloseUpvalue -> insn.upvalue.close(state)
-                    is Insn.Push -> state.stack.push(insn.value)
-                    is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
-                    is Insn.UnaryOp -> TODO()
-                    is Insn.BinaryOp -> TODO()
-                    is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
-                    is Insn.Return -> toReturn = state.stack.pop()
-                    is Insn.Finish -> ip = insns.size
-                }
-                if (state.debugMode) {
-                    println(insn)
-                }
-            } catch (e: MetisRuntimeException) {
-                e.addStackFrame(spans[ip - 1])
-                throw e
-            }
-            return StepResult.CONTINUE
         }
+    }
+
+    companion object {
+        private val metatable = initChunk()
     }
 }

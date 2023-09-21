@@ -2,8 +2,6 @@ package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.StepResult
-import kotlin.collections.Map
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 
 object Intrinsics {
