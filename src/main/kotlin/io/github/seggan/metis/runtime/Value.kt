@@ -68,7 +68,7 @@ interface Value {
         override fun toString(): kotlin.String = "Boolean(value=$value)"
     }
 
-    class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
+    data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
         MutableMap<Value, Value> by value {
 
         operator fun get(key: kotlin.String) = value[String(key)]

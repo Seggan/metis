@@ -1,9 +1,9 @@
-fn str(x) = x:__str__()
-fn len(x) = x:__len__()
+global fn str(x) = x:__str__()
+global fn len(x) = x:__len__()
 
-fn print(x)
-    local out = io.stdout
-    local s = str(x)
+global fn print(x)
+    let out = io.stdout
+    let s = str(x)
     out:write(s:encode("UTF-8"))
     out:write('\n')
     out:flush()

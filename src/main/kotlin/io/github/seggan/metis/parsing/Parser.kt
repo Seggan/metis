@@ -46,14 +46,22 @@ class Parser(tokens: List<Token>) {
         tryParse(::parseVarDecl)?.let { return it }
         tryParse(::parseVarAssign)?.let { return it }
         tryParse(::parseExpression)?.let { return it }
+        val global = tryConsume(GLOBAL)
         if (tryConsume(FN) != null) {
             val startSpan = previous.span
             val target = parseAssignTarget()
             val fn = parseFunctionDef(startSpan)
             if (target is AstNode.Var) {
-                return AstNode.VarDecl(Visibility.GLOBAL, target.name, fn, fn.span)
+                return AstNode.VarDecl(
+                    if (global != null) Visibility.GLOBAL else Visibility.LOCAL,
+                    target.name,
+                    fn,
+                    fn.span
+                )
             }
             return AstNode.VarAssign(target, fn, fn.span)
+        } else if (global != null) {
+            throw ParseException("Global variables must be declared with 'let'", global.span)
         }
         if (tryConsume(DO) != null) return parseBlock()
         if (tryConsume(RETURN) != null) {
@@ -189,8 +197,8 @@ class Parser(tokens: List<Token>) {
     }
 
     private fun parseVarDecl(): AstNode.VarDecl {
-        val start = consume(GLOBAL, LOCAL)
-        val visibility = if (start.type == GLOBAL) Visibility.GLOBAL else Visibility.LOCAL
+        val start = consume(LET)
+        val visibility = if (tryConsume(GLOBAL) != null) Visibility.GLOBAL else Visibility.LOCAL
         val name = parseId().text
         consume(EQUALS)
         val value = tryParse(::parseExpression)

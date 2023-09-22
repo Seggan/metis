@@ -56,7 +56,7 @@ class Lexer(private val code: String) {
         keyword("not", Token.Type.NOT)
         keyword("fn", Token.Type.FN)
         keyword("global", Token.Type.GLOBAL)
-        keyword("local", Token.Type.LOCAL)
+        keyword("let", Token.Type.LET)
         keyword("do", Token.Type.DO)
         keyword("end", Token.Type.END)
         regex("//.*\\n", Token.Type.COMMENT)
@@ -212,7 +212,7 @@ data class Token(val type: Type, val text: String, val span: Span) {
         CONTINUE,
         FN,
         GLOBAL,
-        LOCAL,
+        LET,
         DO,
         END;
 
