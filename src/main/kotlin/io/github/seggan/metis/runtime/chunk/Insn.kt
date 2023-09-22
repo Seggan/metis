@@ -41,4 +41,7 @@ sealed interface Insn {
     data class Call(val nargs: Int) : Insn
     data object Return : Insn
     data object Finish : Insn
+
+    data class Jump(var offset: Int) : Insn
+    data class JumpIfFalse(var offset: Int) : Insn
 }

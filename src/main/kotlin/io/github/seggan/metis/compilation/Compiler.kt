@@ -30,9 +30,9 @@ class Compiler private constructor(
         }
     }
 
-    fun compileCode(name: String, code: List<AstNode.Statement>): Chunk {
+    fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
-        val (insns, spans) = compileStatements(code).unzip()
+        val (insns, spans) = compileBlock(code, false).unzip()
         return Chunk(name, insns, Arity(args.size), upvalues, spans, file)
     }
 
@@ -40,7 +40,7 @@ class Compiler private constructor(
         return statements.flatMap(::compileStatement)
     }
 
-    private fun compileBlock(block: AstNode.Block, remove: Boolean): List<FullInsn> {
+    private fun compileBlock(block: AstNode.Block, remove: Boolean = true): List<FullInsn> {
         scope++
         return compileStatements(block) + exitScope(block.span, remove)
     }
@@ -71,7 +71,7 @@ class Compiler private constructor(
             is AstNode.Break -> TODO()
             is AstNode.Continue -> TODO()
             is AstNode.For -> TODO()
-            is AstNode.If -> TODO()
+            is AstNode.If -> compileIf(statement)
             is AstNode.Return -> buildList {
                 addAll(compileExpression(statement.value))
                 add(Insn.Return to statement.span)
@@ -86,7 +86,7 @@ class Compiler private constructor(
             }
 
             is AstNode.While -> TODO()
-            is AstNode.Block -> compileBlock(statement, false)
+            is AstNode.Block -> compileBlock(statement)
         }
     }
 
@@ -148,6 +148,26 @@ class Compiler private constructor(
         val compiler = Compiler(file, fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
         return listOf(Insn.PushClosure(chunk) to fn.span)
+    }
+
+    private fun compileIf(statement: AstNode.If): List<FullInsn> {
+        return buildList {
+            addAll(compileExpression(statement.condition))
+            val jump = Insn.JumpIfFalse(0)
+            add(jump to statement.span)
+            val then = compileBlock(statement.body)
+            addAll(then)
+            if (statement.elseBody != null) {
+                jump.offset = then.size + 1
+                val jump2 = Insn.Jump(0)
+                add(jump2 to statement.span)
+                val elseBody = compileBlock(statement.elseBody)
+                jump2.offset = elseBody.size
+                addAll(elseBody)
+            } else {
+                jump.offset = then.size
+            }
+        }
     }
 
     private fun compileVarDecl(decl: AstNode.VarDecl): List<FullInsn> {

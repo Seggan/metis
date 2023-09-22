@@ -1,7 +1,6 @@
 package io.github.seggan.metis.parsing
 
 import org.intellij.lang.annotations.Language
-import java.util.*
 
 class Lexer(private val code: String) {
 
@@ -214,11 +213,6 @@ data class Token(val type: Type, val text: String, val span: Span) {
         GLOBAL,
         LET,
         DO,
-        END;
-
-        operator fun plus(other: Type): EnumSet<Type> = EnumSet.of(this, other)
+        END
     }
 }
-
-operator fun EnumSet<Token.Type>.plus(other: Token.Type): EnumSet<Token.Type> =
-    EnumSet.copyOf(this).apply { add(other) }

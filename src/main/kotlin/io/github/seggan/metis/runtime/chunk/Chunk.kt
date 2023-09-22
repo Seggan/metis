@@ -96,6 +96,12 @@ class Chunk(
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                         is Insn.Return -> toReturn = state.stack.pop()
                         is Insn.Finish -> ip = insns.size
+                        is Insn.Jump -> ip += insn.offset
+                        is Insn.JumpIfFalse -> {
+                            if (!state.stack.pop().convertTo<Value.Boolean>().value) {
+                                ip += insn.offset
+                            }
+                        }
                     }
                     if (state.debugMode) {
                         println(insn)
