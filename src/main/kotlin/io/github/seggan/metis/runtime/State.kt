@@ -109,7 +109,7 @@ class State(val isChildState: Boolean = false) {
             if (getter is CallableValue) {
                 callValue(getter, 2)
             } else {
-                throw MetisRuntimeException("Cannot index a non indexable value")
+                throw MetisRuntimeException("Cannot index a non indexable value: ${stack.getFromTop(1)}")
             }
         }
     }

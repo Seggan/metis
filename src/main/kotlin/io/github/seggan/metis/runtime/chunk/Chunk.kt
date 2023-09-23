@@ -91,17 +91,29 @@ class Chunk(
                         is Insn.Push -> state.stack.push(insn.value)
                         is Insn.PushClosure -> state.stack.push(insn.chunk.Instance(state))
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
-                        is Insn.UnaryOp -> TODO()
-                        is Insn.BinaryOp -> TODO()
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                         is Insn.Return -> toReturn = state.stack.pop()
                         is Insn.Finish -> ip = insns.size
                         is Insn.Jump -> ip += insn.offset
                         is Insn.JumpIfFalse -> {
-                            if (!state.stack.pop().convertTo<Value.Boolean>().value) {
+                            val value = if (insn.consume) state.stack.pop() else state.stack.peek()
+                            if (!value.convertTo<Value.Boolean>().value) {
                                 ip += insn.offset
                             }
                         }
+
+                        is Insn.JumpIfTrue -> {
+                            val value = if (insn.consume) state.stack.pop() else state.stack.peek()
+                            if (value.convertTo<Value.Boolean>().value) {
+                                ip += insn.offset
+                            }
+                        }
+
+                        is Insn.Not -> state.stack.push(
+                            Value.Boolean.from(
+                                !state.stack.pop().convertTo<Value.Boolean>().value
+                            )
+                        )
                     }
                     if (state.debugMode) {
                         println(insn)

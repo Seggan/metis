@@ -1,7 +1,5 @@
 package io.github.seggan.metis.runtime.chunk
 
-import io.github.seggan.metis.BinOp
-import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.runtime.Value
 
 sealed interface Insn {
@@ -16,10 +14,6 @@ sealed interface Insn {
     data class CloseUpvalue(val upvalue: Upvalue) : Insn
 
     data class CopyUnder(val index: Int) : Insn
-
-    data class BinaryOp(val op: BinOp) : Insn
-    data class UnaryOp(val op: UnOp) : Insn
-
     data class GetGlobal(val name: String) : Insn
     data class SetGlobal(val name: String) : Insn
     data class GetLocal(val index: Int) : Insn
@@ -43,5 +37,7 @@ sealed interface Insn {
     data object Finish : Insn
 
     data class Jump(var offset: Int) : Insn
-    data class JumpIfFalse(var offset: Int) : Insn
+    data class JumpIfFalse(var offset: Int, val consume: Boolean = true) : Insn
+    data class JumpIfTrue(var offset: Int, val consume: Boolean = true) : Insn
+    data object Not : Insn
 }

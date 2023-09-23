@@ -1,5 +1,7 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.BinOp
+import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
@@ -92,11 +94,8 @@ class Compiler private constructor(
 
     private fun compileExpression(expression: AstNode.Expression): List<FullInsn> {
         return when (expression) {
-            is AstNode.BinaryOp -> buildList {
-                addAll(compileExpression(expression.left))
-                addAll(compileExpression(expression.right))
-                add(Insn.BinaryOp(expression.op) to expression.span)
-            }
+            is AstNode.BinaryOp -> compileBinOp(expression)
+            is AstNode.UnaryOp -> compileUnOp(expression)
 
             is AstNode.Call -> buildList {
                 var nargs = 0
@@ -128,7 +127,6 @@ class Compiler private constructor(
             }
 
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
-            is AstNode.UnaryOp -> listOf(Insn.UnaryOp(expression.op) to expression.span)
             is AstNode.Var -> {
                 val name = expression.name
                 resolveLocal(name)?.let { local ->
@@ -141,6 +139,61 @@ class Compiler private constructor(
             }
 
             is AstNode.FunctionDef -> compileFunctionDef(expression)
+        }
+    }
+
+    private fun compileBinOp(op: AstNode.BinaryOp): List<FullInsn> {
+        return buildList {
+            when (op.op) {
+                BinOp.AND -> {
+                    addAll(compileExpression(op.left))
+                    val jump = Insn.JumpIfFalse(0, false)
+                    add(jump to op.span)
+                    add(Insn.Pop to op.span)
+                    val right = compileExpression(op.right)
+                    addAll(right)
+                    jump.offset = right.size + 1
+                }
+
+                BinOp.OR -> {
+                    addAll(compileExpression(op.left))
+                    val jump = Insn.JumpIfTrue(0, false)
+                    add(jump to op.span)
+                    add(Insn.Pop to op.span)
+                    val right = compileExpression(op.right)
+                    addAll(right)
+                    jump.offset = right.size + 1
+                }
+
+                else -> {
+                    check(op.op.metamethod.isNotEmpty()) { "Cannot compile binary operator ${op.op}" }
+                    addAll(compileExpression(op.left))
+                    addAll(compileExpression(op.right))
+                    add(Insn.CopyUnder(1) to op.span)
+                    add(Insn.Push(Value.String(op.op.metamethod)) to op.span)
+                    add(Insn.Index to op.span)
+                    add(Insn.Call(2) to op.span)
+                }
+            }
+        }
+    }
+
+    private fun compileUnOp(op: AstNode.UnaryOp): List<FullInsn> {
+        return buildList {
+            when (op.op) {
+                UnOp.NOT -> {
+                    addAll(compileExpression(op.expr))
+                    add(Insn.Not to op.span)
+                }
+
+                UnOp.NEG -> {
+                    addAll(compileExpression(op.expr))
+                    add(Insn.CopyUnder(0) to op.span)
+                    add(Insn.Push(Value.String("__mul__")) to op.span)
+                    add(Insn.Index to op.span)
+                    add(Insn.Call(1) to op.span)
+                }
+            }
         }
     }
 

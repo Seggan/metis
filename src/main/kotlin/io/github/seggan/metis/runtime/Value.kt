@@ -54,13 +54,11 @@ interface Value {
     }
 
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
-        override var metatable: Table? = Companion.metatable
+        override var metatable: Table? = initBoolean()
 
         companion object {
             val TRUE = Boolean(true)
             val FALSE = Boolean(false)
-
-            val metatable = initBoolean()
 
             fun from(value: kotlin.Boolean) = if (value) TRUE else FALSE
         }
