@@ -1,10 +1,12 @@
 package io.github.seggan.metis.runtime.intrinsics
 
+import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
 import java.math.BigDecimal
 import java.nio.charset.Charset
+import kotlin.math.pow
 
 internal fun initString() = buildTable { table ->
     table["__str__"] = OneArgFunction { it }
@@ -13,11 +15,50 @@ internal fun initString() = buildTable { table ->
             if (encoding is Value.Null) Charsets.UTF_8 else Charset.forName(encoding.convertTo<Value.String>().value)
         Value.Bytes(self.convertTo<Value.String>().value.toByteArray(actualEncoding))
     }
+    table[BinOp.PLUS.metamethod] = TwoArgFunction { self, other ->
+        Value.String(self.convertTo<Value.String>().value + other.convertTo<Value.String>().value)
+    }
 }
 
 internal fun initNumber() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(BigDecimal(self.convertTo<Value.Number>().value).stripTrailingZeros().toPlainString())
+    }
+    table[BinOp.PLUS.metamethod] = TwoArgFunction { self, other ->
+        Value.Number.from(self.convertTo<Value.Number>().value + other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.MINUS.metamethod] = TwoArgFunction { self, other ->
+        Value.Number.from(self.convertTo<Value.Number>().value - other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.TIMES.metamethod] = TwoArgFunction { self, other ->
+        Value.Number.from(self.convertTo<Value.Number>().value * other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.DIV.metamethod] = TwoArgFunction { self, other ->
+        Value.Number.from(self.convertTo<Value.Number>().value / other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.MOD.metamethod] = TwoArgFunction { self, other ->
+        Value.Number.from(self.convertTo<Value.Number>().value % other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.POW.metamethod] = TwoArgFunction { self, other ->
+        Value.Number.from(self.convertTo<Value.Number>().value.pow(other.convertTo<Value.Number>().value))
+    }
+    table[BinOp.EQ.metamethod] = TwoArgFunction { self, other ->
+        Value.Boolean.from(self.convertTo<Value.Number>().value == other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.NOT_EQ.metamethod] = TwoArgFunction { self, other ->
+        Value.Boolean.from(self.convertTo<Value.Number>().value != other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.LESS.metamethod] = TwoArgFunction { self, other ->
+        Value.Boolean.from(self.convertTo<Value.Number>().value < other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.LESS_EQ.metamethod] = TwoArgFunction { self, other ->
+        Value.Boolean.from(self.convertTo<Value.Number>().value <= other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.GREATER.metamethod] = TwoArgFunction { self, other ->
+        Value.Boolean.from(self.convertTo<Value.Number>().value > other.convertTo<Value.Number>().value)
+    }
+    table[BinOp.GREATER_EQ.metamethod] = TwoArgFunction { self, other ->
+        Value.Boolean.from(self.convertTo<Value.Number>().value >= other.convertTo<Value.Number>().value)
     }
 }
 

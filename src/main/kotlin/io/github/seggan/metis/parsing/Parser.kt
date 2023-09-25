@@ -94,7 +94,8 @@ class Parser(tokens: List<Token>) {
     )
 
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
-    private fun parseMultiplication() = parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV))
+    private fun parseMultiplication() =
+        parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV, PERCENT to BinOp.MOD))
     private fun parseUnary(): AstNode.Expression {
         val op = tryConsume(NOT, MINUS)
         if (op != null) {
