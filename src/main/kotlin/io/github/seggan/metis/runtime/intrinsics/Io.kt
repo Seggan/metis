@@ -11,7 +11,7 @@ private val outStreamMetatable = Value.Table(mutableMapOf()).also { table ->
     table["write"] = TwoArgFunction { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
         asOutStream(self).write(toBeWritten)
-        Value.Number.from(toBeWritten.size.toDouble())
+        Value.Number.of(toBeWritten.size.toDouble())
     }
     table["flush"] = OneArgFunction { self ->
         asOutStream(self).flush()

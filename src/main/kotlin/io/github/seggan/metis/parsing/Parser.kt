@@ -165,7 +165,7 @@ class Parser(tokens: List<Token>) {
                 token.span
             )
 
-            NUMBER -> AstNode.Literal(Value.Number.from(token.text.toDouble()), token.span)
+            NUMBER -> AstNode.Literal(Value.Number.of(token.text.toDouble()), token.span)
             OPEN_PAREN -> parseExpression().also { consume(CLOSE_PAREN) }
             IDENTIFIER -> AstNode.Var(token.text, token.span)
             FN -> parseFunctionDef(token.span)

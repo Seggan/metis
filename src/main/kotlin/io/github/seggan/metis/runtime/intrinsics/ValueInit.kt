@@ -1,6 +1,5 @@
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
@@ -15,7 +14,7 @@ internal fun initString() = buildTable { table ->
             if (encoding is Value.Null) Charsets.UTF_8 else Charset.forName(encoding.convertTo<Value.String>().value)
         Value.Bytes(self.convertTo<Value.String>().value.toByteArray(actualEncoding))
     }
-    table[BinOp.PLUS.metamethod] = TwoArgFunction { self, other ->
+    table["__plus__"] = TwoArgFunction { self, other ->
         Value.String(self.convertTo<Value.String>().value + other.convertTo<Value.String>().value)
     }
 }
@@ -24,47 +23,40 @@ internal fun initNumber() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(BigDecimal(self.convertTo<Value.Number>().value).stripTrailingZeros().toPlainString())
     }
-    table[BinOp.PLUS.metamethod] = TwoArgFunction { self, other ->
-        Value.Number.from(self.convertTo<Value.Number>().value + other.convertTo<Value.Number>().value)
+    table["__plus__"] = TwoArgFunction { self, other ->
+        Value.Number.of(self.convertTo<Value.Number>().value + other.convertTo<Value.Number>().value)
     }
-    table[BinOp.MINUS.metamethod] = TwoArgFunction { self, other ->
-        Value.Number.from(self.convertTo<Value.Number>().value - other.convertTo<Value.Number>().value)
+    table["__minus__"] = TwoArgFunction { self, other ->
+        Value.Number.of(self.convertTo<Value.Number>().value - other.convertTo<Value.Number>().value)
     }
-    table[BinOp.TIMES.metamethod] = TwoArgFunction { self, other ->
-        Value.Number.from(self.convertTo<Value.Number>().value * other.convertTo<Value.Number>().value)
+    table["__times__"] = TwoArgFunction { self, other ->
+        Value.Number.of(self.convertTo<Value.Number>().value * other.convertTo<Value.Number>().value)
     }
-    table[BinOp.DIV.metamethod] = TwoArgFunction { self, other ->
-        Value.Number.from(self.convertTo<Value.Number>().value / other.convertTo<Value.Number>().value)
+    table["__div__"] = TwoArgFunction { self, other ->
+        Value.Number.of(self.convertTo<Value.Number>().value / other.convertTo<Value.Number>().value)
     }
-    table[BinOp.MOD.metamethod] = TwoArgFunction { self, other ->
-        Value.Number.from(self.convertTo<Value.Number>().value % other.convertTo<Value.Number>().value)
+    table["__mod__"] = TwoArgFunction { self, other ->
+        Value.Number.of(self.convertTo<Value.Number>().value % other.convertTo<Value.Number>().value)
     }
-    table[BinOp.POW.metamethod] = TwoArgFunction { self, other ->
-        Value.Number.from(self.convertTo<Value.Number>().value.pow(other.convertTo<Value.Number>().value))
+    table["__pow__"] = TwoArgFunction { self, other ->
+        Value.Number.of(self.convertTo<Value.Number>().value.pow(other.convertTo<Value.Number>().value))
     }
-    table[BinOp.EQ.metamethod] = TwoArgFunction { self, other ->
-        Value.Boolean.from(self.convertTo<Value.Number>().value == other.convertTo<Value.Number>().value)
+    table["__eq__"] = TwoArgFunction { self, other ->
+        Value.Boolean.of(self.convertTo<Value.Number>().value == other.convertTo<Value.Number>().value)
     }
-    table[BinOp.NOT_EQ.metamethod] = TwoArgFunction { self, other ->
-        Value.Boolean.from(self.convertTo<Value.Number>().value != other.convertTo<Value.Number>().value)
-    }
-    table[BinOp.LESS.metamethod] = TwoArgFunction { self, other ->
-        Value.Boolean.from(self.convertTo<Value.Number>().value < other.convertTo<Value.Number>().value)
-    }
-    table[BinOp.LESS_EQ.metamethod] = TwoArgFunction { self, other ->
-        Value.Boolean.from(self.convertTo<Value.Number>().value <= other.convertTo<Value.Number>().value)
-    }
-    table[BinOp.GREATER.metamethod] = TwoArgFunction { self, other ->
-        Value.Boolean.from(self.convertTo<Value.Number>().value > other.convertTo<Value.Number>().value)
-    }
-    table[BinOp.GREATER_EQ.metamethod] = TwoArgFunction { self, other ->
-        Value.Boolean.from(self.convertTo<Value.Number>().value >= other.convertTo<Value.Number>().value)
+    table["__cmp__"] = TwoArgFunction { self, other ->
+        Value.Number.of(
+            self.convertTo<Value.Number>().value.compareTo(other.convertTo<Value.Number>().value).toDouble()
+        )
     }
 }
 
 internal fun initBoolean() = buildTable { table ->
     table["__str__"] = OneArgFunction { self ->
         Value.String(self.convertTo<Value.Boolean>().value.toString())
+    }
+    table["__eq__"] = TwoArgFunction { self, other ->
+        Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
     }
 }
 
@@ -80,7 +72,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
         Value.Null
     }
     table["__len__"] = OneArgFunction { self ->
-        Value.Number.from(self.convertTo<Value.Table>().size.toDouble())
+        Value.Number.of(self.convertTo<Value.Table>().size.toDouble())
     }
 }
 
@@ -96,7 +88,7 @@ internal fun initList() = buildTable { table ->
         Value.Null
     }
     table["__len__"] = OneArgFunction { self ->
-        Value.Number.from(self.convertTo<Value.List>().size.toDouble())
+        Value.Number.of(self.convertTo<Value.List>().size.toDouble())
     }
 }
 
@@ -106,7 +98,7 @@ internal fun initBytes() = buildTable { table ->
     }
     table["__index__"] = TwoArgFunction { self, key ->
         self.convertTo<Value.Bytes>().value.getOrNull(key.intValue())?.let {
-            Value.Number.from(it.toInt().toDouble())
+            Value.Number.of(it.toInt().toDouble())
         } ?: throw MetisRuntimeException("Key not found: $key")
     }
     table["__set__"] = ThreeArgFunction { self, key, value ->

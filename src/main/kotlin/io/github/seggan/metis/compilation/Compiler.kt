@@ -1,6 +1,5 @@
 package io.github.seggan.metis.compilation
 
-import io.github.seggan.metis.BinOp
 import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.AstNode
@@ -48,16 +47,16 @@ class Compiler private constructor(
     }
 
     private fun exitScope(span: Span, remove: Boolean): List<FullInsn> {
-        return buildList {
+        return buildInsns(span) {
             val it = localStack.iterator()
             while (it.hasNext()) {
                 val local = it.next()
                 if (local.scope == scope) {
                     if (remove) it.remove()
                     if (local.capturing != null) {
-                        add(Insn.CloseUpvalue(local.capturing!!) to span)
+                        +Insn.CloseUpvalue(local.capturing!!)
                     } else {
-                        add(Insn.Pop to span)
+                        +Insn.Pop
                     }
                 }
             }
@@ -74,17 +73,17 @@ class Compiler private constructor(
             is AstNode.Continue -> TODO()
             is AstNode.For -> TODO()
             is AstNode.If -> compileIf(statement)
-            is AstNode.Return -> buildList {
-                addAll(compileExpression(statement.value))
-                add(Insn.Return to statement.span)
+            is AstNode.Return -> buildInsns(statement.span) {
+                +compileExpression(statement.value)
+                +Insn.Return
                 for (local in localStack) {
                     if (local.capturing != null) {
-                        add(Insn.CloseUpvalue(local.capturing!!) to statement.span)
+                        +Insn.CloseUpvalue(local.capturing!!)
                     } else {
-                        add(Insn.Pop to statement.span)
+                        +Insn.Pop
                     }
                 }
-                add(Insn.Finish to statement.span)
+                +Insn.Finish
             }
 
             is AstNode.While -> TODO()
@@ -97,34 +96,26 @@ class Compiler private constructor(
             is AstNode.BinaryOp -> compileBinOp(expression)
             is AstNode.UnaryOp -> compileUnOp(expression)
 
-            is AstNode.Call -> buildList {
-                var nargs = 0
+            is AstNode.Call -> buildInsns(expression.span) {
                 expression.args.forEach { arg ->
-                    addAll(compileExpression(arg))
-                    nargs++
+                    +compileExpression(arg)
                 }
-                addAll(compileExpression(expression.expr))
-                add(Insn.Call(nargs) to expression.span)
+                +compileExpression(expression.expr)
+                +Insn.Call(expression.args.size)
             }
 
-            is AstNode.Index -> buildList {
-                addAll(compileExpression(expression.expr))
-                addAll(compileExpression(expression.index))
-                add(Insn.Index to expression.span)
+            is AstNode.Index -> buildInsns(expression.span) {
+                +compileExpression(expression.expr)
+                +compileExpression(expression.index)
+                +Insn.Index
             }
 
-            is AstNode.ColonCall -> buildList {
-                var nargs = 0
-                addAll(compileExpression(expression.expr))
-                expression.args.forEach { arg ->
-                    addAll(compileExpression(arg))
-                    nargs++
-                }
-                add(Insn.CopyUnder(nargs) to expression.span)
-                add(Insn.Push(Value.String(expression.name)) to expression.span)
-                add(Insn.Index to expression.span)
-                add(Insn.Call(nargs + 1) to expression.span)
-            }
+            is AstNode.ColonCall -> generateColonCall(
+                compileExpression(expression.expr),
+                expression.name,
+                expression.args.map(::compileExpression),
+                expression.span
+            )
 
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
             is AstNode.Var -> {
@@ -143,55 +134,25 @@ class Compiler private constructor(
     }
 
     private fun compileBinOp(op: AstNode.BinaryOp): List<FullInsn> {
-        return buildList {
-            when (op.op) {
-                BinOp.AND -> {
-                    addAll(compileExpression(op.left))
-                    val jump = Insn.JumpIfFalse(0, false)
-                    add(jump to op.span)
-                    add(Insn.Pop to op.span)
-                    val right = compileExpression(op.right)
-                    addAll(right)
-                    jump.offset = right.size + 1
-                }
-
-                BinOp.OR -> {
-                    addAll(compileExpression(op.left))
-                    val jump = Insn.JumpIfTrue(0, false)
-                    add(jump to op.span)
-                    add(Insn.Pop to op.span)
-                    val right = compileExpression(op.right)
-                    addAll(right)
-                    jump.offset = right.size + 1
-                }
-
-                else -> {
-                    check(op.op.metamethod.isNotEmpty()) { "Cannot compile binary operator ${op.op}" }
-                    addAll(compileExpression(op.left))
-                    addAll(compileExpression(op.right))
-                    add(Insn.CopyUnder(1) to op.span)
-                    add(Insn.Push(Value.String(op.op.metamethod)) to op.span)
-                    add(Insn.Index to op.span)
-                    add(Insn.Call(2) to op.span)
-                }
-            }
+        return buildInsns(op.span) {
+            op.op.generateCode(this, compileExpression(op.left), compileExpression(op.right))
         }
     }
 
     private fun compileUnOp(op: AstNode.UnaryOp): List<FullInsn> {
-        return buildList {
+        return buildInsns(op.span) {
             when (op.op) {
                 UnOp.NOT -> {
-                    addAll(compileExpression(op.expr))
-                    add(Insn.Not to op.span)
+                    +compileExpression(op.expr)
+                    +Insn.Not
                 }
 
                 UnOp.NEG -> {
-                    addAll(compileExpression(op.expr))
-                    add(Insn.CopyUnder(0) to op.span)
-                    add(Insn.Push(Value.String("__mul__")) to op.span)
-                    add(Insn.Index to op.span)
-                    add(Insn.Call(1) to op.span)
+                    +compileExpression(op.expr)
+                    +Insn.CopyUnder(0)
+                    +Insn.Push(Value.String("__mul__"))
+                    +Insn.Index
+                    +Insn.Call(1)
                 }
             }
         }
@@ -204,19 +165,19 @@ class Compiler private constructor(
     }
 
     private fun compileIf(statement: AstNode.If): List<FullInsn> {
-        return buildList {
-            addAll(compileExpression(statement.condition))
-            val jump = Insn.JumpIfFalse(0)
-            add(jump to statement.span)
+        return buildInsns(statement.span) {
+            +compileExpression(statement.condition)
+            val jump = Insn.JumpIf(0, false)
+            +jump
             val then = compileBlock(statement.body)
-            addAll(then)
+            +then
             if (statement.elseBody != null) {
                 jump.offset = then.size + 1
                 val jump2 = Insn.Jump(0)
-                add(jump2 to statement.span)
+                +jump2
                 val elseBody = compileBlock(statement.elseBody)
                 jump2.offset = elseBody.size
-                addAll(elseBody)
+                +elseBody
             } else {
                 jump.offset = then.size
             }
@@ -234,27 +195,27 @@ class Compiler private constructor(
 
     private fun compileVarAssign(assign: AstNode.VarAssign): List<FullInsn> {
         return when (val target = assign.target) {
-            is AstNode.Index -> buildList {
-                addAll(compileExpression(assign.value))
-                addAll(compileExpression(target.index))
-                addAll(compileExpression(target.expr))
-                add(Insn.Set to target.span)
+            is AstNode.Index -> buildInsns(target.span) {
+                +compileExpression(assign.value)
+                +compileExpression(target.index)
+                +compileExpression(target.expr)
+                +Insn.Set
             }
 
-            is AstNode.Var -> buildList {
+            is AstNode.Var -> buildInsns(target.span) {
                 val name = target.name
                 resolveLocal(name)?.let { local ->
-                    addAll(compileExpression(assign.value))
-                    add(Insn.SetLocal(local.index) to target.span)
-                    return@buildList
+                    +compileExpression(assign.value)
+                    +Insn.SetLocal(local.index)
+                    return@buildInsns
                 }
                 resolveUpvalue(name)?.let { upvalue ->
-                    addAll(compileExpression(assign.value))
-                    add(Insn.SetUpvalue(upvalues.indexOf(upvalue)) to target.span)
-                    return@buildList
+                    +compileExpression(assign.value)
+                    +Insn.SetUpvalue(upvalues.indexOf(upvalue))
+                    return@buildInsns
                 }
-                addAll(compileExpression(assign.value))
-                add(Insn.SetGlobal(name) to target.span)
+                +compileExpression(assign.value)
+                +Insn.SetGlobal(name)
             }
         }
     }
@@ -283,9 +244,25 @@ class Compiler private constructor(
         }
         return null
     }
-}
 
-private typealias FullInsn = Pair<Insn, Span>
+    internal companion object {
+        fun generateColonCall(
+            expr: List<FullInsn>,
+            name: String,
+            args: List<List<FullInsn>>,
+            span: Span
+        ) = buildInsns(span) {
+            +expr
+            args.forEach { arg ->
+                +arg
+            }
+            +Insn.CopyUnder(args.size)
+            +Insn.Push(Value.String(name))
+            +Insn.Index
+            +Insn.Call(args.size + 1)
+        }
+    }
+}
 
 private data class ResolvedUpvalue(val upvalue: Upvalue, val index: Int)
 

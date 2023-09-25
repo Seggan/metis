@@ -191,9 +191,9 @@ fun <E> ArrayDeque<E>.popn(n: Int): List<E> {
 fun <E> ArrayDeque<E>.peek() = this.last()
 fun <E> ArrayDeque<E>.getFromTop(index: Int): E = this[this.size - index - 1]
 
-fun Stack.push(value: Double) = this.push(Value.Number.from(value))
+fun Stack.push(value: Double) = this.push(Value.Number.of(value))
 fun Stack.push(value: String) = this.push(Value.String(value))
-fun Stack.push(value: Boolean) = this.push(Value.Boolean.from(value))
+fun Stack.push(value: Boolean) = this.push(Value.Boolean.of(value))
 fun Stack.push(value: Nothing?) = this.push(Value.Null)
 
 inline fun <reified T : Value> Stack.popAs(): T = this.pop().convertTo()

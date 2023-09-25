@@ -24,12 +24,14 @@ interface Value {
                 Number(it - CACHE_SIZE.toDouble())
             }
 
-            fun from(value: Double): Number {
+            fun of(value: Double): Number {
                 if (value % 1 == 0.0 && value <= CACHE_SIZE && value >= -CACHE_SIZE) {
                     return cache[(value + CACHE_SIZE).toInt()]
                 }
                 return Number(value)
             }
+
+            fun of(value: Int) = of(value.toDouble())
         }
 
         override fun equals(other: Any?): kotlin.Boolean {
@@ -60,7 +62,7 @@ interface Value {
             val TRUE = Boolean(true)
             val FALSE = Boolean(false)
 
-            fun from(value: kotlin.Boolean) = if (value) TRUE else FALSE
+            fun of(value: kotlin.Boolean) = if (value) TRUE else FALSE
         }
 
         override fun toString(): kotlin.String = "Boolean(value=$value)"
@@ -153,7 +155,7 @@ fun Value.lookUp(key: Value): Value? {
             is Value.Bytes -> {
                 val value = this.value.getOrNull(key.intValue())
                 if (value != null) {
-                    return Value.Number.from(value.toDouble())
+                    return Value.Number.of(value.toDouble())
                 }
             }
         }

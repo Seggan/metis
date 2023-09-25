@@ -95,22 +95,15 @@ class Chunk(
                         is Insn.Return -> toReturn = state.stack.pop()
                         is Insn.Finish -> ip = insns.size
                         is Insn.Jump -> ip += insn.offset
-                        is Insn.JumpIfFalse -> {
+                        is Insn.JumpIf -> {
                             val value = if (insn.consume) state.stack.pop() else state.stack.peek()
-                            if (!value.convertTo<Value.Boolean>().value) {
-                                ip += insn.offset
-                            }
-                        }
-
-                        is Insn.JumpIfTrue -> {
-                            val value = if (insn.consume) state.stack.pop() else state.stack.peek()
-                            if (value.convertTo<Value.Boolean>().value) {
+                            if (value.convertTo<Value.Boolean>().value == insn.bool) {
                                 ip += insn.offset
                             }
                         }
 
                         is Insn.Not -> state.stack.push(
-                            Value.Boolean.from(
+                            Value.Boolean.of(
                                 !state.stack.pop().convertTo<Value.Boolean>().value
                             )
                         )

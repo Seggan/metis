@@ -1,20 +1,70 @@
 package io.github.seggan.metis
 
-enum class BinOp(val metamethod: String) {
-    PLUS("__add__"),
-    MINUS("__sub__"),
-    TIMES("__mul__"),
+import io.github.seggan.metis.compilation.Compiler
+import io.github.seggan.metis.compilation.FullInsn
+import io.github.seggan.metis.compilation.InsnsBuilder
+import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.chunk.Insn
+
+enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
+    PLUS("__plus__"),
+    MINUS("__minus__"),
+    TIMES("__times__"),
     DIV("__div__"),
     MOD("__mod__"),
     POW("__pow__"),
     EQ("__eq__"),
-    NOT_EQ("__neq__"),
-    LESS("__lt__"),
-    LESS_EQ("__leq__"),
-    GREATER("__gt__"),
-    GREATER_EQ("__geq__"),
-    AND(""),
-    OR(""),
+    NOT_EQ({ left, right ->
+        +Compiler.generateColonCall(
+            left,
+            "__eq__",
+            listOf(right),
+            span
+        )
+        +Insn.Not
+    }),
+    LESS(-1),
+    LESS_EQ(1, true),
+    GREATER(1),
+    GREATER_EQ(-1, true),
+    AND({ left, right ->
+        +left
+        +Insn.JumpIf(right.size + 1, bool = false, consume = false)
+        +Insn.Pop
+        +right
+    }),
+    OR({ left, right ->
+        +left
+        +Insn.JumpIf(right.size + 1, bool = true, consume = false)
+        +Insn.Pop
+        +right
+    });
+
+    constructor(metamethod: String) : this({ left, right ->
+        +Compiler.generateColonCall(
+            left,
+            metamethod,
+            listOf(right),
+            span
+        )
+    })
+
+    constructor(number: Int, inverse: Boolean = false) : this({ left, right ->
+        +Compiler.generateColonCall(
+            left,
+            "__cmp__",
+            listOf(right),
+            span
+        )
+        +Insn.Push(Value.Number.of(number))
+        +Insn.CopyUnder(1)
+        +Insn.Push(Value.String("__eq__"))
+        +Insn.Index
+        +Insn.Call(2)
+        if (inverse) {
+            +Insn.Not
+        }
+    })
 }
 
 enum class UnOp {

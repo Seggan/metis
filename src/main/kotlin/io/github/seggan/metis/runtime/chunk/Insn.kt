@@ -37,7 +37,6 @@ sealed interface Insn {
     data object Finish : Insn
 
     data class Jump(var offset: Int) : Insn
-    data class JumpIfFalse(var offset: Int, val consume: Boolean = true) : Insn
-    data class JumpIfTrue(var offset: Int, val consume: Boolean = true) : Insn
+    data class JumpIf(var offset: Int, val bool: Boolean, val consume: Boolean = true) : Insn
     data object Not : Insn
 }
