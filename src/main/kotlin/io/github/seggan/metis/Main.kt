@@ -9,6 +9,7 @@ import kotlin.io.path.readText
 
 internal fun main(args: Array<String>) {
     val code = Path(args[0]).readText()
+    val state = State()
     try {
         val toks = Lexer(code).lex()
         println(toks)
@@ -17,12 +18,14 @@ internal fun main(args: Array<String>) {
         val compiler = Compiler(args[0], code)
         val chunk = compiler.compileCode(args[0], ast)
         println(chunk)
-        val state = State()
         //state.debugMode = true
         state.loadChunk(chunk)
         state.call(0)
         state.runTillComplete()
     } catch (e: MetisException) {
         System.err.println(e.report(code, args[0]))
+        if (state.debugMode) {
+            e.printStackTrace()
+        }
     }
 }

@@ -81,10 +81,10 @@ internal fun initList() = buildTable { table ->
         Value.String(self.convertTo<Value.List>().toString())
     }
     table["__index__"] = TwoArgFunction { self, key ->
-        self.convertTo<Value.List>()[key.intValue()]
+        self.lookUp(key) ?: throw MetisRuntimeException("Index not found: $key")
     }
     table["__set__"] = ThreeArgFunction { self, key, value ->
-        self.convertTo<Value.List>()[key.intValue()] = value
+        self.set(key, value)
         Value.Null
     }
     table["__len__"] = OneArgFunction { self ->

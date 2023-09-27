@@ -64,6 +64,9 @@ class Chunk(
                 }
                 try {
                     val insn = insns[ip++]
+                    if (state.debugMode) {
+                        println(insn)
+                    }
                     when (insn) {
                         is Insn.GetGlobal -> state.stack.push(state.globals[insn.name].orNull())
                         is Insn.SetGlobal -> state.globals[insn.name] = state.stack.pop()
@@ -90,6 +93,13 @@ class Chunk(
 
                         is Insn.Push -> state.stack.push(insn.value)
                         is Insn.PushClosure -> state.stack.push(insn.chunk.Instance(state))
+                        is Insn.PushList -> {
+                            val list = ArrayDeque<Value>(insn.size)
+                            repeat(insn.size) {
+                                list.addFirst(state.stack.pop())
+                            }
+                            state.stack.push(Value.List(list))
+                        }
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                         is Insn.Return -> toReturn = state.stack.pop()
@@ -107,9 +117,6 @@ class Chunk(
                                 !state.stack.pop().convertTo<Value.Boolean>().value
                             )
                         )
-                    }
-                    if (state.debugMode) {
-                        println(insn)
                     }
                 } catch (e: MetisRuntimeException) {
                     e.addStackFrame(spans[ip - 1])

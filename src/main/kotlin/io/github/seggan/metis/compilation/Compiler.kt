@@ -130,6 +130,12 @@ class Compiler private constructor(
             }
 
             is AstNode.FunctionDef -> compileFunctionDef(expression)
+            is AstNode.ListLiteral -> buildInsns(expression.span) {
+                expression.values.forEach { value ->
+                    +compileExpression(value)
+                }
+                +Insn.PushList(expression.values.size)
+            }
         }
     }
 
