@@ -100,6 +100,17 @@ class Chunk(
                             }
                             state.stack.push(Value.List(list))
                         }
+
+                        is Insn.PushTable -> {
+                            val table = HashMap<Value, Value>(insn.size)
+                            repeat(insn.size) {
+                                val value = state.stack.pop()
+                                val key = state.stack.pop()
+                                table[key] = value
+                            }
+                            state.stack.push(Value.Table(table))
+                        }
+
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                         is Insn.Return -> toReturn = state.stack.pop()

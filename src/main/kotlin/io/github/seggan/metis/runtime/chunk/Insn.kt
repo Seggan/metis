@@ -11,6 +11,7 @@ sealed interface Insn {
     }
 
     data class PushList(val size: Int) : Insn
+    data class PushTable(val size: Int) : Insn
 
     data object Pop : Insn
     data class CloseUpvalue(val upvalue: Upvalue) : Insn

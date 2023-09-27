@@ -147,7 +147,7 @@ class Parser(tokens: List<Token>) {
     }
 
     private fun parsePrimary(): AstNode.Expression {
-        val token = consume(STRING, BYTES, NUMBER, OPEN_PAREN, IDENTIFIER, FN, OPEN_BRACKET)
+        val token = consume(STRING, BYTES, NUMBER, OPEN_PAREN, IDENTIFIER, FN, OPEN_BRACKET, OPEN_BRACE)
         return when (token.type) {
             STRING -> AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1).intern()), token.span)
             BYTES -> AstNode.Literal(
@@ -161,6 +161,16 @@ class Parser(tokens: List<Token>) {
             FN -> parseFunctionDef(token.span)
             OPEN_BRACKET -> AstNode.ListLiteral(
                 parseArgList(CLOSE_BRACKET, ::parseExpression),
+                token.span + previous.span
+            )
+
+            OPEN_BRACE -> AstNode.TableLiteral(
+                parseArgList(CLOSE_BRACE) {
+                    val key = parseExpression()
+                    consume(EQUALS)
+                    val value = parseExpression()
+                    key to value
+                },
                 token.span + previous.span
             )
             else -> throw AssertionError()

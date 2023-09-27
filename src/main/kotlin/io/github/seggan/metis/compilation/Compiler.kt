@@ -136,6 +136,14 @@ class Compiler private constructor(
                 }
                 +Insn.PushList(expression.values.size)
             }
+
+            is AstNode.TableLiteral -> buildInsns(expression.span) {
+                expression.values.forEach { (key, value) ->
+                    +compileExpression(key)
+                    +compileExpression(value)
+                }
+                +Insn.PushTable(expression.values.size)
+            }
         }
     }
 
