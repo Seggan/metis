@@ -7,6 +7,9 @@ internal class InsnsBuilder(val span: Span) {
 
     private val list = mutableListOf<FullInsn>()
 
+    val size: Int
+        get() = list.size
+
     operator fun Insn.unaryPlus() {
         list.add(this to span)
     }

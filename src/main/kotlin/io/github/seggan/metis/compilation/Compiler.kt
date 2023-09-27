@@ -69,10 +69,6 @@ class Compiler private constructor(
             is AstNode.Expression -> compileExpression(statement) + (Insn.Pop to statement.span)
             is AstNode.VarDecl -> compileVarDecl(statement)
             is AstNode.VarAssign -> compileVarAssign(statement)
-            is AstNode.Break -> TODO()
-            is AstNode.Continue -> TODO()
-            is AstNode.For -> TODO()
-            is AstNode.If -> compileIf(statement)
             is AstNode.Return -> buildInsns(statement.span) {
                 +compileExpression(statement.value)
                 +Insn.Return
@@ -86,7 +82,11 @@ class Compiler private constructor(
                 +Insn.Finish
             }
 
-            is AstNode.While -> TODO()
+            is AstNode.While -> compileWhile(statement)
+            is AstNode.For -> TODO()
+            is AstNode.Break -> TODO()
+            is AstNode.Continue -> TODO()
+            is AstNode.If -> compileIf(statement)
             is AstNode.Block -> compileBlock(statement)
         }
     }
@@ -162,6 +162,18 @@ class Compiler private constructor(
         val compiler = Compiler(file, fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
         return listOf(Insn.PushClosure(chunk) to fn.span)
+    }
+
+    private fun compileWhile(statement: AstNode.While): List<FullInsn> {
+        return buildInsns(statement.span) {
+            +compileExpression(statement.condition)
+            val jump = Insn.JumpIf(0, false)
+            +jump
+            val body = compileBlock(statement.body)
+            +body
+            jump.offset = body.size + 1
+            +Insn.Jump(-size - 1)
+        }
     }
 
     private fun compileIf(statement: AstNode.If): List<FullInsn> {

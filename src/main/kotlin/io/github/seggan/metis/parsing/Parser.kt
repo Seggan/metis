@@ -49,24 +49,9 @@ class Parser(tokens: List<Token>) {
         tryParse(::parseVarDecl)?.let { return it }
         tryParse(::parseVarAssign)?.let { return it }
         tryParse(::parseExpression)?.let { return it }
+        tryParse(::parseWhile)?.let { return it }
+        tryParse(::parseFunctionDecl)?.let { return it }
         if (tryConsume(IF) != null) return parseIf()
-        val global = tryConsume(GLOBAL)
-        if (tryConsume(FN) != null) {
-            val startSpan = previous.span
-            val target = parseAssignTarget()
-            val fn = parseFunctionDef(startSpan)
-            if (target is AstNode.Var) {
-                return AstNode.VarDecl(
-                    if (global != null) Visibility.GLOBAL else Visibility.LOCAL,
-                    target.name,
-                    fn,
-                    fn.span
-                )
-            }
-            return AstNode.VarAssign(target, fn, fn.span)
-        } else if (global != null) {
-            throw ParseException("Global variables must be declared with 'let'", global.span)
-        }
         if (tryConsume(DO) != null) return parseBlock(END)
         if (tryConsume(RETURN) != null) {
             val startSpan = previous.span
@@ -96,6 +81,7 @@ class Parser(tokens: List<Token>) {
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
     private fun parseMultiplication() =
         parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV, PERCENT to BinOp.MOD))
+
     private fun parseUnary(): AstNode.Expression {
         val op = tryConsume(NOT, MINUS)
         if (op != null) {
@@ -188,6 +174,24 @@ class Parser(tokens: List<Token>) {
         return AstNode.FunctionDef(args, block, startSpan + block.span)
     }
 
+    private fun parseFunctionDecl(): AstNode.Statement {
+        val global = tryConsume(GLOBAL)
+        consume(FN)
+        val startSpan = global?.span ?: previous.span
+        val target = parseAssignTarget()
+        val fn = parseFunctionDef(startSpan)
+        return if (target is AstNode.Var) {
+            AstNode.VarDecl(
+                if (global != null) Visibility.GLOBAL else Visibility.LOCAL,
+                target.name,
+                fn,
+                fn.span
+            )
+        } else {
+            AstNode.VarAssign(target, fn, fn.span)
+        }
+    }
+
     private inline fun parseBinOp(next: () -> AstNode.Expression, types: Map<Token.Type, BinOp>): AstNode.Expression {
         var expr = next()
         val keys = types.keys.toTypedArray()
@@ -252,6 +256,13 @@ class Parser(tokens: List<Token>) {
             END -> AstNode.If(condition, then, null, startSpan + then.span)
             else -> throw AssertionError()
         }
+    }
+
+    private fun parseWhile(): AstNode.While {
+        val startSpan = consume(WHILE).span
+        val condition = parseExpression()
+        val body = parseBlock(END)
+        return AstNode.While(condition, body, startSpan + body.span)
     }
 
     private fun parseId(): Token {

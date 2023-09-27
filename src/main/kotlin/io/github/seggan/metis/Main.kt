@@ -23,6 +23,6 @@ internal fun main(args: Array<String>) {
         state.call(0)
         state.runTillComplete()
     } catch (e: MetisException) {
-        println(e.report(code, args[0]))
+        System.err.println(e.report(code, args[0]))
     }
 }
