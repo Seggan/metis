@@ -8,6 +8,7 @@ import io.github.seggan.metis.runtime.Arity
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.chunk.Label
 import io.github.seggan.metis.runtime.chunk.Upvalue
 
 class Compiler private constructor(
@@ -83,7 +84,7 @@ class Compiler private constructor(
             }
 
             is AstNode.While -> compileWhile(statement)
-            is AstNode.For -> TODO()
+            is AstNode.For -> compileFor(statement)
             is AstNode.Break -> TODO()
             is AstNode.Continue -> TODO()
             is AstNode.If -> compileIf(statement)
@@ -180,32 +181,62 @@ class Compiler private constructor(
 
     private fun compileWhile(statement: AstNode.While): List<FullInsn> {
         return buildInsns(statement.span) {
+            val start = Label()
+            +start
             +compileExpression(statement.condition)
-            val jump = Insn.JumpIf(0, false)
-            +jump
-            val body = compileBlock(statement.body)
-            +body
-            jump.offset = body.size + 1
-            +Insn.Jump(-size - 1)
+            val end = Label()
+            +Insn.JumpIf(start, false)
+            +compileBlock(statement.body)
+            +end
+            +Insn.Jump(start)
+        }
+    }
+
+    private fun compileFor(statement: AstNode.For): List<FullInsn> {
+        return buildInsns(statement.span) {
+            +compileExpression(statement.iterable)
+            +Insn.CopyUnder(0)
+            +Insn.Push(Value.String("__iter__"))
+            +Insn.Index
+            +Insn.Call(1)
+            localStack.addFirst(Local("", scope, localStack.size))
+            val start = Label()
+            +start
+            +Insn.CopyUnder(0)
+            +Insn.CopyUnder(0)
+            +Insn.Push(Value.String("has_next"))
+            +Insn.Index
+            +Insn.Call(1)
+            val end = Label()
+            +Insn.JumpIf(end, false)
+            +Insn.CopyUnder(0)
+            +Insn.CopyUnder(0)
+            +Insn.Push(Value.String("next"))
+            +Insn.Index
+            +Insn.Call(1)
+            localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
+            +compileBlock(statement.body)
+            +Insn.Jump(start)
+            +end
+            localStack.removeFirst()
+            +Insn.Pop
         }
     }
 
     private fun compileIf(statement: AstNode.If): List<FullInsn> {
         return buildInsns(statement.span) {
             +compileExpression(statement.condition)
-            val jump = Insn.JumpIf(0, false)
-            +jump
-            val then = compileBlock(statement.body)
-            +then
+            val end = Label()
+            +Insn.JumpIf(end, false)
+            +compileBlock(statement.body)
             if (statement.elseBody != null) {
-                jump.offset = then.size + 1
-                val jump2 = Insn.Jump(0)
-                +jump2
-                val elseBody = compileBlock(statement.elseBody)
-                jump2.offset = elseBody.size
-                +elseBody
+                val realEnd = Label()
+                +Insn.Jump(realEnd)
+                +end
+                +compileBlock(statement.elseBody)
+                +realEnd
             } else {
-                jump.offset = then.size
+                +end
             }
         }
     }

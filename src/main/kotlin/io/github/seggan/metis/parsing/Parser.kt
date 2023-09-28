@@ -50,6 +50,7 @@ class Parser(tokens: List<Token>) {
         tryParse(::parseVarAssign)?.let { return it }
         tryParse(::parseExpression)?.let { return it }
         tryParse(::parseWhile)?.let { return it }
+        tryParse(::parseFor)?.let { return it }
         tryParse(::parseFunctionDecl)?.let { return it }
         if (tryConsume(IF) != null) return parseIf()
         if (tryConsume(DO) != null) return parseBlock(END)
@@ -281,6 +282,15 @@ class Parser(tokens: List<Token>) {
         val condition = parseExpression()
         val body = parseBlock(END)
         return AstNode.While(condition, body, startSpan + body.span)
+    }
+
+    private fun parseFor(): AstNode.For {
+        val startSpan = consume(FOR).span
+        val name = parseId().text
+        consume(IN)
+        val expr = parseExpression()
+        val body = parseBlock(END)
+        return AstNode.For(name, expr, body, startSpan + body.span)
     }
 
     private fun parseId(): Token {

@@ -1,6 +1,7 @@
 package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.runtime.Value
+import kotlin.properties.Delegates
 
 sealed interface Insn {
     data class Push(val value: Value) : Insn
@@ -39,7 +40,29 @@ sealed interface Insn {
     data object Return : Insn
     data object Finish : Insn
 
-    data class Jump(var offset: Int) : Insn
-    data class JumpIf(var offset: Int, val bool: Boolean, val consume: Boolean = true) : Insn
+    sealed interface Jumping : Insn {
+        var label: Label
+    }
+
+    data class Jump(override var label: Label) : Jumping
+    data class JumpIf(override var label: Label, val bool: Boolean, val consume: Boolean = true) : Jumping
+
     data object Not : Insn
+}
+
+class Label {
+    var start: Int by Delegates.notNull()
+    var end: Int by Delegates.notNull()
+
+    val offset by lazy {
+        var offset = end - start
+        if (offset < 0) {
+            offset--
+        }
+        offset
+    }
+
+    override fun toString(): String {
+        return "Label(start=$start, end=$end, offset=$offset)"
+    }
 }

@@ -198,3 +198,11 @@ inline fun <reified T : Value> Value.convertTo(): T {
 
 fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
 fun Value.doubleValue() = this.convertTo<Value.Number>().value
+
+inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
+    val map = mutableMapOf<String, Value>()
+    init(map)
+    return Value.Table(map.mapKeysTo(mutableMapOf()) { Value.String(it.key) }).also {
+        require(it.metatable != null)
+    }
+}

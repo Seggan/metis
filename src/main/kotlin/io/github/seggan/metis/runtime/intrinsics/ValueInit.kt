@@ -8,104 +8,113 @@ import java.nio.charset.Charset
 import kotlin.math.pow
 
 internal fun initString() = buildTable { table ->
-    table["__str__"] = OneArgFunction { it }
-    table["encode"] = TwoArgFunction { self, encoding ->
+    table["__str__"] = oneArgFunction { it }
+    table["encode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
             if (encoding is Value.Null) Charsets.UTF_8 else Charset.forName(encoding.convertTo<Value.String>().value)
         Value.Bytes(self.convertTo<Value.String>().value.toByteArray(actualEncoding))
     }
-    table["__plus__"] = TwoArgFunction { self, other ->
+    table["__plus__"] = twoArgFunction { self, other ->
         Value.String(self.convertTo<Value.String>().value + other.convertTo<Value.String>().value)
     }
 }
 
 internal fun initNumber() = buildTable { table ->
-    table["__str__"] = OneArgFunction { self ->
-        Value.String(BigDecimal(self.convertTo<Value.Number>().value).stripTrailingZeros().toPlainString())
+    table["__str__"] = oneArgFunction { self ->
+        Value.String(BigDecimal(self.doubleValue()).stripTrailingZeros().toPlainString())
     }
-    table["__plus__"] = TwoArgFunction { self, other ->
-        Value.Number.of(self.convertTo<Value.Number>().value + other.convertTo<Value.Number>().value)
+    table["__plus__"] = twoArgFunction { self, other ->
+        Value.Number.of(self.doubleValue() + other.doubleValue())
     }
-    table["__minus__"] = TwoArgFunction { self, other ->
-        Value.Number.of(self.convertTo<Value.Number>().value - other.convertTo<Value.Number>().value)
+    table["__minus__"] = twoArgFunction { self, other ->
+        Value.Number.of(self.doubleValue() - other.doubleValue())
     }
-    table["__times__"] = TwoArgFunction { self, other ->
-        Value.Number.of(self.convertTo<Value.Number>().value * other.convertTo<Value.Number>().value)
+    table["__times__"] = twoArgFunction { self, other ->
+        Value.Number.of(self.doubleValue() * other.doubleValue())
     }
-    table["__div__"] = TwoArgFunction { self, other ->
-        Value.Number.of(self.convertTo<Value.Number>().value / other.convertTo<Value.Number>().value)
+    table["__div__"] = twoArgFunction { self, other ->
+        Value.Number.of(self.doubleValue() / other.doubleValue())
     }
-    table["__mod__"] = TwoArgFunction { self, other ->
-        Value.Number.of(self.convertTo<Value.Number>().value % other.convertTo<Value.Number>().value)
+    table["__mod__"] = twoArgFunction { self, other ->
+        Value.Number.of(self.doubleValue() % other.doubleValue())
     }
-    table["__pow__"] = TwoArgFunction { self, other ->
-        Value.Number.of(self.convertTo<Value.Number>().value.pow(other.convertTo<Value.Number>().value))
+    table["__pow__"] = twoArgFunction { self, other ->
+        Value.Number.of(self.doubleValue().pow(other.doubleValue()))
     }
-    table["__eq__"] = TwoArgFunction { self, other ->
-        Value.Boolean.of(self.convertTo<Value.Number>().value == other.convertTo<Value.Number>().value)
+    table["__eq__"] = twoArgFunction { self, other ->
+        Value.Boolean.of(self.doubleValue() == other.doubleValue())
     }
-    table["__cmp__"] = TwoArgFunction { self, other ->
+    table["__cmp__"] = twoArgFunction { self, other ->
         Value.Number.of(
-            self.convertTo<Value.Number>().value.compareTo(other.convertTo<Value.Number>().value).toDouble()
+            self.doubleValue().compareTo(other.doubleValue()).toDouble()
         )
     }
 }
 
 internal fun initBoolean() = buildTable { table ->
-    table["__str__"] = OneArgFunction { self ->
+    table["__str__"] = oneArgFunction { self ->
         Value.String(self.convertTo<Value.Boolean>().value.toString())
     }
-    table["__eq__"] = TwoArgFunction { self, other ->
+    table["__eq__"] = twoArgFunction { self, other ->
         Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
     }
 }
 
 internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
-    table["__str__"] = OneArgFunction { self ->
+    table["__str__"] = oneArgFunction { self ->
         Value.String(self.convertTo<Value.Table>().toString())
     }
-    table["__index__"] = TwoArgFunction { self, key ->
+    table["__index__"] = twoArgFunction { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException("Key not found: $key")
     }
-    table["__set__"] = ThreeArgFunction { self, key, value ->
+    table["__set__"] = threeArgFunction { self, key, value ->
         self.set(key, value)
         Value.Null
     }
-    table["__len__"] = OneArgFunction { self ->
+    table["__len__"] = oneArgFunction { self ->
         Value.Number.of(self.convertTo<Value.Table>().size.toDouble())
+    }
+    table["keys"] = oneArgFunction { self ->
+        Value.List(self.convertTo<Value.Table>().keys.toMutableList())
+    }
+    table["values"] = oneArgFunction { self ->
+        Value.List(self.convertTo<Value.Table>().values.toMutableList())
     }
 }
 
 internal fun initList() = buildTable { table ->
-    table["__str__"] = OneArgFunction { self ->
+    table["__str__"] = oneArgFunction { self ->
         Value.String(self.convertTo<Value.List>().toString())
     }
-    table["__index__"] = TwoArgFunction { self, key ->
+    table["__index__"] = twoArgFunction { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException("Index not found: $key")
     }
-    table["__set__"] = ThreeArgFunction { self, key, value ->
+    table["__set__"] = threeArgFunction { self, key, value ->
         self.set(key, value)
         Value.Null
     }
-    table["__len__"] = OneArgFunction { self ->
+    table["__len__"] = oneArgFunction { self ->
         Value.Number.of(self.convertTo<Value.List>().size.toDouble())
+    }
+    table["__iter__"] = oneArgFunction { self ->
+        wrapIterator(self.convertTo<Value.List>().iterator())
     }
 }
 
 internal fun initBytes() = buildTable { table ->
-    table["__str__"] = OneArgFunction { self ->
+    table["__str__"] = oneArgFunction { self ->
         Value.String(self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8))
     }
-    table["__index__"] = TwoArgFunction { self, key ->
+    table["__index__"] = twoArgFunction { self, key ->
         self.convertTo<Value.Bytes>().value.getOrNull(key.intValue())?.let {
             Value.Number.of(it.toInt().toDouble())
         } ?: throw MetisRuntimeException("Key not found: $key")
     }
-    table["__set__"] = ThreeArgFunction { self, key, value ->
+    table["__set__"] = threeArgFunction { self, key, value ->
         self.convertTo<Value.Bytes>().value[key.intValue()] = value.intValue().toByte()
         Value.Null
     }
-    table["decode"] = TwoArgFunction { self, encoding ->
+    table["decode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
             if (encoding is Value.Null) Charsets.UTF_8 else Charset.forName(encoding.convertTo<Value.String>().value)
         Value.String(self.convertTo<Value.Bytes>().value.toString(actualEncoding))
@@ -113,24 +122,38 @@ internal fun initBytes() = buildTable { table ->
 }
 
 internal fun initNull() = buildTable { table ->
-    table["__str__"] = OneArgFunction {
+    table["__str__"] = oneArgFunction {
         Value.String("null")
     }
-    table["__call__"] = ZeroArgFunction {
+    table["__call__"] = zeroArgFunction {
         throw MetisRuntimeException("Cannot call null")
     }
 }
 
 internal fun initChunk() = buildTable { table ->
-    table["__str__"] = OneArgFunction { self ->
+    table["__str__"] = oneArgFunction { self ->
         Value.String(self.convertTo<Chunk.Instance>().toString())
     }
 }
 
-private inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
-    val map = mutableMapOf<String, Value>()
-    init(map)
-    return Value.Table(map.mapKeysTo(mutableMapOf()) { Value.String(it.key) }).also {
-        require(it.metatable != null)
+private val iteratorMetatable = buildTable { table ->
+
+    @Suppress("UNCHECKED_CAST")
+    fun Value.asIterator() = convertTo<Value.Native>().value as? Iterator<Value>
+        ?: throw MetisRuntimeException("Invalid iterator")
+
+    table["has_next"] = oneArgFunction { self ->
+        Value.Boolean.of(self.asIterator().hasNext())
     }
+    table["next"] = oneArgFunction { self ->
+        self.asIterator().next()
+    }
+    table["__iter__"] = oneArgFunction { it }
+    table["__str__"] = oneArgFunction {
+        Value.String("an iterator")
+    }
+}
+
+fun wrapIterator(iterator: Iterator<Value>): Value {
+    return Value.Native(iterator, iteratorMetatable)
 }

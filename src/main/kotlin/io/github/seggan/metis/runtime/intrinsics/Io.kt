@@ -8,22 +8,23 @@ import io.github.seggan.metis.runtime.convertTo
 import java.io.OutputStream
 
 private val outStreamMetatable = Value.Table(mutableMapOf()).also { table ->
-    table["write"] = TwoArgFunction { self, value ->
+
+    fun Value.asOutStream() = convertTo<Value.Native>().value as? OutputStream
+        ?: throw MetisRuntimeException("Invalid stream")
+
+    table["write"] = twoArgFunction { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
-        asOutStream(self).write(toBeWritten)
+        self.asOutStream().write(toBeWritten)
         Value.Number.of(toBeWritten.size.toDouble())
     }
-    table["flush"] = OneArgFunction { self ->
-        asOutStream(self).flush()
+    table["flush"] = oneArgFunction { self ->
+        self.asOutStream().flush()
         Value.Null
     }
-    table["__str__"] = OneArgFunction {
+    table["__str__"] = oneArgFunction {
         Value.String("an output stream")
     }
 }
-
-private fun asOutStream(value: Value): OutputStream = value.convertTo<Value.Native>().value as? OutputStream
-    ?: throw MetisRuntimeException("Invalid stream")
 
 fun wrapOutStream(stream: OutputStream): Value {
     return Value.Native(stream, outStreamMetatable)

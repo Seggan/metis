@@ -30,7 +30,7 @@ sealed interface AstNode {
     ) : Statement
 
     data class While(val condition: Expression, val body: Block, override val span: Span) : Statement
-    data class For(val name: String, val range: Expression, val body: Block, override val span: Span) : Statement
+    data class For(val name: String, val iterable: Expression, val body: Block, override val span: Span) : Statement
     data class Break(override val span: Span) : Statement
     data class Continue(override val span: Span) : Statement
 

@@ -5,6 +5,7 @@ import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.InsnsBuilder
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.chunk.Label
 
 enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
     PLUS("__plus__"),
@@ -29,15 +30,19 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     GREATER_EQ(-1, true),
     AND({ left, right ->
         +left
-        +Insn.JumpIf(right.size + 1, bool = false, consume = false)
+        val end = Label()
+        +Insn.JumpIf(end, bool = false, consume = false)
         +Insn.Pop
         +right
+        +end
     }),
     OR({ left, right ->
         +left
-        +Insn.JumpIf(right.size + 1, bool = true, consume = false)
+        val end = Label()
+        +Insn.JumpIf(end, bool = true, consume = false)
         +Insn.Pop
         +right
+        +end
     });
 
     constructor(metamethod: String) : this({ left, right ->

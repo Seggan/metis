@@ -19,7 +19,7 @@ object Intrinsics {
     }
 
     fun registerOneArg(name: String, fn: (Value) -> Value) {
-        _intrinsics[name] = OneArgFunction(fn)
+        _intrinsics[name] = oneArgFunction(fn)
     }
 
     fun registerDefault() {
@@ -42,17 +42,20 @@ open class OneShotFunction(override val arity: Arity, private val fn: State.(Int
     }
 }
 
-class ZeroArgFunction(fn: () -> Value) : OneShotFunction(Arity.ZERO, { stack.push(fn()) })
-class OneArgFunction(fn: (Value) -> Value) : OneShotFunction(Arity.ONE, { stack.push(fn(stack.pop())) })
-class TwoArgFunction(fn: (Value, Value) -> Value) : OneShotFunction(Arity.TWO, {
+inline fun zeroArgFunction(crossinline fn: () -> Value) = OneShotFunction(Arity.ZERO) { stack.push(fn()) }
+
+inline fun oneArgFunction(crossinline fn: (Value) -> Value) =
+    OneShotFunction(Arity.ONE) { stack.push(fn(stack.pop())) }
+
+inline fun twoArgFunction(crossinline fn: (Value, Value) -> Value) = OneShotFunction(Arity.TWO) {
     val b = stack.pop()
     val a = stack.pop()
     stack.push(fn(a, b))
-})
+}
 
-class ThreeArgFunction(fn: (Value, Value, Value) -> Value) : OneShotFunction(Arity.THREE, {
+inline fun threeArgFunction(crossinline fn: (Value, Value, Value) -> Value) = OneShotFunction(Arity.THREE) {
     val c = stack.pop()
     val b = stack.pop()
     val a = stack.pop()
     stack.push(fn(a, b, c))
-})
+}
