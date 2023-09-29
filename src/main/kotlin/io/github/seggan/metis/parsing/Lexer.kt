@@ -2,7 +2,7 @@ package io.github.seggan.metis.parsing
 
 import org.intellij.lang.annotations.Language
 
-class Lexer(private val code: String) {
+class Lexer(private val code: String, private val filename: String = "<unknown>") {
 
     private val matchers = mutableListOf<TokenMatcher>()
 
@@ -77,19 +77,28 @@ class Lexer(private val code: String) {
             for (matcher in matchers) {
                 val match = matcher.parse(code, pos)
                 if (match != null) {
-                    matched.add(match to Token(matcher.type, match.text, Span(pos, pos + match.length)))
+                    matched.add(
+                        match to Token(
+                            matcher.type, match.text, Span(
+                                pos,
+                                pos + match.length,
+                                filename to this.code
+                            )
+                        )
+                    )
                 }
             }
             val bestMatch = matched.maxByOrNull { it.first } ?: throw ParseException(
                 "Unexpected character '${code[0]}'",
-                Span(pos, pos + 1)
+                pos,
+                Span(pos, pos + 1, filename to this.code)
             )
             tokens.add(bestMatch.second)
             val length = bestMatch.first.length
             pos += length
             code.delete(0, length)
         }
-        return tokens
+        return tokens + Token(Token.Type.EOF, "", Span(pos, pos, filename to this.code))
     }
 }
 
@@ -168,35 +177,35 @@ private fun String.toMatch(): TokenMatcher.Match {
 }
 
 data class Token(val type: Type, val text: String, val span: Span) {
-    enum class Type {
-        IDENTIFIER,
-        STRING,
-        BYTES,
-        NUMBER,
-        OPEN_PAREN,
-        CLOSE_PAREN,
-        OPEN_BRACE,
-        CLOSE_BRACE,
-        OPEN_BRACKET,
-        CLOSE_BRACKET,
-        SEMICOLON,
-        EQUALS,
-        DOUBLE_EQUALS,
-        NOT_EQUALS,
-        GREATER_THAN,
-        LESS_THAN,
-        GREATER_THAN_OR_EQUAL,
-        LESS_THAN_OR_EQUAL,
-        DOT,
-        COLON,
-        COMMA,
-        COMMENT,
-        WHITESPACE,
-        PLUS,
-        MINUS,
-        STAR,
-        SLASH,
-        PERCENT,
+    enum class Type(private val humanName: String? = null) {
+        IDENTIFIER("an identifier"),
+        STRING("a string"),
+        BYTES("a byte string"),
+        NUMBER("a number"),
+        OPEN_PAREN("'('"),
+        CLOSE_PAREN("')'"),
+        OPEN_BRACE("'{'"),
+        CLOSE_BRACE("'}'"),
+        OPEN_BRACKET("'['"),
+        CLOSE_BRACKET("']'"),
+        SEMICOLON("';'"),
+        EQUALS("'='"),
+        DOUBLE_EQUALS("'=='"),
+        NOT_EQUALS("'!='"),
+        GREATER_THAN("'>'"),
+        LESS_THAN("'<'"),
+        GREATER_THAN_OR_EQUAL("'>='"),
+        LESS_THAN_OR_EQUAL("'<='"),
+        DOT("'.'"),
+        COLON("':'"),
+        COMMA("','"),
+        COMMENT("a comment"),
+        WHITESPACE("whitespace"),
+        PLUS("'+'"),
+        MINUS("'-'"),
+        STAR("'*'"),
+        SLASH("'/'"),
+        PERCENT("'%'"),
         IF,
         ELSE,
         ELIF,
@@ -213,6 +222,11 @@ data class Token(val type: Type, val text: String, val span: Span) {
         GLOBAL,
         LET,
         DO,
-        END
+        END,
+        EOF("end of file");
+
+        override fun toString(): String {
+            return humanName ?: "'${name.lowercase()}'"
+        }
     }
 }

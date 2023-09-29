@@ -42,7 +42,7 @@ interface Value {
         override fun hashCode() = value.hashCode()
 
         override fun toString(): kotlin.String {
-            return "Number(value=$value)"
+            return value.toBigDecimal().stripTrailingZeros().toPlainString()
         }
     }
 
@@ -53,6 +53,8 @@ interface Value {
         companion object {
             val metatable = initString()
         }
+
+        override fun toString() = value
     }
 
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
@@ -65,7 +67,7 @@ interface Value {
             fun of(value: kotlin.Boolean) = if (value) TRUE else FALSE
         }
 
-        override fun toString(): kotlin.String = "Boolean(value=$value)"
+        override fun toString() = value.toString()
     }
 
     data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
@@ -106,6 +108,8 @@ interface Value {
 
     data object Null : Value {
         override var metatable: Table? = initNull()
+
+        override fun toString() = "null"
     }
 }
 

@@ -10,11 +10,8 @@ class Chunk(
     val insns: List<Insn>,
     val arity: Arity,
     val upvalues: List<Upvalue>,
-    spans: List<Span>,
-    val file: Pair<String, String>
+    val spans: List<Span>
 ) {
-
-    val spans = spans.map { it.copy(file = file) }
 
     override fun toString(): String {
         return buildString {
@@ -68,7 +65,10 @@ class Chunk(
                         println(insn)
                     }
                     when (insn) {
-                        is Insn.GetGlobal -> state.stack.push(state.globals[insn.name].orNull())
+                        is Insn.GetGlobal -> state.stack.push(
+                            state.globals[insn.name] ?: throw MetisRuntimeException("Global '${insn.name}' not found")
+                        )
+
                         is Insn.SetGlobal -> state.globals[insn.name] = state.stack.pop()
                         is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
                         is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.pop()

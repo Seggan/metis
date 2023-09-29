@@ -91,7 +91,7 @@ class State(val isChildState: Boolean = false) {
     }
 
     fun runCode(name: String, code: String) {
-        val lexer = Lexer(code)
+        val lexer = Lexer(code, name)
         val parser = Parser(lexer.lex())
         val compiler = Compiler(name, code)
         loadChunk(compiler.compileCode(name, parser.parse()))
@@ -159,17 +159,7 @@ class State(val isChildState: Boolean = false) {
         }
         val executor = value.call(argc)
         if (value is OneShotFunction) {
-            try {
-                executor.step(this)
-            } catch (e: MetisException) {
-                for (i in callStack.lastIndex downTo 0) {
-                    val span = callStack[i].span
-                    if (span != null) {
-                        e.addStackFrame(span)
-                    }
-                }
-                throw e
-            }
+            executor.step(this)
         } else {
             callStack.push(CallFrame(executor, stackBottom, span))
         }

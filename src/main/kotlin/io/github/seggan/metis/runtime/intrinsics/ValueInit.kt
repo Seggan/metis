@@ -3,7 +3,6 @@ package io.github.seggan.metis.runtime.intrinsics
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
-import java.math.BigDecimal
 import java.nio.charset.Charset
 import kotlin.math.pow
 
@@ -21,7 +20,7 @@ internal fun initString() = buildTable { table ->
 
 internal fun initNumber() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(BigDecimal(self.doubleValue()).stripTrailingZeros().toPlainString())
+        Value.String(self.toString())
     }
     table["__plus__"] = twoArgFunction { self, other ->
         Value.Number.of(self.doubleValue() + other.doubleValue())
@@ -53,7 +52,7 @@ internal fun initNumber() = buildTable { table ->
 
 internal fun initBoolean() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<Value.Boolean>().value.toString())
+        Value.String(self.toString())
     }
     table["__eq__"] = twoArgFunction { self, other ->
         Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
@@ -61,9 +60,6 @@ internal fun initBoolean() = buildTable { table ->
 }
 
 internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
-    table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<Value.Table>().toString())
-    }
     table["__index__"] = twoArgFunction { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException("Key not found: $key")
     }

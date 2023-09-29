@@ -35,7 +35,7 @@ class Compiler private constructor(
     fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
         val (insns, spans) = compileBlock(code, false).unzip()
-        return Chunk(name, insns, Arity(args.size), upvalues, spans, file)
+        return Chunk(name, insns, Arity(args.size), upvalues, spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -106,7 +106,7 @@ class Compiler private constructor(
             }
 
             is AstNode.Index -> buildInsns(expression.span) {
-                +compileExpression(expression.expr)
+                +compileExpression(expression.target)
                 +compileExpression(expression.index)
                 +Insn.Index
             }
@@ -253,9 +253,9 @@ class Compiler private constructor(
     private fun compileVarAssign(assign: AstNode.VarAssign): List<FullInsn> {
         return when (val target = assign.target) {
             is AstNode.Index -> buildInsns(target.span) {
-                +compileExpression(assign.value)
+                +compileExpression(target.target)
                 +compileExpression(target.index)
-                +compileExpression(target.expr)
+                +compileExpression(assign.value)
                 +Insn.Set
             }
 

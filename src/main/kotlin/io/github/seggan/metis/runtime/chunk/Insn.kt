@@ -55,11 +55,7 @@ class Label {
     var end: Int by Delegates.notNull()
 
     val offset by lazy {
-        var offset = end - start
-        if (offset < 0) {
-            offset--
-        }
-        offset
+        end - start - 1
     }
 
     override fun toString(): String {

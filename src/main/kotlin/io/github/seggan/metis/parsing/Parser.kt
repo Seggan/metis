@@ -24,7 +24,7 @@ class Parser(tokens: List<Token>) {
 
     fun parse(): AstNode.Block {
         val statements = mutableListOf<AstNode.Statement>()
-        while (index < tokens.size) {
+        while (tryConsume(EOF) == null) {
             skip(SEMICOLON)
             statements.add(parseStatement())
             skip(SEMICOLON)
@@ -41,25 +41,31 @@ class Parser(tokens: List<Token>) {
         val startSpan = previous.span
         while (tryConsume(*validEnders) == null) {
             result.add(parseStatement())
+            if (tryConsume(EOF) != null) {
+                throw ParseException("Unterminated block", index, startSpan)
+            }
         }
         return AstNode.Block(result, startSpan + previous.span)
     }
 
     private fun parseStatement(): AstNode.Statement {
-        tryParse(::parseVarDecl)?.let { return it }
-        tryParse(::parseVarAssign)?.let { return it }
-        tryParse(::parseExpression)?.let { return it }
-        tryParse(::parseWhile)?.let { return it }
-        tryParse(::parseFor)?.let { return it }
-        tryParse(::parseFunctionDecl)?.let { return it }
-        if (tryConsume(IF) != null) return parseIf()
-        if (tryConsume(DO) != null) return parseBlock(END)
-        if (tryConsume(RETURN) != null) {
-            val startSpan = previous.span
-            val expr = tryParse(::parseExpression) ?: AstNode.Literal(Value.Null, startSpan)
-            return AstNode.Return(expr, startSpan + expr.span)
-        }
-        throw ParseException("Unknown statement", current.span)
+        return oneOf(
+            ::parseFunctionDecl,
+            ::parseVarDecl,
+            ::parseVarAssign,
+            ::parseExpression,
+            ::parseWhile,
+            ::parseFor,
+            { consume(IF); parseIf() },
+            { consume(DO); parseBlock(END) },
+            ::parseReturn
+        )
+    }
+
+    private fun parseReturn(): AstNode.Return {
+        val startSpan = consume(RETURN).span
+        val expr = tryParse(::parseExpression) ?: AstNode.Literal(Value.Null, startSpan)
+        return AstNode.Return(expr, startSpan + expr.span)
     }
 
     private fun parseExpression() = parseOr()
@@ -174,6 +180,7 @@ class Parser(tokens: List<Token>) {
                 },
                 token.span + previous.span
             )
+
             else -> throw AssertionError()
         }
     }
@@ -249,7 +256,7 @@ class Parser(tokens: List<Token>) {
     private fun parseAssignTarget(): AstNode.AssignTarget {
         val target = parsePostfix(false)
         if (target is AstNode.AssignTarget) return target
-        throw ParseException("Invalid variable/function assignment target", target.span)
+        throw ParseException("Invalid variable/function assignment target", index, target.span)
     }
 
     private fun parseIf(): AstNode.If {
@@ -310,6 +317,7 @@ class Parser(tokens: List<Token>) {
     private fun consume(vararg types: Token.Type): Token {
         return tryConsume(*types) ?: throw ParseException(
             "Expected ${types.joinToString(" or ")}, got ${current.type}",
+            index,
             current.span
         )
     }
@@ -328,6 +336,20 @@ class Parser(tokens: List<Token>) {
             this.index = index
             null
         }
+    }
+
+    private fun <T : AstNode> oneOf(vararg parsers: () -> T): T {
+        val errors = mutableListOf<ParseException>()
+        val index = this.index
+        for (parser in parsers) {
+            try {
+                return parser()
+            } catch (e: ParseException) {
+                errors.add(e)
+                this.index = index
+            }
+        }
+        throw errors.maxBy { it.consumed }
     }
 }
 
