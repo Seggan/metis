@@ -9,15 +9,13 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.chunk.Upvalue
-import io.github.seggan.metis.runtime.intrinsics.Intrinsics
-import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
-import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
+import io.github.seggan.metis.runtime.intrinsics.*
 import java.io.InputStream
 import java.io.OutputStream
 
 class State(val isChildState: Boolean = false) {
 
-    val globals = mutableMapOf<String, Value>()
+    val globals = Value.Table()
 
     val stack = Stack()
 
@@ -49,11 +47,22 @@ class State(val isChildState: Boolean = false) {
             globals[name] = value
         }
 
-        val io = Value.Table(mutableMapOf())
+        val io = Value.Table()
         io["stdout"] = wrapOutStream(stdout)
         io["stderr"] = wrapOutStream(stderr)
 
         globals["io"] = io
+
+        val string = Value.Table()
+        string["builder"] = oneArgFunction { str ->
+            if (str is Value.Null) {
+                wrapStringBuilder(StringBuilder())
+            } else {
+                wrapStringBuilder(StringBuilder(str.convertTo<Value.String>().value))
+            }
+        }
+
+        globals["string"] = string
 
         val core = State::class.java.classLoader.getResource("core.metis")!!.readText()
         runCode("core", core)

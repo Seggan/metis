@@ -19,6 +19,7 @@ class Lexer(private val code: String, private val filename: String = "<unknown>"
     }
 
     init {
+        regex("//.*\\n", Token.Type.COMMENT)
         text("(", Token.Type.OPEN_PAREN)
         text(")", Token.Type.CLOSE_PAREN)
         text("{", Token.Type.OPEN_BRACE)
@@ -58,8 +59,6 @@ class Lexer(private val code: String, private val filename: String = "<unknown>"
         keyword("let", Token.Type.LET)
         keyword("do", Token.Type.DO)
         keyword("end", Token.Type.END)
-        regex("//.*\\n", Token.Type.COMMENT)
-        regex("/\\*.*?\\*/", Token.Type.COMMENT)
         regex("\\s+", Token.Type.WHITESPACE)
         regex("[0-9]+(\\.[0-9]+)?(e[0-9]+(\\.[0-9]+)?)?", Token.Type.NUMBER)
         regex("[a-zA-Z_][a-zA-Z0-9_]*", Token.Type.IDENTIFIER)

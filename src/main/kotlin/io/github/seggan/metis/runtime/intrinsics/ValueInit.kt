@@ -131,25 +131,3 @@ internal fun initChunk() = buildTable { table ->
         Value.String(self.convertTo<Chunk.Instance>().toString())
     }
 }
-
-private val iteratorMetatable = buildTable { table ->
-
-    @Suppress("UNCHECKED_CAST")
-    fun Value.asIterator() = convertTo<Value.Native>().value as? Iterator<Value>
-        ?: throw MetisRuntimeException("Invalid iterator")
-
-    table["has_next"] = oneArgFunction { self ->
-        Value.Boolean.of(self.asIterator().hasNext())
-    }
-    table["next"] = oneArgFunction { self ->
-        self.asIterator().next()
-    }
-    table["__iter__"] = oneArgFunction { it }
-    table["__str__"] = oneArgFunction {
-        Value.String("an iterator")
-    }
-}
-
-fun wrapIterator(iterator: Iterator<Value>): Value {
-    return Value.Native(iterator, iteratorMetatable)
-}

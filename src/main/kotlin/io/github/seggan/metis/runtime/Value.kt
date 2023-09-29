@@ -3,6 +3,7 @@ package io.github.seggan.metis.runtime
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.intrinsics.*
+import io.github.seggan.metis.util.MutableLazy
 
 interface Value {
 
@@ -48,10 +49,11 @@ interface Value {
 
     data class String(val value: kotlin.String) : Value {
 
-        override var metatable: Table? = Companion.metatable
+        override var metatable: Table? by MutableLazy { Companion.metatable }
 
         companion object {
-            val metatable = initString()
+            // lazy because of a mutual dependency between initTable and String
+            val metatable by lazy(::initString)
         }
 
         override fun toString() = value
@@ -70,8 +72,10 @@ interface Value {
         override fun toString() = value.toString()
     }
 
-    data class Table(val value: MutableMap<Value, Value>, override var metatable: Table? = Companion.metatable) : Value,
-        MutableMap<Value, Value> by value {
+    data class Table(
+        val value: MutableMap<Value, Value> = mutableMapOf(),
+        override var metatable: Table? = Companion.metatable
+    ) : Value, MutableMap<Value, Value> by value {
 
         operator fun get(key: kotlin.String) = value[String(key)]
         operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
@@ -80,6 +84,8 @@ interface Value {
             private val metatable = initTable()
             val EMPTY = Table(mutableMapOf())
         }
+
+        override fun toString() = value.toString()
     }
 
     data class List(val value: MutableList<Value>, override var metatable: Table? = Companion.metatable) : Value,
@@ -104,7 +110,9 @@ interface Value {
         }
     }
 
-    data class Native(val value: Any, override var metatable: Table? = null) : Value
+    data class Native(val value: Any, override var metatable: Table? = null) : Value {
+        override fun toString() = "Native(value=$value)"
+    }
 
     data object Null : Value {
         override var metatable: Table? = initNull()
@@ -203,10 +211,20 @@ inline fun <reified T : Value> Value.convertTo(): T {
 fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
 fun Value.doubleValue() = this.convertTo<Value.Number>().value
 
+inline fun <reified T> Value.asObj(): T {
+    val value = convertTo<Value.Native>().value
+    if (value is T) {
+        return value
+    }
+    throw MetisRuntimeException("Failed to unpack native object; expected ${T::class.qualifiedName}, got ${value::class.qualifiedName}")
+}
+
 inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
     val map = mutableMapOf<String, Value>()
     init(map)
     return Value.Table(map.mapKeysTo(mutableMapOf()) { Value.String(it.key) }).also {
-        require(it.metatable != null)
+        if (it.metatable == null) {
+            throw AssertionError("Null Table metatable on init; this shouldn't happen!")
+        }
     }
 }
