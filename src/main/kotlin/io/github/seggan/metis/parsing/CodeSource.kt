@@ -1,4 +1,4 @@
-package io.github.seggan.metis
+package io.github.seggan.metis.parsing
 
 import java.lang.ref.WeakReference
 import java.nio.file.Path

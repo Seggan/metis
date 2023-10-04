@@ -1,11 +1,11 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.CodeSource
 import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.compilation.Compiler
 import io.github.seggan.metis.debug.Breakpoint
 import io.github.seggan.metis.debug.DebugInfo
+import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span

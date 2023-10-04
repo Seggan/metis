@@ -1,6 +1,5 @@
 package io.github.seggan.metis.parsing
 
-import io.github.seggan.metis.CodeSource
 import org.intellij.lang.annotations.Language
 
 class Lexer(private val source: CodeSource) {

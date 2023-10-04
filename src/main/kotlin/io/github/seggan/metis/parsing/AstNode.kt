@@ -1,8 +1,8 @@
 package io.github.seggan.metis.parsing
 
-import io.github.seggan.metis.BinOp
-import io.github.seggan.metis.UnOp
-import io.github.seggan.metis.Visibility
+import io.github.seggan.metis.compilation.BinOp
+import io.github.seggan.metis.compilation.UnOp
+import io.github.seggan.metis.compilation.Visibility
 import io.github.seggan.metis.runtime.Value
 
 sealed interface AstNode {

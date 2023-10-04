@@ -1,9 +1,8 @@
 package io.github.seggan.metis.parsing
 
-import io.github.seggan.metis.BinOp
-import io.github.seggan.metis.CodeSource
-import io.github.seggan.metis.UnOp
-import io.github.seggan.metis.Visibility
+import io.github.seggan.metis.compilation.BinOp
+import io.github.seggan.metis.compilation.UnOp
+import io.github.seggan.metis.compilation.Visibility
 import io.github.seggan.metis.parsing.Token.Type.*
 import io.github.seggan.metis.runtime.Value
 import java.util.*

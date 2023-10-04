@@ -1,4 +1,4 @@
-package io.github.seggan.metis
+package io.github.seggan.metis.compilation
 
 enum class Visibility {
     GLOBAL,

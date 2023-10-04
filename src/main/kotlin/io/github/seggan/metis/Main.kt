@@ -2,6 +2,7 @@ package io.github.seggan.metis
 
 import io.github.seggan.metis.compilation.Compiler
 import io.github.seggan.metis.debug.Debugger
+import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.runtime.State

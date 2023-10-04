@@ -1,8 +1,5 @@
-package io.github.seggan.metis
+package io.github.seggan.metis.compilation
 
-import io.github.seggan.metis.compilation.Compiler
-import io.github.seggan.metis.compilation.FullInsn
-import io.github.seggan.metis.compilation.InsnsBuilder
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.chunk.Label

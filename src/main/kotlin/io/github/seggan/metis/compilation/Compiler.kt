@@ -1,7 +1,5 @@
 package io.github.seggan.metis.compilation
 
-import io.github.seggan.metis.UnOp
-import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.Arity
