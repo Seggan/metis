@@ -1,13 +1,14 @@
 package io.github.seggan.metis.parsing
 
 import io.github.seggan.metis.BinOp
+import io.github.seggan.metis.CodeSource
 import io.github.seggan.metis.UnOp
 import io.github.seggan.metis.Visibility
 import io.github.seggan.metis.parsing.Token.Type.*
 import io.github.seggan.metis.runtime.Value
 import java.util.*
 
-class Parser(tokens: List<Token>) {
+class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private val tokens = tokens.filter { it.type !in SKIPPED_TOKENS }
 
@@ -29,7 +30,7 @@ class Parser(tokens: List<Token>) {
             statements.add(parseStatement())
             skip(SEMICOLON)
         }
-        val returnSpan = Span(0, tokens.lastOrNull()?.span?.end ?: 0)
+        val returnSpan = Span(0, tokens.lastOrNull()?.span?.end ?: 0, source)
         return AstNode.Block(
             statements + AstNode.Return(AstNode.Literal(Value.Null, returnSpan), returnSpan),
             returnSpan

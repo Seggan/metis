@@ -1,25 +1,42 @@
 package io.github.seggan.metis.parsing
 
+import io.github.seggan.metis.CodeSource
 import kotlin.math.max
 import kotlin.math.min
 
-class Span(val start: Int, val end: Int, val file: Pair<String, String>? = null) {
+data class Span(val start: Int, val end: Int, val source: CodeSource) {
+
     val length = end - start
 
-    operator fun plus(other: Span) = Span(min(start, other.start), max(end, other.end), file ?: other.file)
-
-    override fun equals(other: Any?): Boolean {
-        return other is Span && other.start == start && other.end == end && other.file == file
+    private val lineAndCol by lazy {
+        val lines = source.text.split("\n")
+        var pos = start
+        var line = 0
+        while (pos > lines[line].length) {
+            pos -= lines[line].length + 1
+            line++
+        }
+        LineAndCol(line + 1, pos + 1)
     }
 
-    override fun hashCode(): Int {
-        var result = start
-        result = 31 * result + end
-        result = 31 * result + (file?.hashCode() ?: 0)
-        return result
-    }
+    val line get() = lineAndCol.line
+    val col get() = lineAndCol.col
 
-    override fun toString(): String {
-        return "Span(start=$start, end=$end)"
+    operator fun plus(other: Span) = Span(min(start, other.start), max(end, other.end), source)
+
+    fun fancyDisplay(): String {
+        val lines = source.text.split("\n")
+        val lineText = lines[line - 1]
+        val sb = StringBuilder()
+        sb.append("|> ").appendLine(lineText)
+        sb.append(" ".repeat(col + 2))
+        sb.append("^")
+        if (length > 1) {
+            sb.append("~".repeat(length - 2))
+            sb.appendLine("^")
+        }
+        return sb.toString()
     }
 }
+
+private data class LineAndCol(val line: Int, val col: Int)

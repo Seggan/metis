@@ -4,7 +4,7 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.chunk.Label
 
-internal class InsnsBuilder(val span: Span) {
+class InsnsBuilder(val span: Span) {
 
     private val list = mutableListOf<FullInsn>()
 
@@ -34,8 +34,8 @@ internal class InsnsBuilder(val span: Span) {
     }
 }
 
-internal inline fun buildInsns(span: Span, block: InsnsBuilder.() -> Unit): List<FullInsn> {
+inline fun buildInsns(span: Span, block: InsnsBuilder.() -> Unit): List<FullInsn> {
     return InsnsBuilder(span).apply(block).build()
 }
 
-internal typealias FullInsn = Pair<Insn, Span>
+typealias FullInsn = Pair<Insn, Span>

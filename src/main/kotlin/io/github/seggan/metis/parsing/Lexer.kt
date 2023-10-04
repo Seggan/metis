@@ -1,8 +1,9 @@
 package io.github.seggan.metis.parsing
 
+import io.github.seggan.metis.CodeSource
 import org.intellij.lang.annotations.Language
 
-class Lexer(private val code: String, private val filename: String = "<unknown>") {
+class Lexer(private val source: CodeSource) {
 
     private val matchers = mutableListOf<TokenMatcher>()
 
@@ -70,7 +71,7 @@ class Lexer(private val code: String, private val filename: String = "<unknown>"
 
     fun lex(): List<Token> {
         val tokens = mutableListOf<Token>()
-        val code = StringBuilder(this.code)
+        val code = StringBuilder(source.text)
         while (code.isNotEmpty()) {
             val matched = mutableListOf<Pair<TokenMatcher.Match, Token>>()
             for (matcher in matchers) {
@@ -81,7 +82,7 @@ class Lexer(private val code: String, private val filename: String = "<unknown>"
                             matcher.type, match.text, Span(
                                 pos,
                                 pos + match.length,
-                                filename to this.code
+                                source
                             )
                         )
                     )
@@ -90,14 +91,14 @@ class Lexer(private val code: String, private val filename: String = "<unknown>"
             val bestMatch = matched.maxByOrNull { it.first } ?: throw ParseException(
                 "Unexpected character '${code[0]}'",
                 pos,
-                Span(pos, pos + 1, filename to this.code)
+                Span(pos, pos + 1, source)
             )
             tokens.add(bestMatch.second)
             val length = bestMatch.first.length
             pos += length
             code.delete(0, length)
         }
-        return tokens + Token(Token.Type.EOF, "", Span(pos, pos, filename to this.code))
+        return tokens + Token(Token.Type.EOF, "", Span(pos, pos, source))
     }
 }
 

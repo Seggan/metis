@@ -12,12 +12,11 @@ import io.github.seggan.metis.runtime.chunk.Label
 import io.github.seggan.metis.runtime.chunk.Upvalue
 
 class Compiler private constructor(
-    private val file: Pair<String, String>,
     private val args: List<String>,
     private val enclosingCompiler: Compiler?
 ) {
 
-    constructor(filename: String, file: String) : this(filename to file, emptyList(), null)
+    constructor() : this(emptyList(), null)
 
     private val localStack = ArrayDeque<Local>()
     private val upvalues = mutableListOf<Upvalue>()
@@ -174,7 +173,7 @@ class Compiler private constructor(
     }
 
     private fun compileFunctionDef(fn: AstNode.FunctionDef): List<FullInsn> {
-        val compiler = Compiler(file, fn.args, this)
+        val compiler = Compiler(fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
         return listOf(Insn.PushClosure(chunk) to fn.span)
     }

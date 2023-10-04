@@ -1,8 +1,11 @@
 package io.github.seggan.metis.runtime
 
+import io.github.seggan.metis.CodeSource
 import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.compilation.Compiler
+import io.github.seggan.metis.debug.Breakpoint
+import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
@@ -31,6 +34,8 @@ class State(val isChildState: Boolean = false) {
         get() = callStack.peek().stackBottom
 
     var debugMode = false
+    var debugInfo: DebugInfo? = null
+    val breakpoints = mutableListOf<Breakpoint>()
 
     companion object {
         init {
@@ -64,8 +69,7 @@ class State(val isChildState: Boolean = false) {
 
         globals["string"] = string
 
-        val core = State::class.java.classLoader.getResource("core.metis")!!.readText()
-        runCode("core", core)
+        runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
     }
 
     fun loadChunk(chunk: Chunk) {
@@ -87,9 +91,6 @@ class State(val isChildState: Boolean = false) {
             }
             throw e
         }
-        if (debugMode) {
-            println(stack)
-        }
         return StepResult.CONTINUE
     }
 
@@ -99,11 +100,11 @@ class State(val isChildState: Boolean = false) {
         }
     }
 
-    fun runCode(name: String, code: String) {
-        val lexer = Lexer(code, name)
-        val parser = Parser(lexer.lex())
-        val compiler = Compiler(name, code)
-        loadChunk(compiler.compileCode(name, parser.parse()))
+    fun runCode(source: CodeSource) {
+        val lexer = Lexer(source)
+        val parser = Parser(lexer.lex(), source)
+        val compiler = Compiler()
+        loadChunk(compiler.compileCode(source.name, parser.parse()))
         call(0)
         runTillComplete()
         stack.pop()
@@ -181,18 +182,6 @@ typealias Stack = ArrayDeque<Value>
 
 fun <E> ArrayDeque<E>.push(value: E) = this.addLast(value)
 fun <E> ArrayDeque<E>.pop() = this.removeLast()
-fun <E> ArrayDeque<E>.popn(n: Int): List<E> {
-    val list = ArrayDeque<E>(n)
-    repeat(n) { list.addFirst(this.removeLast()) }
-    return list
-}
 
 fun <E> ArrayDeque<E>.peek() = this.last()
 fun <E> ArrayDeque<E>.getFromTop(index: Int): E = this[this.size - index - 1]
-
-fun Stack.push(value: Double) = this.push(Value.Number.of(value))
-fun Stack.push(value: String) = this.push(Value.String(value))
-fun Stack.push(value: Boolean) = this.push(Value.Boolean.of(value))
-fun Stack.push(value: Nothing?) = this.push(Value.Null)
-
-inline fun <reified T : Value> Stack.popAs(): T = this.pop().convertTo()

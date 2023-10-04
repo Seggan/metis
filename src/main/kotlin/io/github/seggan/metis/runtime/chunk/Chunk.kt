@@ -1,6 +1,7 @@
 package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.MetisRuntimeException
+import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.intrinsics.initChunk
@@ -50,6 +51,8 @@ class Chunk(
 
             private var toReturn: Value? = null
 
+            private var justHitBreakpoint = false
+
             override fun step(state: State): StepResult {
                 if (ip >= insns.size) {
                     if (toReturn != null) {
@@ -60,10 +63,31 @@ class Chunk(
                     throw MetisRuntimeException("Chunk finished without returning a value")
                 }
                 try {
-                    val insn = insns[ip++]
+                    val insn = insns[ip]
                     if (state.debugMode) {
-                        println(insn)
+                        val span = spans[ip]
+                        if (!justHitBreakpoint) {
+                            if (state.breakpoints.any { it.isInSpan(span) }) {
+                                print("Hit breakpoint")
+                                val source = span.source
+                                if (source != null) {
+                                    println("at ${source.name}:${span.line}:${span.col}")
+                                } else {
+                                    println()
+                                }
+
+                                justHitBreakpoint = true
+                                return StepResult.BREAKPOINT
+                            }
+                        } else {
+                            justHitBreakpoint = false
+                        }
+                        state.debugInfo = DebugInfo(
+                            span,
+                            insn
+                        )
                     }
+                    ip++
                     when (insn) {
                         is Insn.GetGlobal -> state.stack.push(
                             state.globals[insn.name] ?: throw MetisRuntimeException("Global '${insn.name}' not found")
