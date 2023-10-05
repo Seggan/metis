@@ -23,7 +23,7 @@ abstract class MetisException(message: String, private val stacktrace: MutableLi
                 mainSb.appendLine()
             }
             mainSb.appendLine()
-            mainSb.append(span.fancyDisplay())
+            mainSb.append(span.fancyToString())
         }
         return mainSb.toString()
     }

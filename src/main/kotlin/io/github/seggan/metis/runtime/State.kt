@@ -78,9 +78,12 @@ class State(val isChildState: Boolean = false) {
 
     fun step(): StepResult {
         if (callStack.isEmpty()) return StepResult.FINISHED
+        lateinit var stepResult: StepResult
         try {
-            if (callStack.peek().executing.step(this) == StepResult.FINISHED) {
+            stepResult = callStack.peek().executing.step(this)
+            if (stepResult == StepResult.FINISHED) {
                 callStack.removeLast()
+                stepResult = StepResult.CONTINUE
             }
         } catch (e: MetisException) {
             for (i in callStack.lastIndex downTo 0) {
@@ -91,7 +94,7 @@ class State(val isChildState: Boolean = false) {
             }
             throw e
         }
-        return StepResult.CONTINUE
+        return stepResult
     }
 
     @Suppress("ControlFlowWithEmptyBody")
@@ -133,6 +136,7 @@ class State(val isChildState: Boolean = false) {
             val setter = stack.getFromTop(2).lookUp(Value.String("__set__"))
             if (setter is CallableValue) {
                 callValue(setter, 3)
+                stack.pop()
             } else {
                 throw MetisRuntimeException("Cannot set index on a non indexable value")
             }

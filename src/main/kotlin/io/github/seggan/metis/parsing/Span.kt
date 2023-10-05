@@ -23,7 +23,7 @@ data class Span(val start: Int, val end: Int, val source: CodeSource) {
 
     operator fun plus(other: Span) = Span(min(start, other.start), max(end, other.end), source)
 
-    fun fancyDisplay(): String {
+    fun fancyToString(): String {
         val lines = source.text.split("\n")
         val lineText = lines[line - 1]
         val sb = StringBuilder()

@@ -43,7 +43,9 @@ class Chunk(
 
         override fun call(nargs: Int): CallableValue.Executor = ChunkExecutor()
 
-        override fun toString() = this@Chunk.toString()
+        override fun toString() = name
+
+        fun verboseToString() = this@Chunk.toString()
 
         private inner class ChunkExecutor : CallableValue.Executor {
 
@@ -66,16 +68,10 @@ class Chunk(
                     val insn = insns[ip]
                     if (state.debugMode) {
                         val span = spans[ip]
-                        if (!justHitBreakpoint) {
-                            if (state.breakpoints.any { it.isInSpan(span) }) {
-                                print("Hit breakpoint")
-                                val source = span.source
-                                if (source != null) {
-                                    println("at ${source.name}:${span.line}:${span.col}")
-                                } else {
-                                    println()
-                                }
-
+                        if (state.breakpoints.any { it.isInSpan(span) }) {
+                            if (!justHitBreakpoint) {
+                                println("Hit breakpoint at ${span.source.name}:${span.line}")
+                                println(span.fancyToString())
                                 justHitBreakpoint = true
                                 return StepResult.BREAKPOINT
                             }

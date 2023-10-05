@@ -52,7 +52,7 @@ class Debugger(private val state: State, private val sourceName: String) {
             printStacktrace(this)
         },
         DebugCommand("stack", "st") {
-            for (value in state.stack.reversed()) {
+            for (value in state.stack) {
                 println(value)
             }
         },
@@ -77,6 +77,7 @@ class Debugger(private val state: State, private val sourceName: String) {
                 command.action(state, args.drop(1))
             } catch (e: MetisException) {
                 System.err.println(e.report(sourceName))
+                e.printStackTrace()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -85,13 +86,13 @@ class Debugger(private val state: State, private val sourceName: String) {
     }
 
     private fun printStacktrace(state: State) {
-        println(state.debugInfo?.span?.fancyDisplay() ?: "<unknown>")
+        println(state.debugInfo?.span?.fancyToString() ?: "<unknown>")
         val it = state.callStack.reversed().iterator()
         while (it.hasNext()) {
             val span = it.next().span
             if (!it.hasNext()) break
             if (span != null) {
-                println(span.fancyDisplay())
+                println(span.fancyToString())
             } else {
                 println("<unknown>")
             }

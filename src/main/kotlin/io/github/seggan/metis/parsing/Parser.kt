@@ -16,11 +16,8 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private val previous: Token
         get() = tokens[index - 1]
 
-    private val current: Token
-        get() = tokens[index]
-
     private val next: Token
-        get() = tokens[index + 1]
+        get() = tokens[index]
 
     fun parse(): AstNode.Block {
         val statements = mutableListOf<AstNode.Statement>()
@@ -237,7 +234,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         val name = parseId().text
         consume(EQUALS)
         val value = tryParse(::parseExpression)
-        val endSpan = value?.span ?: current.span
+        val endSpan = value?.span ?: next.span
         return AstNode.VarDecl(
             visibility,
             name,
@@ -316,9 +313,9 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun consume(vararg types: Token.Type): Token {
         return tryConsume(*types) ?: throw ParseException(
-            "Expected ${types.joinToString(" or ")}, got ${current.type}",
+            "Expected ${types.joinToString(" or ")}, got ${next.type}",
             index,
-            current.span
+            next.span
         )
     }
 

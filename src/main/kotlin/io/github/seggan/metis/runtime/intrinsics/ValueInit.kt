@@ -128,6 +128,6 @@ internal fun initNull() = buildTable { table ->
 
 internal fun initChunk() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<Chunk.Instance>().toString())
+        Value.String(self.convertTo<Chunk.Instance>().verboseToString())
     }
 }
