@@ -12,7 +12,11 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.chunk.Upvalue
-import io.github.seggan.metis.runtime.intrinsics.*
+import io.github.seggan.metis.runtime.intrinsics.Intrinsics
+import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
+import io.github.seggan.metis.runtime.intrinsics.PathLoader
+import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
+import io.github.seggan.metis.util.*
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -41,6 +45,8 @@ class State(val isChildState: Boolean = false) {
         init {
             Intrinsics.registerDefault()
         }
+
+        val coreScripts = mutableListOf("string", "table", "list")
     }
 
     init {
@@ -58,18 +64,20 @@ class State(val isChildState: Boolean = false) {
 
         globals["io"] = io
 
-        val string = Value.Table()
-        string["builder"] = oneArgFunction { str ->
-            if (str is Value.Null) {
-                wrapStringBuilder(StringBuilder())
-            } else {
-                wrapStringBuilder(StringBuilder(str.convertTo<Value.String>().value))
-            }
-        }
+        globals["string"] = Value.String.metatable
+        globals["number"] = Value.Number.metatable
+        globals["table"] = Value.Table.metatable
+        globals["list"] = Value.List.metatable
 
-        globals["string"] = string
+        val pkg = Value.Table()
+        pkg["loaded"] = Value.List()
+        pkg["path"] = Value.List()
+        pkg["loaders"] = Value.List(mutableListOf(PathLoader))
 
         runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
+        for (script in coreScripts) {
+            runCode(CodeSource(script) { State::class.java.classLoader.getResource("./$it.metis")!!.readText() })
+        }
     }
 
     fun loadChunk(chunk: Chunk) {
@@ -181,11 +189,3 @@ class State(val isChildState: Boolean = false) {
 }
 
 internal data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)
-
-typealias Stack = ArrayDeque<Value>
-
-fun <E> ArrayDeque<E>.push(value: E) = this.addLast(value)
-fun <E> ArrayDeque<E>.pop() = this.removeLast()
-
-fun <E> ArrayDeque<E>.peek() = this.last()
-fun <E> ArrayDeque<E>.getFromTop(index: Int): E = this[this.size - index - 1]

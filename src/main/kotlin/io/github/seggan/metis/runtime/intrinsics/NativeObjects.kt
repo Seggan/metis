@@ -43,7 +43,7 @@ fun wrapIterator(iterator: Iterator<Value>): Value = Value.Native(iterator, iter
 
 private val sbMetatable = buildTable { table ->
     table["__append"] = twoArgFunction { self, value ->
-        self.asObj<StringBuilder>().append(value.convertTo<Value.String>().value)
+        self.asObj<StringBuilder>().append(value.stringValue())
         self
     }
     table["__index__"] = twoArgFunction { self, value ->
@@ -55,7 +55,7 @@ private val sbMetatable = buildTable { table ->
     }
     table["__set"] = threeArgFunction { self, index, value ->
         if (value is Value.Number) {
-            self.asObj<StringBuilder>()[index.intValue()] = value.convertTo<Value.String>().value[0]
+            self.asObj<StringBuilder>()[index.intValue()] = value.stringValue()[0]
         } else {
             self.set(index, value)
         }

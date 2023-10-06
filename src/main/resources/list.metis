@@ -1,0 +1,9 @@
+fn [].metatable.__str__(self)
+    let sb = string.builder()
+    sb:append("[")
+    for v in self
+        sb:append(v):append(", ")
+    end
+    sb:delete_last(2)
+    return str(sb:append("]"))
+end

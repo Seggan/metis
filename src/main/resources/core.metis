@@ -9,3 +9,5 @@ global fn print(x)
     out:write('\n')
     out:flush()
 end
+
+package.path:append("./?.metis")

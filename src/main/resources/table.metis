@@ -1,0 +1,13 @@
+fn table.__str__(self)
+    let sb = string.builder()
+    sb:append("{ ")
+    for k in self:keys()
+        let v = self[k]
+        sb:append(k)
+            :append(" = ")
+            :append(v)
+            :append(", ")
+    end
+    sb:delete_at(len(sb) - 2)
+    return str(sb:append("}"))
+end

@@ -1,21 +1,16 @@
 package io.github.seggan.metis
 
-import io.github.seggan.metis.compilation.Compiler
 import io.github.seggan.metis.debug.Debugger
 import io.github.seggan.metis.parsing.CodeSource
-import io.github.seggan.metis.parsing.Lexer
-import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.chunk.Chunk
 import kotlin.io.path.Path
 
 internal fun main(args: Array<String>) {
     val source = CodeSource.from(Path(args.firstOrNull() ?: error("No file specified")))
     try {
         val state = State()
-        val toks = Lexer(source).lex()
-        val ast = Parser(toks, source).parse()
-        val compiler = Compiler()
-        val chunk = compiler.compileCode(source.name, ast)
+        val chunk = Chunk.load(source)
         println(chunk)
         state.loadChunk(chunk)
         state.call(0)

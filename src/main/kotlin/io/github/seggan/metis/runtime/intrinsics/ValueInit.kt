@@ -8,13 +8,25 @@ import kotlin.math.pow
 
 internal fun initString() = buildTable { table ->
     table["__str__"] = oneArgFunction { it }
+    table["__plus__"] = twoArgFunction { self, other ->
+        Value.String(self.stringValue() + other.stringValue())
+    }
     table["encode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
-            if (encoding is Value.Null) Charsets.UTF_8 else Charset.forName(encoding.convertTo<Value.String>().value)
-        Value.Bytes(self.convertTo<Value.String>().value.toByteArray(actualEncoding))
+            if (encoding == Value.Null) Charsets.UTF_8
+            else Charset.forName(encoding.stringValue())
+        Value.Bytes(self.stringValue().toByteArray(actualEncoding))
     }
-    table["__plus__"] = twoArgFunction { self, other ->
-        Value.String(self.convertTo<Value.String>().value + other.convertTo<Value.String>().value)
+    table["replace"] = threeArgFunction { self, value, toReplace ->
+        Value.String(self.stringValue().replace(value.stringValue(), toReplace.stringValue()))
+    }
+
+    table["builder"] = oneArgFunction { init ->
+        if (init == Value.Null) {
+            wrapStringBuilder(StringBuilder())
+        } else {
+            wrapStringBuilder(StringBuilder(init.stringValue()))
+        }
     }
 }
 
@@ -95,6 +107,10 @@ internal fun initList() = buildTable { table ->
     table["__iter__"] = oneArgFunction { self ->
         wrapIterator(self.convertTo<Value.List>().iterator())
     }
+    table["append"] = twoArgFunction { self, value ->
+        self.convertTo<Value.List>().add(value)
+        Value.Null
+    }
 }
 
 internal fun initBytes() = buildTable { table ->
@@ -112,7 +128,8 @@ internal fun initBytes() = buildTable { table ->
     }
     table["decode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
-            if (encoding is Value.Null) Charsets.UTF_8 else Charset.forName(encoding.convertTo<Value.String>().value)
+            if (encoding == Value.Null) Charsets.UTF_8
+            else Charset.forName(encoding.stringValue())
         Value.String(self.convertTo<Value.Bytes>().value.toString(actualEncoding))
     }
 }

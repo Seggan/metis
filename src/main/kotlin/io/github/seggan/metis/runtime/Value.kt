@@ -81,18 +81,20 @@ interface Value {
         operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
 
         companion object {
-            private val metatable = initTable()
+            val metatable = initTable()
             val EMPTY = Table(mutableMapOf())
         }
 
         override fun toString() = value.toString()
     }
 
-    data class List(val value: MutableList<Value>, override var metatable: Table? = Companion.metatable) : Value,
-        MutableList<Value> by value {
+    data class List(
+        val value: MutableList<Value> = mutableListOf(),
+        override var metatable: Table? = Companion.metatable
+    ) : Value, MutableList<Value> by value {
         companion object {
             val EMPTY = List(mutableListOf())
-            private val metatable = initList()
+            val metatable = initList()
         }
     }
 
@@ -106,7 +108,7 @@ interface Value {
 
         companion object {
             val EMPTY = Bytes(byteArrayOf())
-            private val metatable = initBytes()
+            val metatable = initBytes()
         }
     }
 
@@ -210,6 +212,7 @@ inline fun <reified T : Value> Value.convertTo(): T {
 
 fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
 fun Value.doubleValue() = this.convertTo<Value.Number>().value
+fun Value.stringValue() = this.convertTo<Value.String>().value
 
 inline fun <reified T> Value.asObj(): T {
     val value = convertTo<Value.Native>().value

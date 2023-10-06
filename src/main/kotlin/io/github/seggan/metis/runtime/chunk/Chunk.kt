@@ -1,10 +1,18 @@
 package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.MetisRuntimeException
+import io.github.seggan.metis.compilation.Compiler
 import io.github.seggan.metis.debug.DebugInfo
+import io.github.seggan.metis.parsing.CodeSource
+import io.github.seggan.metis.parsing.Lexer
+import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.intrinsics.initChunk
+import io.github.seggan.metis.util.getFromTop
+import io.github.seggan.metis.util.peek
+import io.github.seggan.metis.util.pop
+import io.github.seggan.metis.util.push
 
 class Chunk(
     val name: String,
@@ -160,5 +168,12 @@ class Chunk(
 
     companion object {
         private val metatable = initChunk()
+
+        fun load(source: CodeSource): Chunk {
+            val lexer = Lexer(source)
+            val parser = Parser(lexer.lex(), source)
+            val compiler = Compiler()
+            return compiler.compileCode(source.name, parser.parse())
+        }
     }
 }

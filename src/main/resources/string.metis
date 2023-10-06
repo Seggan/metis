@@ -1,0 +1,11 @@
+do
+    let sb_meta = string.builder().metatable
+    fn sb_meta.append(self, value) = self:__append(str(value))
+    fn sb_meta.delete_last(self, n)
+        let length = len(self)
+        self:delete(length - n, length)
+        return self
+    end
+    // THIS GOES LAST
+    fn sb_meta.__set__(self, index, value) = self:__set(self, index, str(value))
+end
