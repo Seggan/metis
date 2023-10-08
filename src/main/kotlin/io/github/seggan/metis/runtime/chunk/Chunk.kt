@@ -1,6 +1,5 @@
 package io.github.seggan.metis.runtime.chunk
 
-import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.compilation.Compiler
 import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.CodeSource
@@ -70,7 +69,7 @@ class Chunk(
                         return StepResult.FINISHED
                     }
                     state.stderr.write("Chunk finished without returning a value\n".toByteArray())
-                    throw MetisRuntimeException("Chunk finished without returning a value")
+                    throw MetisRuntimeException("InternalError", "Chunk finished without returning a value")
                 }
                 try {
                     val insn = insns[ip]
@@ -94,7 +93,10 @@ class Chunk(
                     ip++
                     when (insn) {
                         is Insn.GetGlobal -> state.stack.push(
-                            state.globals[insn.name] ?: throw MetisRuntimeException("Global '${insn.name}' not found")
+                            state.globals[insn.name] ?: throw MetisRuntimeException(
+                                "NameError",
+                                "Global '${insn.name}' not found"
+                            )
                         )
 
                         is Insn.SetGlobal -> state.globals[insn.name] = state.stack.pop()
@@ -121,24 +123,9 @@ class Chunk(
 
                         is Insn.Push -> state.stack.push(insn.value)
                         is Insn.PushClosure -> state.stack.push(insn.chunk.Instance(state))
-                        is Insn.PushList -> {
-                            val list = ArrayDeque<Value>(insn.size)
-                            repeat(insn.size) {
-                                list.addFirst(state.stack.pop())
-                            }
-                            state.stack.push(Value.List(list))
-                        }
-
-                        is Insn.PushTable -> {
-                            val table = HashMap<Value, Value>(insn.size)
-                            repeat(insn.size) {
-                                val value = state.stack.pop()
-                                val key = state.stack.pop()
-                                table[key] = value
-                            }
-                            state.stack.push(Value.Table(table))
-                        }
-
+                        is Insn.PushList -> state.wrapToList(insn.size)
+                        is Insn.PushTable -> state.wrapToTable(insn.size)
+                        is Insn.PushError -> state.newError(insn.type)
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                         is Insn.Return -> toReturn = state.stack.pop()
@@ -151,11 +138,7 @@ class Chunk(
                             }
                         }
 
-                        is Insn.Not -> state.stack.push(
-                            Value.Boolean.of(
-                                !state.stack.pop().convertTo<Value.Boolean>().value
-                            )
-                        )
+                        is Insn.Not -> state.not()
                     }
                 } catch (e: MetisRuntimeException) {
                     e.addStackFrame(spans[ip - 1])

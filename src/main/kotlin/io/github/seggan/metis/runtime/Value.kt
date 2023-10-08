@@ -1,13 +1,17 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.intrinsics.*
 import io.github.seggan.metis.util.MutableLazy
+import kotlin.reflect.KClass
 
 interface Value {
 
     var metatable: Table?
+
+    fun lookUpDirect(key: Value): Value? = null
+
+    fun setDirect(key: Value, value: Value): kotlin.Boolean = false
 
     class Number private constructor(val value: Double) : Value {
 
@@ -51,6 +55,13 @@ interface Value {
 
         override var metatable: Table? by MutableLazy { Companion.metatable }
 
+        override fun lookUpDirect(key: Value): Value? {
+            if (key is Number) {
+                return String(value[key.intValue()].toString())
+            }
+            return null
+        }
+
         companion object {
             // lazy because of a mutual dependency between initTable and String
             val metatable by lazy(::initString)
@@ -60,6 +71,7 @@ interface Value {
     }
 
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
+
         override var metatable: Table? = initBoolean()
 
         companion object {
@@ -77,12 +89,18 @@ interface Value {
         override var metatable: Table? = Companion.metatable
     ) : Value, MutableMap<Value, Value> by value {
 
+        override fun lookUpDirect(key: Value) = value[key]
+
+        override fun setDirect(key: Value, value: Value): kotlin.Boolean {
+            this.value[key] = value
+            return true
+        }
+
         operator fun get(key: kotlin.String) = value[String(key)]
-        operator fun set(key: kotlin.String, value: Value) = this.set(String(key), value)
+        operator fun set(key: kotlin.String, value: Value) = this.setOrError(String(key), value)
 
         companion object {
             val metatable = initTable()
-            val EMPTY = Table(mutableMapOf())
         }
 
         override fun toString() = value.toString()
@@ -92,13 +110,44 @@ interface Value {
         val value: MutableList<Value> = mutableListOf(),
         override var metatable: Table? = Companion.metatable
     ) : Value, MutableList<Value> by value {
+
+        override fun lookUpDirect(key: Value): Value? {
+            if (key is Number) {
+                return getOrNull(key.intValue())
+            }
+            return null
+        }
+
+        override fun setDirect(key: Value, value: Value): kotlin.Boolean {
+            if (key is Number) {
+                this[key.intValue()] = value
+                return true
+            }
+            return false
+        }
+
         companion object {
-            val EMPTY = List(mutableListOf())
             val metatable = initList()
         }
     }
 
     data class Bytes(val value: ByteArray, override var metatable: Table? = Companion.metatable) : Value {
+
+        override fun lookUpDirect(key: Value): Value? {
+            if (key is Number) {
+                return Number.of(value[key.intValue()].toDouble())
+            }
+            return null
+        }
+
+        override fun setDirect(key: Value, value: Value): kotlin.Boolean {
+            if (key is Number && value is Number) {
+                this.value[key.intValue()] = value.intValue().toByte()
+                return true
+            }
+            return false
+        }
+
         override fun equals(other: Any?): kotlin.Boolean {
             if (this === other) return true
             return other is Bytes && value.contentEquals(other.value)
@@ -107,7 +156,6 @@ interface Value {
         override fun hashCode() = value.contentHashCode()
 
         companion object {
-            val EMPTY = Bytes(byteArrayOf())
             val metatable = initBytes()
         }
     }
@@ -117,6 +165,7 @@ interface Value {
     }
 
     data object Null : Value {
+
         override var metatable: Table? = initNull()
 
         override fun toString() = "null"
@@ -144,62 +193,17 @@ data class Arity(val required: Int, val isVarargs: Boolean = false) {
     }
 }
 
-fun Value.lookUp(key: Value): Value? {
-    if (this is Value.Table) {
-        val value = this[key]
-        if (value != null) {
-            return value
-        }
-    } else if (key is Value.Number) {
-        when (this) {
-            is Value.List -> {
-                val value = this.getOrNull(key.intValue())
-                if (value != null) {
-                    return value
-                }
-            }
+fun Value.lookUp(key: Value): Value? = lookUpDirect(key) ?: metatable?.lookUp(key)
 
-            is Value.String -> {
-                val value = this.value.getOrNull(key.intValue())
-                if (value != null) {
-                    return Value.String(value.toString())
-                }
-            }
-
-            is Value.Bytes -> {
-                val value = this.value.getOrNull(key.intValue())
-                if (value != null) {
-                    return Value.Number.of(value.toDouble())
-                }
-            }
-        }
-    }
-    return this.metatable?.lookUp(key)
+fun Value.set(key: Value, value: Value): Boolean {
+    return setDirect(key, value) || metatable?.set(key, value) ?: false
 }
 
-fun Value.lookUp(key: String): Value? = lookUp(Value.String(key))
-
-fun Value.set(key: Value, value: Value) {
-    if (this is Value.Table) {
-        this[key] = value
-        return
-    } else if (key is Value.Number) {
-        when (this) {
-            is Value.List -> {
-                this[key.intValue()] = value
-                return
-            }
-
-            is Value.Bytes -> {
-                this.value[key.intValue()] = value.intValue().toByte()
-                return
-            }
-        }
+fun Value.setOrError(key: Value, value: Value) {
+    if (!set(key, value)) {
+        throw MetisRuntimeException("IndexError", "Cannot set ${typeToName(key::class)} on ${typeToName(this::class)}")
     }
-    this.metatable?.set(key, value)
 }
-
-fun Value.set(key: String, value: Value) = set(Value.String(key), value)
 
 fun Value?.orNull() = this ?: Value.Null
 
@@ -207,7 +211,7 @@ inline fun <reified T : Value> Value.convertTo(): T {
     if (this is T) {
         return this
     }
-    throw MetisRuntimeException("Cannot convert ${this::class.simpleName} to ${T::class.simpleName}")
+    throw MetisRuntimeException("IndexError", "Cannot convert ${typeToName(this::class)} to ${typeToName(T::class)}")
 }
 
 fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
@@ -219,7 +223,10 @@ inline fun <reified T> Value.asObj(): T {
     if (value is T) {
         return value
     }
-    throw MetisRuntimeException("Failed to unpack native object; expected ${T::class.qualifiedName}, got ${value::class.qualifiedName}")
+    throw MetisRuntimeException(
+        "TypeError",
+        "Failed to unpack native object; expected ${T::class.qualifiedName}, got ${value::class.qualifiedName}"
+    )
 }
 
 inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
@@ -229,5 +236,22 @@ inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
         if (it.metatable == null) {
             throw AssertionError("Null Table metatable on init; this shouldn't happen!")
         }
+    }
+}
+
+fun typeToName(clazz: KClass<out Value>): String = when (clazz::class) {
+    Value.Number::class -> "number"
+    Value.String::class -> "string"
+    Value.Boolean::class -> "boolean"
+    Value.Table::class -> "table"
+    Value.List::class -> "list"
+    Value.Bytes::class -> "bytes"
+    Value.Native::class -> "native"
+    Value.Null::class -> "null"
+    MetisRuntimeException::class -> "error"
+    else -> if (CallableValue::class.java.isAssignableFrom(clazz::class.java)) {
+        "callable"
+    } else {
+        clazz::class.simpleName ?: "unknown"
     }
 }

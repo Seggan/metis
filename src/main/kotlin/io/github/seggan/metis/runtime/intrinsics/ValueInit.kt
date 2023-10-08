@@ -1,6 +1,5 @@
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
 import java.nio.charset.Charset
@@ -73,10 +72,10 @@ internal fun initBoolean() = buildTable { table ->
 
 internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
     table["__index__"] = twoArgFunction { self, key ->
-        self.lookUp(key) ?: throw MetisRuntimeException("Key not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException("KeyError", "Key not found: $key")
     }
     table["__set__"] = threeArgFunction { self, key, value ->
-        self.set(key, value)
+        self.setOrError(key, value)
         Value.Null
     }
     table["__len__"] = oneArgFunction { self ->
@@ -95,10 +94,10 @@ internal fun initList() = buildTable { table ->
         Value.String(self.convertTo<Value.List>().toString())
     }
     table["__index__"] = twoArgFunction { self, key ->
-        self.lookUp(key) ?: throw MetisRuntimeException("Index not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Index not found: $key")
     }
     table["__set__"] = threeArgFunction { self, key, value ->
-        self.set(key, value)
+        self.setOrError(key, value)
         Value.Null
     }
     table["__len__"] = oneArgFunction { self ->
@@ -120,7 +119,7 @@ internal fun initBytes() = buildTable { table ->
     table["__index__"] = twoArgFunction { self, key ->
         self.convertTo<Value.Bytes>().value.getOrNull(key.intValue())?.let {
             Value.Number.of(it.toInt().toDouble())
-        } ?: throw MetisRuntimeException("Key not found: $key")
+        } ?: throw MetisRuntimeException("KeyError", "Key not found: $key")
     }
     table["__set__"] = threeArgFunction { self, key, value ->
         self.convertTo<Value.Bytes>().value[key.intValue()] = value.intValue().toByte()
@@ -139,12 +138,21 @@ internal fun initNull() = buildTable { table ->
         Value.String("null")
     }
     table["__call__"] = zeroArgFunction {
-        throw MetisRuntimeException("Cannot call null")
+        throw MetisRuntimeException("TypeError", "Cannot call null")
     }
 }
 
 internal fun initChunk() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
         Value.String(self.convertTo<Chunk.Instance>().verboseToString())
+    }
+}
+
+internal fun initError() = buildTable { table ->
+    table["__str__"] = oneArgFunction { self ->
+        Value.String(self.convertTo<MetisRuntimeException>().message!!)
+    }
+    table["__call__"] = zeroArgFunction {
+        throw MetisRuntimeException("TypeError", "Cannot call error")
     }
 }

@@ -2,7 +2,6 @@
 
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.MetisRuntimeException
 import io.github.seggan.metis.runtime.*
 import java.io.OutputStream
 
@@ -50,14 +49,14 @@ private val sbMetatable = buildTable { table ->
         if (value is Value.Number) {
             Value.String(self.asObj<StringBuilder>()[value.intValue()].toString())
         } else {
-            self.lookUp(value) ?: throw MetisRuntimeException("Key not found: $value")
+            self.lookUp(value) ?: throw MetisRuntimeException("KeyError", "Key not found: $value")
         }
     }
     table["__set"] = threeArgFunction { self, index, value ->
         if (value is Value.Number) {
             self.asObj<StringBuilder>()[index.intValue()] = value.stringValue()[0]
         } else {
-            self.set(index, value)
+            self.setOrError(index, value)
         }
         self
     }

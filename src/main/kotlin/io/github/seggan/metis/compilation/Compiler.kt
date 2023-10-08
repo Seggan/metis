@@ -127,7 +127,7 @@ class Compiler private constructor(
                 listOf(Insn.GetGlobal(name) to expression.span)
             }
 
-            is AstNode.FunctionDef -> compileFunctionDef(expression)
+            is AstNode.FunctionLiteral -> compileFunctionDef(expression)
             is AstNode.ListLiteral -> buildInsns(expression.span) {
                 expression.values.forEach { value ->
                     +compileExpression(value)
@@ -142,6 +142,8 @@ class Compiler private constructor(
                 }
                 +Insn.PushTable(expression.values.size)
             }
+
+            is AstNode.ErrorLiteral -> compileErrorLiteral(expression)
         }
     }
 
@@ -170,10 +172,26 @@ class Compiler private constructor(
         }
     }
 
-    private fun compileFunctionDef(fn: AstNode.FunctionDef): List<FullInsn> {
+    private fun compileFunctionDef(fn: AstNode.FunctionLiteral): List<FullInsn> {
         val compiler = Compiler(fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
         return listOf(Insn.PushClosure(chunk) to fn.span)
+    }
+
+    private fun compileErrorLiteral(error: AstNode.ErrorLiteral): List<FullInsn> {
+        return buildInsns(error.span) {
+            +compileExpression(error.message)
+            +Insn.CopyUnder(0)
+            +Insn.Push(Value.String("__str__"))
+            +Insn.Index
+            +Insn.Call(1)
+            if (error.companionData != null) {
+                +compileExpression(error.companionData)
+            } else {
+                +Insn.Push(Value.Table())
+            }
+            +Insn.PushError(error.type)
+        }
     }
 
     private fun compileWhile(statement: AstNode.While): List<FullInsn> {

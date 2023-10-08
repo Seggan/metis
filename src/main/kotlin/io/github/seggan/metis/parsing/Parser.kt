@@ -45,19 +45,17 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         return AstNode.Block(result, startSpan + previous.span)
     }
 
-    private fun parseStatement(): AstNode.Statement {
-        return oneOf(
-            ::parseFunctionDecl,
-            ::parseVarDecl,
-            ::parseVarAssign,
-            ::parseExpression,
-            ::parseWhile,
-            ::parseFor,
-            { consume(IF); parseIf() },
-            { consume(DO); parseBlock(END) },
-            ::parseReturn
-        )
-    }
+    private fun parseStatement(): AstNode.Statement = oneOf(
+        ::parseFunctionDecl,
+        ::parseVarDecl,
+        ::parseVarAssign,
+        ::parseExpression,
+        ::parseWhile,
+        ::parseFor,
+        { consume(IF); parseIf() },
+        { consume(DO); parseBlock(END) },
+        ::parseReturn
+    )
 
     private fun parseReturn(): AstNode.Return {
         val startSpan = consume(RETURN).span
@@ -150,39 +148,66 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         return args
     }
 
-    private fun parsePrimary(): AstNode.Expression {
-        val token = consume(STRING, BYTES, NUMBER, OPEN_PAREN, IDENTIFIER, FN, OPEN_BRACKET, OPEN_BRACE)
-        return when (token.type) {
-            STRING -> AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1).intern()), token.span)
-            BYTES -> AstNode.Literal(
-                Value.Bytes(token.text.substring(1, token.text.length - 1).encodeToByteArray()),
-                token.span
-            )
+    private fun parsePrimary(): AstNode.Expression = oneOf(
+        ::parseString,
+        ::parseBytes,
+        ::parseNumber,
+        { consume(OPEN_PAREN); parseExpression().also { consume(CLOSE_PAREN) } },
+        { AstNode.Var(parseId().text, previous.span) },
+        { parseFunctionDef(consume(FN).span) },
+        ::parseList,
+        ::parseTable,
+        ::parseError
+    )
 
-            NUMBER -> AstNode.Literal(Value.Number.of(token.text.toDouble()), token.span)
-            OPEN_PAREN -> parseExpression().also { consume(CLOSE_PAREN) }
-            IDENTIFIER -> AstNode.Var(token.text, token.span)
-            FN -> parseFunctionDef(token.span)
-            OPEN_BRACKET -> AstNode.ListLiteral(
-                parseArgList(CLOSE_BRACKET, ::parseExpression),
-                token.span + previous.span
-            )
-
-            OPEN_BRACE -> AstNode.TableLiteral(
-                parseArgList(CLOSE_BRACE) {
-                    val key = parseExpression()
-                    consume(EQUALS)
-                    val value = parseExpression()
-                    key to value
-                },
-                token.span + previous.span
-            )
-
-            else -> throw AssertionError()
-        }
+    private fun parseString(): AstNode.Literal {
+        val token = consume(STRING)
+        return AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1).intern()), token.span)
     }
 
-    private fun parseFunctionDef(startSpan: Span): AstNode.FunctionDef {
+    private fun parseBytes(): AstNode.Literal {
+        val token = consume(BYTES)
+        return AstNode.Literal(
+            Value.Bytes(token.text.substring(1, token.text.length - 1).encodeToByteArray()),
+            token.span
+        )
+    }
+
+    private fun parseNumber(): AstNode.Literal {
+        val token = consume(NUMBER)
+        return AstNode.Literal(Value.Number.of(token.text.toDouble()), token.span)
+    }
+
+    private fun parseList(): AstNode.ListLiteral {
+        val token = consume(OPEN_BRACKET)
+        val list = parseArgList(CLOSE_BRACKET, ::parseExpression)
+        return AstNode.ListLiteral(list, token.span + previous.span)
+    }
+
+    private fun parseTable(): AstNode.TableLiteral {
+        val token = consume(OPEN_BRACE)
+        val table = parseArgList(CLOSE_BRACE) {
+            val key = parseExpression()
+            consume(EQUALS)
+            val value = parseExpression()
+            key to value
+        }
+        return AstNode.TableLiteral(table, token.span + previous.span)
+    }
+
+    private fun parseError(): AstNode.ErrorLiteral {
+        val startSpan = consume(ERROR).span
+        val type = parseId().text
+        consume(OPEN_PAREN)
+        val message = parseExpression()
+        consume(CLOSE_PAREN)
+        val companionData = if (tryConsume(COLON) != null) {
+            parseTable()
+        } else null
+        return AstNode.ErrorLiteral(type, message, companionData, startSpan + previous.span)
+    }
+
+    private fun parseFunctionDef(startSpan: Span): AstNode.FunctionLiteral {
         consume(OPEN_PAREN)
         val args = parseArgList(CLOSE_PAREN) { parseId().text }
         var block = if (tryConsume(EQUALS) != null) {
@@ -194,7 +219,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
             nodes.add(AstNode.Return(AstNode.Literal(Value.Null, block.span), block.span))
             block = AstNode.Block(nodes, block.span)
         }
-        return AstNode.FunctionDef(args, block, startSpan + block.span)
+        return AstNode.FunctionLiteral(args, block, startSpan + block.span)
     }
 
     private fun parseFunctionDecl(): AstNode.Statement {
@@ -234,12 +259,11 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         val name = parseId().text
         consume(EQUALS)
         val value = tryParse(::parseExpression)
-        val endSpan = value?.span ?: next.span
         return AstNode.VarDecl(
             visibility,
             name,
-            value ?: AstNode.Literal(Value.Null, endSpan),
-            start.span + endSpan
+            value ?: AstNode.Literal(Value.Null, start.span + previous.span),
+            start.span + previous.span
         )
     }
 
@@ -312,11 +336,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     }
 
     private fun consume(vararg types: Token.Type): Token {
-        return tryConsume(*types) ?: throw ParseException(
-            "Expected ${types.joinToString(" or ")}, got ${next.type}",
-            index,
-            next.span
-        )
+        return tryConsume(*types) ?: throw UnexpectedTokenException(next, types.toList(), index, next.span)
     }
 
     @Suppress("ControlFlowWithEmptyBody")

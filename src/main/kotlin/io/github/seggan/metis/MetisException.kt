@@ -32,5 +32,3 @@ abstract class MetisException(message: String, private val stacktrace: MutableLi
         stacktrace.add(span)
     }
 }
-
-class MetisRuntimeException(message: String) : MetisException(message, mutableListOf())
