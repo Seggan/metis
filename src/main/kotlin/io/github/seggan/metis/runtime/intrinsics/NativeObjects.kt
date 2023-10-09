@@ -6,7 +6,6 @@ import io.github.seggan.metis.runtime.*
 import java.io.OutputStream
 
 private val outStreamMetatable = buildTable { table ->
-
     table["write"] = twoArgFunction { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
         self.asObj<OutputStream>().write(toBeWritten)
@@ -16,8 +15,12 @@ private val outStreamMetatable = buildTable { table ->
         self.asObj<OutputStream>().flush()
         Value.Null
     }
+    table["close"] = oneArgFunction { self ->
+        self.asObj<OutputStream>().close()
+        Value.Null
+    }
     table["__str__"] = oneArgFunction {
-        Value.String("an output stream")
+        "an output stream".metisValue()
     }
 }
 
@@ -27,14 +30,14 @@ fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamM
 private val iteratorMetatable = buildTable { table ->
 
     table["has_next"] = oneArgFunction { self ->
-        Value.Boolean.of(self.asObj<Iterator<Value>>().hasNext())
+        self.asObj<Iterator<Value>>().hasNext().metisValue()
     }
     table["next"] = oneArgFunction { self ->
         self.asObj<Iterator<Value>>().next()
     }
     table["__iter__"] = oneArgFunction { it }
     table["__str__"] = oneArgFunction {
-        Value.String("an iterator")
+        "an iterator".metisValue()
     }
 }
 
@@ -47,7 +50,7 @@ private val sbMetatable = buildTable { table ->
     }
     table["__index__"] = twoArgFunction { self, value ->
         if (value is Value.Number) {
-            Value.String(self.asObj<StringBuilder>()[value.intValue()].toString())
+            self.asObj<StringBuilder>()[value.intValue()].toString().metisValue()
         } else {
             self.lookUp(value) ?: throw MetisRuntimeException("KeyError", "Key not found: $value")
         }
@@ -76,7 +79,7 @@ private val sbMetatable = buildTable { table ->
         Value.Number.of(self.asObj<StringBuilder>().length)
     }
     table["__str__"] = oneArgFunction {
-        Value.String(it.asObj<StringBuilder>().toString())
+        it.asObj<StringBuilder>().toString().metisValue()
     }
 }
 

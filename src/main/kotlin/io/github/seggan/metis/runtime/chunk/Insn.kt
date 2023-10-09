@@ -4,7 +4,12 @@ import io.github.seggan.metis.runtime.Value
 import kotlin.properties.Delegates
 
 sealed interface Insn {
-    data class Push(val value: Value) : Insn
+    data class Push(val value: Value) : Insn {
+        constructor(value: Int) : this(Value.Number.of(value))
+        constructor(value: Double) : this(Value.Number.of(value))
+        constructor(value: Boolean) : this(Value.Boolean.of(value))
+        constructor(value: String) : this(Value.String(value))
+    }
     data class PushClosure(val chunk: Chunk) : Insn {
         override fun toString(): String {
             return "PushClosure:\n" + chunk.toString().prependIndent("  ")

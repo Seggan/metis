@@ -164,7 +164,7 @@ class Compiler private constructor(
                 UnOp.NEG -> {
                     +compileExpression(op.expr)
                     +Insn.CopyUnder(0)
-                    +Insn.Push(Value.String("__mul__"))
+                    +Insn.Push("__mul__")
                     +Insn.Index
                     +Insn.Call(1)
                 }
@@ -182,7 +182,7 @@ class Compiler private constructor(
         return buildInsns(error.span) {
             +compileExpression(error.message)
             +Insn.CopyUnder(0)
-            +Insn.Push(Value.String("__str__"))
+            +Insn.Push("__str__")
             +Insn.Index
             +Insn.Call(1)
             if (error.companionData != null) {
@@ -211,7 +211,7 @@ class Compiler private constructor(
         return buildInsns(statement.span) {
             +compileExpression(statement.iterable)
             +Insn.CopyUnder(0)
-            +Insn.Push(Value.String("__iter__"))
+            +Insn.Push("__iter__")
             +Insn.Index
             +Insn.Call(1)
             localStack.addFirst(Local("", scope, localStack.size))
@@ -219,14 +219,14 @@ class Compiler private constructor(
             +start
             +Insn.CopyUnder(0)
             +Insn.CopyUnder(0)
-            +Insn.Push(Value.String("has_next"))
+            +Insn.Push("has_next")
             +Insn.Index
             +Insn.Call(1)
             val end = Label()
             +Insn.JumpIf(end, false)
             +Insn.CopyUnder(0)
             +Insn.CopyUnder(0)
-            +Insn.Push(Value.String("next"))
+            +Insn.Push("next")
             +Insn.Index
             +Insn.Call(1)
             localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
@@ -329,7 +329,7 @@ class Compiler private constructor(
                 +arg
             }
             +Insn.CopyUnder(args.size)
-            +Insn.Push(Value.String(name))
+            +Insn.Push(name)
             +Insn.Index
             +Insn.Call(args.size + 1)
         }

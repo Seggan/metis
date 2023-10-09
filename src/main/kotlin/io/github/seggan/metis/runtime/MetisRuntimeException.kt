@@ -5,14 +5,14 @@ import io.github.seggan.metis.runtime.intrinsics.initError
 
 class MetisRuntimeException(
     val type: String,
-    message: String,
+    private val actualMessage: String,
     private val companionData: Value.Table = Value.Table()
-) : MetisException("$type: $message", mutableListOf()), Value {
+) : MetisException("$type: $actualMessage", mutableListOf()), Value {
 
     override var metatable: Value.Table? = Companion.metatable
 
     override fun lookUpDirect(key: Value): Value? {
-        if (key == messageString) return Value.String(message!!)
+        if (key == messageString) return actualMessage.metisValue()
         return companionData.lookUpDirect(key)
     }
 

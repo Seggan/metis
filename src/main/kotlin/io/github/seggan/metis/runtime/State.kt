@@ -12,8 +12,8 @@ import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.runtime.intrinsics.Intrinsics
-import io.github.seggan.metis.runtime.intrinsics.ModuleLoader
 import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
+import io.github.seggan.metis.runtime.intrinsics.initPathLib
 import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
 import io.github.seggan.metis.util.*
 import java.io.InputStream
@@ -75,8 +75,10 @@ class State(val isChildState: Boolean = false) {
         val pkg = Value.Table()
         pkg["loaded"] = Value.List()
         pkg["path"] = Value.List()
-        pkg["loaders"] = Value.List(mutableListOf(ModuleLoader))
+        pkg["loaders"] = Value.List()
         globals["package"] = pkg
+
+        globals["path"] = initPathLib()
 
         runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
         for (script in coreScripts) {
@@ -130,7 +132,7 @@ class State(val isChildState: Boolean = false) {
             stack.pop()
             stack.push(stack.pop().metatable.orNull())
         } else {
-            val getter = stack.getFromTop(1).lookUp(Value.String("__index__"))
+            val getter = stack.getFromTop(1).lookUp("__index__".metisValue())
             if (getter is CallableValue) {
                 callValue(getter, 2)
             } else {
@@ -140,7 +142,7 @@ class State(val isChildState: Boolean = false) {
     }
 
     fun set() {
-        if (stack.getFromTop(1) == Value.String("metatable")) {
+        if (stack.getFromTop(1) == metatableString) {
             val toSet = stack.pop().convertTo<Value.Table>()
             stack.pop()
             stack.pop().metatable = toSet
@@ -160,7 +162,7 @@ class State(val isChildState: Boolean = false) {
         if (callable is CallableValue) {
             callValue(callable, nargs, span)
         } else {
-            val possiblyCallable = callable.lookUp(Value.String("__call__"))
+            val possiblyCallable = callable.lookUp("__call__".metisValue())
             if (possiblyCallable is CallableValue) {
                 callValue(possiblyCallable, nargs, span)
             } else {

@@ -255,3 +255,9 @@ fun typeToName(clazz: KClass<out Value>): String = when (clazz::class) {
         clazz::class.simpleName ?: "unknown"
     }
 }
+
+fun Int.metisValue() = Value.Number.of(this)
+fun Double.metisValue() = Value.Number.of(this)
+fun String.metisValue() = Value.String(this)
+fun Boolean.metisValue() = Value.Boolean.of(this)
+fun List<Value>.metisValue() = Value.List(this.toMutableList())

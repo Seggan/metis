@@ -8,7 +8,7 @@ import kotlin.math.pow
 internal fun initString() = buildTable { table ->
     table["__str__"] = oneArgFunction { it }
     table["__plus__"] = twoArgFunction { self, other ->
-        Value.String(self.stringValue() + other.stringValue())
+        (self.stringValue() + other.stringValue()).metisValue()
     }
     table["encode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
@@ -17,7 +17,7 @@ internal fun initString() = buildTable { table ->
         Value.Bytes(self.stringValue().toByteArray(actualEncoding))
     }
     table["replace"] = threeArgFunction { self, value, toReplace ->
-        Value.String(self.stringValue().replace(value.stringValue(), toReplace.stringValue()))
+        self.stringValue().replace(value.stringValue(), toReplace.stringValue()).metisValue()
     }
 
     table["builder"] = oneArgFunction { init ->
@@ -31,7 +31,7 @@ internal fun initString() = buildTable { table ->
 
 internal fun initNumber() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.toString())
+        self.toString().metisValue()
     }
     table["__plus__"] = twoArgFunction { self, other ->
         Value.Number.of(self.doubleValue() + other.doubleValue())
@@ -63,7 +63,7 @@ internal fun initNumber() = buildTable { table ->
 
 internal fun initBoolean() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.toString())
+        self.toString().metisValue()
     }
     table["__eq__"] = twoArgFunction { self, other ->
         Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
@@ -91,7 +91,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
 
 internal fun initList() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<Value.List>().toString())
+        self.convertTo<Value.List>().toString().metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Index not found: $key")
@@ -114,7 +114,7 @@ internal fun initList() = buildTable { table ->
 
 internal fun initBytes() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8))
+        self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8).metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
         self.convertTo<Value.Bytes>().value.getOrNull(key.intValue())?.let {
@@ -129,13 +129,13 @@ internal fun initBytes() = buildTable { table ->
         val actualEncoding =
             if (encoding == Value.Null) Charsets.UTF_8
             else Charset.forName(encoding.stringValue())
-        Value.String(self.convertTo<Value.Bytes>().value.toString(actualEncoding))
+        self.convertTo<Value.Bytes>().value.toString(actualEncoding).metisValue()
     }
 }
 
 internal fun initNull() = buildTable { table ->
     table["__str__"] = oneArgFunction {
-        Value.String("null")
+        "null".metisValue()
     }
     table["__call__"] = zeroArgFunction {
         throw MetisRuntimeException("TypeError", "Cannot call null")
@@ -144,13 +144,13 @@ internal fun initNull() = buildTable { table ->
 
 internal fun initChunk() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<Chunk.Instance>().verboseToString())
+        self.convertTo<Chunk.Instance>().verboseToString().metisValue()
     }
 }
 
 internal fun initError() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        Value.String(self.convertTo<MetisRuntimeException>().message!!)
+        self.convertTo<MetisRuntimeException>().message!!.metisValue()
     }
     table["__call__"] = zeroArgFunction {
         throw MetisRuntimeException("TypeError", "Cannot call error")

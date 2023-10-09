@@ -41,19 +41,20 @@ abstract class OneShotFunction(override val arity: Arity) : CallableValue {
     abstract fun execute(state: State, nargs: Int)
 }
 
-inline fun zeroArgFunction(crossinline fn: () -> Value) = object : OneShotFunction(Arity.ZERO) {
+inline fun zeroArgFunction(crossinline fn: () -> Value): OneShotFunction = object : OneShotFunction(Arity.ZERO) {
     override fun execute(state: State, nargs: Int) {
         state.stack.push(fn())
     }
 }
 
-inline fun oneArgFunction(crossinline fn: (Value) -> Value) = object : OneShotFunction(Arity.ONE) {
+inline fun oneArgFunction(crossinline fn: (Value) -> Value): OneShotFunction = object : OneShotFunction(Arity.ONE) {
     override fun execute(state: State, nargs: Int) {
         state.stack.push(fn(state.stack.pop()))
     }
 }
 
-inline fun twoArgFunction(crossinline fn: (Value, Value) -> Value) = object : OneShotFunction(Arity.TWO) {
+inline fun twoArgFunction(crossinline fn: (Value, Value) -> Value): OneShotFunction =
+    object : OneShotFunction(Arity.TWO) {
     override fun execute(state: State, nargs: Int) {
         val b = state.stack.pop()
         val a = state.stack.pop()
@@ -61,7 +62,8 @@ inline fun twoArgFunction(crossinline fn: (Value, Value) -> Value) = object : On
     }
 }
 
-inline fun threeArgFunction(crossinline fn: (Value, Value, Value) -> Value) = object : OneShotFunction(Arity.THREE) {
+inline fun threeArgFunction(crossinline fn: (Value, Value, Value) -> Value): OneShotFunction =
+    object : OneShotFunction(Arity.THREE) {
     override fun execute(state: State, nargs: Int) {
         val c = state.stack.pop()
         val b = state.stack.pop()
