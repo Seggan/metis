@@ -3,13 +3,14 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
+import java.io.InputStream
 import java.io.OutputStream
 
 private val outStreamMetatable = buildTable { table ->
     table["write"] = twoArgFunction { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
         self.asObj<OutputStream>().write(toBeWritten)
-        Value.Number.of(toBeWritten.size.toDouble())
+        toBeWritten.size.toDouble().metisValue()
     }
     table["flush"] = oneArgFunction { self ->
         self.asObj<OutputStream>().flush()
@@ -26,6 +27,25 @@ private val outStreamMetatable = buildTable { table ->
 
 fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamMetatable)
 
+private val inStreamMetatable = buildTable { table ->
+    table["read"] = oneArgFunction { self ->
+        val read = self.asObj<InputStream>().read()
+        if (read == -1) {
+            Value.Null
+        } else {
+            read.metisValue()
+        }
+    }
+    table["close"] = oneArgFunction { self ->
+        self.asObj<InputStream>().close()
+        Value.Null
+    }
+    table["__str__"] = oneArgFunction {
+        "an input stream".metisValue()
+    }
+}
+
+fun wrapInStream(stream: InputStream): Value = Value.Native(stream, inStreamMetatable)
 
 private val iteratorMetatable = buildTable { table ->
 

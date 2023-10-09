@@ -1,0 +1,5 @@
+fn number.char(self)
+    let b = bytes.allocate(1)
+    b[0] = self
+    return b:decode("UTF-8")
+end

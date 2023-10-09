@@ -194,10 +194,10 @@ class Compiler private constructor(
             +start
             +compileExpression(statement.condition)
             val end = Label()
-            +Insn.JumpIf(start, false)
+            +Insn.JumpIf(end, false)
             +compileBlock(statement.body)
-            +end
             +Insn.Jump(start)
+            +end
         }
     }
 

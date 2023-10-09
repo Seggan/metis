@@ -9,3 +9,5 @@ do
     // THIS GOES LAST
     fn sb_meta.__set__(self, index, value) = self:__set(self, index, str(value))
 end
+
+fn string.char_code(self) = self:encode("UTF-8")[0]

@@ -11,10 +11,7 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.chunk.Upvalue
-import io.github.seggan.metis.runtime.intrinsics.Intrinsics
-import io.github.seggan.metis.runtime.intrinsics.OneShotFunction
-import io.github.seggan.metis.runtime.intrinsics.initPathLib
-import io.github.seggan.metis.runtime.intrinsics.wrapOutStream
+import io.github.seggan.metis.runtime.intrinsics.*
 import io.github.seggan.metis.util.*
 import java.io.InputStream
 import java.io.OutputStream
@@ -49,7 +46,7 @@ class State(val isChildState: Boolean = false) {
             Intrinsics.registerDefault()
         }
 
-        val coreScripts = mutableListOf("string", "table", "list")
+        val coreScripts = mutableListOf("string", "table", "list", "number")
     }
 
     init {
@@ -64,13 +61,14 @@ class State(val isChildState: Boolean = false) {
         val io = Value.Table()
         io["stdout"] = wrapOutStream(stdout)
         io["stderr"] = wrapOutStream(stderr)
-
+        io["stdin"] = wrapInStream(stdin)
         globals["io"] = io
 
         globals["string"] = Value.String.metatable
         globals["number"] = Value.Number.metatable
         globals["table"] = Value.Table.metatable
         globals["list"] = Value.List.metatable
+        globals["bytes"] = Value.Bytes.metatable
 
         val pkg = Value.Table()
         pkg["loaded"] = Value.List()

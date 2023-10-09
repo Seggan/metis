@@ -239,7 +239,7 @@ inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
     }
 }
 
-fun typeToName(clazz: KClass<out Value>): String = when (clazz::class) {
+fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
     Value.Number::class -> "number"
     Value.String::class -> "string"
     Value.Boolean::class -> "boolean"
@@ -252,7 +252,7 @@ fun typeToName(clazz: KClass<out Value>): String = when (clazz::class) {
     else -> if (CallableValue::class.java.isAssignableFrom(clazz::class.java)) {
         "callable"
     } else {
-        clazz::class.simpleName ?: "unknown"
+        clazz.simpleName ?: "unknown"
     }
 }
 

@@ -1,9 +1,8 @@
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.runtime.Arity
-import io.github.seggan.metis.runtime.CallableValue
-import io.github.seggan.metis.runtime.State
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.parsing.CodeSource
+import io.github.seggan.metis.runtime.*
+import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
@@ -15,12 +14,11 @@ object Intrinsics {
 
     val intrinsics: Map<String, CallableValue> get() = _intrinsics
 
-    fun register(name: String, value: CallableValue) {
-        _intrinsics[name] = value
-    }
-
     fun registerDefault() {
-        // TODO: intrinsics
+        _intrinsics["load_chunk"] = twoArgFunction { name, chunk ->
+            val source = CodeSource.constant(name.stringValue(), chunk.stringValue())
+            Chunk.load(source).Instance(this)
+        }
     }
 }
 
@@ -41,33 +39,34 @@ abstract class OneShotFunction(override val arity: Arity) : CallableValue {
     abstract fun execute(state: State, nargs: Int)
 }
 
-inline fun zeroArgFunction(crossinline fn: () -> Value): OneShotFunction = object : OneShotFunction(Arity.ZERO) {
+inline fun zeroArgFunction(crossinline fn: State.() -> Value): OneShotFunction = object : OneShotFunction(Arity.ZERO) {
     override fun execute(state: State, nargs: Int) {
-        state.stack.push(fn())
+        state.stack.push(state.fn())
     }
 }
 
-inline fun oneArgFunction(crossinline fn: (Value) -> Value): OneShotFunction = object : OneShotFunction(Arity.ONE) {
-    override fun execute(state: State, nargs: Int) {
-        state.stack.push(fn(state.stack.pop()))
+inline fun oneArgFunction(crossinline fn: State.(Value) -> Value): OneShotFunction =
+    object : OneShotFunction(Arity.ONE) {
+        override fun execute(state: State, nargs: Int) {
+            state.stack.push(state.fn(state.stack.pop()))
+        }
     }
-}
 
-inline fun twoArgFunction(crossinline fn: (Value, Value) -> Value): OneShotFunction =
+inline fun twoArgFunction(crossinline fn: State.(Value, Value) -> Value): OneShotFunction =
     object : OneShotFunction(Arity.TWO) {
-    override fun execute(state: State, nargs: Int) {
-        val b = state.stack.pop()
-        val a = state.stack.pop()
-        state.stack.push(fn(a, b))
+        override fun execute(state: State, nargs: Int) {
+            val b = state.stack.pop()
+            val a = state.stack.pop()
+            state.stack.push(state.fn(a, b))
+        }
     }
-}
 
-inline fun threeArgFunction(crossinline fn: (Value, Value, Value) -> Value): OneShotFunction =
+inline fun threeArgFunction(crossinline fn: State.(Value, Value, Value) -> Value): OneShotFunction =
     object : OneShotFunction(Arity.THREE) {
-    override fun execute(state: State, nargs: Int) {
-        val c = state.stack.pop()
-        val b = state.stack.pop()
-        val a = state.stack.pop()
-        state.stack.push(fn(a, b, c))
+        override fun execute(state: State, nargs: Int) {
+            val c = state.stack.pop()
+            val b = state.stack.pop()
+            val a = state.stack.pop()
+            state.stack.push(state.fn(a, b, c))
+        }
     }
-}

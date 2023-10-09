@@ -34,8 +34,6 @@ internal fun initPathLib() = buildTable { lib ->
     lib["is_dir"] = pathFunction { Value.Boolean.of(it.isDirectory()) }
     lib["is_symlink"] = pathFunction { Value.Boolean.of(it.isSymbolicLink()) }
     lib["is_hidden"] = pathFunction { Value.Boolean.of(it.isHidden()) }
-    lib["open_write"] = pathFunction { path ->
-        val stream = path.toFile().outputStream()
-        wrapOutStream(stream)
-    }
+    lib["open_write"] = pathFunction { wrapOutStream(it.outputStream()) }
+    lib["open_read"] = pathFunction { wrapInStream(it.inputStream()) }
 }

@@ -10,6 +10,13 @@ internal fun initString() = buildTable { table ->
     table["__plus__"] = twoArgFunction { self, other ->
         (self.stringValue() + other.stringValue()).metisValue()
     }
+    table["__eq__"] = twoArgFunction { self, other ->
+        if (other !is Value.String) {
+            Value.Boolean.FALSE
+        } else {
+            Value.Boolean.of(self.stringValue() == other.stringValue())
+        }
+    }
     table["encode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
             if (encoding == Value.Null) Charsets.UTF_8
@@ -52,7 +59,11 @@ internal fun initNumber() = buildTable { table ->
         Value.Number.of(self.doubleValue().pow(other.doubleValue()))
     }
     table["__eq__"] = twoArgFunction { self, other ->
-        Value.Boolean.of(self.doubleValue() == other.doubleValue())
+        if (other !is Value.Number) {
+            Value.Boolean.FALSE
+        } else {
+            Value.Boolean.of(self.doubleValue() == other.doubleValue())
+        }
     }
     table["__cmp__"] = twoArgFunction { self, other ->
         Value.Number.of(
@@ -69,7 +80,11 @@ internal fun initBoolean() = buildTable { table ->
         self.toString().metisValue()
     }
     table["__eq__"] = twoArgFunction { self, other ->
-        Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
+        if (other !is Value.Boolean) {
+            Value.Boolean.FALSE
+        } else {
+            Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
+        }
     }
 }
 
@@ -120,12 +135,10 @@ internal fun initBytes() = buildTable { table ->
         self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8).metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
-        self.convertTo<Value.Bytes>().value.getOrNull(key.intValue())?.let {
-            Value.Number.of(it.toInt().toDouble())
-        } ?: throw MetisRuntimeException("KeyError", "Key not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Byte not found: $key")
     }
     table["__set__"] = threeArgFunction { self, key, value ->
-        self.convertTo<Value.Bytes>().value[key.intValue()] = value.intValue().toByte()
+        self.setOrError(key, value)
         Value.Null
     }
     table["decode"] = twoArgFunction { self, encoding ->
@@ -133,6 +146,10 @@ internal fun initBytes() = buildTable { table ->
             if (encoding == Value.Null) Charsets.UTF_8
             else Charset.forName(encoding.stringValue())
         self.convertTo<Value.Bytes>().value.toString(actualEncoding).metisValue()
+    }
+
+    table["allocate"] = oneArgFunction { size ->
+        Value.Bytes(ByteArray(size.intValue()))
     }
 }
 
@@ -142,6 +159,9 @@ internal fun initNull() = buildTable { table ->
     }
     table["__call__"] = zeroArgFunction {
         throw MetisRuntimeException("TypeError", "Cannot call null")
+    }
+    table["__eq__"] = twoArgFunction { _, other ->
+        Value.Boolean.of(other == Value.Null)
     }
 }
 
@@ -157,5 +177,8 @@ internal fun initError() = buildTable { table ->
     }
     table["__call__"] = zeroArgFunction {
         throw MetisRuntimeException("TypeError", "Cannot call error")
+    }
+    table["__eq__"] = twoArgFunction { self, other ->
+        Value.Boolean.of(self === other)
     }
 }
