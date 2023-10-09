@@ -59,6 +59,9 @@ internal fun initNumber() = buildTable { table ->
             self.doubleValue().compareTo(other.doubleValue()).toDouble()
         )
     }
+    table["__neg__"] = oneArgFunction { self ->
+        Value.Number.of(-self.doubleValue())
+    }
 }
 
 internal fun initBoolean() = buildTable { table ->

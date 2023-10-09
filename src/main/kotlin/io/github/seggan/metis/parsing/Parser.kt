@@ -207,7 +207,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         return AstNode.ErrorLiteral(type, message, companionData, startSpan + previous.span)
     }
 
-    private fun parseFunctionDef(startSpan: Span): AstNode.FunctionLiteral {
+    private fun parseFunctionDef(startSpan: Span, name: String? = null): AstNode.FunctionLiteral {
         consume(OPEN_PAREN)
         val args = parseArgList(CLOSE_PAREN) { parseId().text }
         var block = if (tryConsume(EQUALS) != null) {
@@ -219,7 +219,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
             nodes.add(AstNode.Return(AstNode.Literal(Value.Null, block.span), block.span))
             block = AstNode.Block(nodes, block.span)
         }
-        return AstNode.FunctionLiteral(args, block, startSpan + block.span)
+        return AstNode.FunctionLiteral(args, block, name, startSpan + block.span)
     }
 
     private fun parseFunctionDecl(): AstNode.Statement {
@@ -227,7 +227,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         consume(FN)
         val startSpan = global?.span ?: previous.span
         val target = parseAssignTarget()
-        val fn = parseFunctionDef(startSpan)
+        val fn = parseFunctionDef(startSpan, if (target is AstNode.Var) target.name else null)
         return if (target is AstNode.Var) {
             AstNode.VarDecl(
                 if (global != null) Visibility.GLOBAL else Visibility.LOCAL,

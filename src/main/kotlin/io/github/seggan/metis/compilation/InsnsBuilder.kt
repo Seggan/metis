@@ -34,6 +34,15 @@ class InsnsBuilder(val span: Span) {
     }
 }
 
+fun InsnsBuilder.generateMetaCall(name: String, nargs: Int) {
+    +Insn.CopyUnder(nargs)
+    +Insn.Push("metatable")
+    +Insn.Index
+    +Insn.Push(name)
+    +Insn.Index
+    +Insn.Call(nargs + 1)
+}
+
 inline fun buildInsns(span: Span, block: InsnsBuilder.() -> Unit): List<FullInsn> {
     return InsnsBuilder(span).apply(block).build()
 }

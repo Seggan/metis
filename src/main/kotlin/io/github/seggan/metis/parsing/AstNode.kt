@@ -58,7 +58,8 @@ sealed interface AstNode {
     data class Literal(val value: Value, override val span: Span) : Expression
     data class ListLiteral(val values: List<Expression>, override val span: Span) : Expression
     data class TableLiteral(val values: List<Pair<Expression, Expression>>, override val span: Span) : Expression
-    data class FunctionLiteral(val args: List<String>, val body: Block, override val span: Span) : Expression
+    data class FunctionLiteral(val args: List<String>, val body: Block, val name: String?, override val span: Span) :
+        Expression
     data class ErrorLiteral(
         val type: String,
         val message: Expression,

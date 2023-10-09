@@ -163,10 +163,7 @@ class Compiler private constructor(
 
                 UnOp.NEG -> {
                     +compileExpression(op.expr)
-                    +Insn.CopyUnder(0)
-                    +Insn.Push("__mul__")
-                    +Insn.Index
-                    +Insn.Call(1)
+                    generateMetaCall("__neg__", 0)
                 }
             }
         }
@@ -181,10 +178,7 @@ class Compiler private constructor(
     private fun compileErrorLiteral(error: AstNode.ErrorLiteral): List<FullInsn> {
         return buildInsns(error.span) {
             +compileExpression(error.message)
-            +Insn.CopyUnder(0)
-            +Insn.Push("__str__")
-            +Insn.Index
-            +Insn.Call(1)
+            generateMetaCall("__str__", 0)
             if (error.companionData != null) {
                 +compileExpression(error.companionData)
             } else {
@@ -210,10 +204,7 @@ class Compiler private constructor(
     private fun compileFor(statement: AstNode.For): List<FullInsn> {
         return buildInsns(statement.span) {
             +compileExpression(statement.iterable)
-            +Insn.CopyUnder(0)
-            +Insn.Push("__iter__")
-            +Insn.Index
-            +Insn.Call(1)
+            generateMetaCall("__iter__", 0)
             localStack.addFirst(Local("", scope, localStack.size))
             val start = Label()
             +start

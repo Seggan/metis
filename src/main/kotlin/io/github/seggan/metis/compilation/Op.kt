@@ -1,6 +1,5 @@
 package io.github.seggan.metis.compilation
 
-import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.chunk.Label
 
@@ -13,12 +12,9 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     POW("__pow__"),
     EQ("__eq__"),
     NOT_EQ({ left, right ->
-        +Compiler.generateColonCall(
-            left,
-            "__eq__",
-            listOf(right),
-            span
-        )
+        +left
+        +right
+        generateMetaCall("__eq__", 1)
         +Insn.Not
     }),
     LESS(-1),
@@ -43,22 +39,16 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     });
 
     constructor(metamethod: String) : this({ left, right ->
-        +Compiler.generateColonCall(
-            left,
-            metamethod,
-            listOf(right),
-            span
-        )
+        +left
+        +right
+        generateMetaCall(metamethod, 1)
     })
 
     constructor(number: Int, inverse: Boolean = false) : this({ left, right ->
-        +Compiler.generateColonCall(
-            left,
-            "__cmp__",
-            listOf(right),
-            span
-        )
-        +Insn.Push(Value.Number.of(number))
+        +left
+        +right
+        generateMetaCall("__cmp__", 1)
+        +Insn.Push(number)
         +Insn.CopyUnder(1)
         +Insn.Push("__eq__")
         +Insn.Index
