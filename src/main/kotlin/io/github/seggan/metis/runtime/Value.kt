@@ -57,7 +57,10 @@ interface Value {
 
         override fun lookUpDirect(key: Value): Value? {
             if (key is Number) {
-                return String(value[key.intValue()].toString())
+                val index = key.intValue()
+                if (index >= 0 && index < value.length) {
+                    return String(value[index].toString())
+                }
             }
             return null
         }
@@ -211,7 +214,7 @@ inline fun <reified T : Value> Value.convertTo(): T {
     if (this is T) {
         return this
     }
-    throw MetisRuntimeException("IndexError", "Cannot convert ${typeToName(this::class)} to ${typeToName(T::class)}")
+    throw MetisRuntimeException("TypeError", "Cannot convert ${typeToName(this::class)} to ${typeToName(T::class)}")
 }
 
 fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
@@ -249,7 +252,7 @@ fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
     Value.Native::class -> "native"
     Value.Null::class -> "null"
     MetisRuntimeException::class -> "error"
-    else -> if (CallableValue::class.java.isAssignableFrom(clazz::class.java)) {
+    else -> if (CallableValue::class.java.isAssignableFrom(clazz.java)) {
         "callable"
     } else {
         clazz.simpleName ?: "unknown"

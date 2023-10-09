@@ -91,7 +91,14 @@ class Compiler private constructor(
 
     private fun compileExpression(expression: AstNode.Expression): List<FullInsn> {
         return when (expression) {
-            is AstNode.BinaryOp -> compileBinOp(expression)
+            is AstNode.BinaryOp -> buildInsns(expression.span) {
+                expression.op.generateCode(
+                    this,
+                    compileExpression(expression.left),
+                    compileExpression(expression.right)
+                )
+            }
+
             is AstNode.UnaryOp -> compileUnOp(expression)
 
             is AstNode.Call -> buildInsns(expression.span) {
@@ -144,12 +151,6 @@ class Compiler private constructor(
             }
 
             is AstNode.ErrorLiteral -> compileErrorLiteral(expression)
-        }
-    }
-
-    private fun compileBinOp(op: AstNode.BinaryOp): List<FullInsn> {
-        return buildInsns(op.span) {
-            op.op.generateCode(this, compileExpression(op.left), compileExpression(op.right))
         }
     }
 

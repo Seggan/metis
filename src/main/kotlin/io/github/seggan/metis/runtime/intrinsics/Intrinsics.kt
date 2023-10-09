@@ -19,6 +19,9 @@ object Intrinsics {
             val source = CodeSource.constant(name.stringValue(), chunk.stringValue())
             Chunk.load(source).Instance(this)
         }
+        _intrinsics["type"] = oneArgFunction { value ->
+            typeToName(value::class).metisValue()
+        }
     }
 }
 

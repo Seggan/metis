@@ -28,12 +28,19 @@ private val outStreamMetatable = buildTable { table ->
 fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamMetatable)
 
 private val inStreamMetatable = buildTable { table ->
-    table["read"] = oneArgFunction { self ->
-        val read = self.asObj<InputStream>().read()
-        if (read == -1) {
-            Value.Null
+    table["read"] = twoArgFunction { self, buffer ->
+        if (buffer == Value.Null) {
+            // Read a single byte
+            self.asObj<InputStream>().read().toDouble().metisValue()
         } else {
-            read.metisValue()
+            // Read into a buffer
+            val toBeRead = buffer.convertTo<Value.Bytes>().value
+            val read = self.asObj<InputStream>().read(toBeRead)
+            if (read == -1) {
+                Value.Null
+            } else {
+                read.toDouble().metisValue()
+            }
         }
     }
     table["close"] = oneArgFunction { self ->

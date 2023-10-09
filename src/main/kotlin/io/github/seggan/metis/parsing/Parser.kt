@@ -72,7 +72,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     )
 
     private fun parseComparison() = parseBinOp(
-        ::parseAddition, mapOf(
+        ::parseRange, mapOf(
             LESS_THAN to BinOp.LESS,
             LESS_THAN_OR_EQUAL to BinOp.LESS_EQ,
             GREATER_THAN to BinOp.GREATER,
@@ -80,6 +80,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         )
     )
 
+    private fun parseRange() = parseBinOp(::parseAddition, mapOf(RANGE to BinOp.RANGE))
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
     private fun parseMultiplication() =
         parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV, PERCENT to BinOp.MOD))

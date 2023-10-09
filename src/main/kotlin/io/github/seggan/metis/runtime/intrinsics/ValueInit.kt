@@ -10,6 +10,12 @@ internal fun initString() = buildTable { table ->
     table["__plus__"] = twoArgFunction { self, other ->
         (self.stringValue() + other.stringValue()).metisValue()
     }
+    table["__len__"] = oneArgFunction { self ->
+        Value.Number.of(self.stringValue().length.toDouble())
+    }
+    table["__index__"] = twoArgFunction { self, key ->
+        self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Index not found: $key")
+    }
     table["__eq__"] = twoArgFunction { self, other ->
         if (other !is Value.String) {
             Value.Boolean.FALSE

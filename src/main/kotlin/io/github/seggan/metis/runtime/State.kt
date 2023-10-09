@@ -46,7 +46,7 @@ class State(val isChildState: Boolean = false) {
             Intrinsics.registerDefault()
         }
 
-        val coreScripts = mutableListOf("string", "table", "list", "number")
+        val coreScripts = mutableListOf("string", "table", "list", "number", "range")
     }
 
     init {

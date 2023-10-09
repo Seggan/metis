@@ -10,6 +10,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     DIV("__div__"),
     MOD("__mod__"),
     POW("__pow__"),
+    RANGE("__range__"),
     EQ("__eq__"),
     NOT_EQ({ left, right ->
         +left

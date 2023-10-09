@@ -1,0 +1,24 @@
+let range_iter = {
+    "has_next" = fn(self) = self.current < self.stop,
+    "next" = fn(self)
+        let current = self.current
+        self.current = current + self.step
+        return current
+    end
+}
+
+let global ranges = {
+    "__iter__" = fn(self) = with_metatable({
+        "current" = self.start,
+        "stop" = self.stop,
+        "step" = self.step
+    }, range_iter)
+}
+
+global fn range(start, stop, step) = with_metatable({
+    "start" = start,
+    "stop" = stop,
+    "step" = step
+}, ranges)
+
+fn number.__range__(self, other) = range(self, other, 1)
