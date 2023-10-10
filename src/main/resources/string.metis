@@ -11,3 +11,5 @@ do
 end
 
 fn string.char_code(self) = self:encode("UTF-8")[0]
+
+string.metatable = collection

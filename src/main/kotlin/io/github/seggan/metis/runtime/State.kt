@@ -46,7 +46,7 @@ class State(val isChildState: Boolean = false) {
             Intrinsics.registerDefault()
         }
 
-        val coreScripts = mutableListOf("string", "table", "list", "number", "range")
+        val coreScripts = mutableListOf("collection", "list", "string", "table", "number", "range")
     }
 
     init {
@@ -130,7 +130,7 @@ class State(val isChildState: Boolean = false) {
             stack.pop()
             stack.push(stack.pop().metatable.orNull())
         } else {
-            val getter = stack.getFromTop(1).lookUp("__index__".metisValue())
+            val getter = stack.getFromTop(1).metatable?.lookUp(indexString)
             if (getter is CallableValue) {
                 callValue(getter, 2)
             } else {
@@ -145,7 +145,7 @@ class State(val isChildState: Boolean = false) {
             stack.pop()
             stack.pop().metatable = toSet
         } else {
-            val setter = stack.getFromTop(2).lookUp(Value.String("__set__"))
+            val setter = stack.getFromTop(2).metatable?.lookUp(setString)
             if (setter is CallableValue) {
                 callValue(setter, 3)
                 stack.pop()
@@ -223,3 +223,5 @@ class State(val isChildState: Boolean = false) {
 internal data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)
 
 private val metatableString = Value.String("metatable")
+private val indexString = Value.String("__index__")
+private val setString = Value.String("__set__")

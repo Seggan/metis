@@ -54,22 +54,6 @@ private val inStreamMetatable = buildTable { table ->
 
 fun wrapInStream(stream: InputStream): Value = Value.Native(stream, inStreamMetatable)
 
-private val iteratorMetatable = buildTable { table ->
-
-    table["has_next"] = oneArgFunction { self ->
-        self.asObj<Iterator<Value>>().hasNext().metisValue()
-    }
-    table["next"] = oneArgFunction { self ->
-        self.asObj<Iterator<Value>>().next()
-    }
-    table["__iter__"] = oneArgFunction { it }
-    table["__str__"] = oneArgFunction {
-        "an iterator".metisValue()
-    }
-}
-
-fun wrapIterator(iterator: Iterator<Value>): Value = Value.Native(iterator, iteratorMetatable)
-
 private val sbMetatable = buildTable { table ->
     table["__append"] = twoArgFunction { self, value ->
         self.asObj<StringBuilder>().append(value.stringValue())

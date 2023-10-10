@@ -4,6 +4,7 @@ import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
+import io.github.seggan.metis.util.MutableLazy
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 import kotlin.collections.set
@@ -22,6 +23,7 @@ object Intrinsics {
         _intrinsics["type"] = oneArgFunction { value ->
             typeToName(value::class).metisValue()
         }
+        _intrinsics["globals"] = zeroArgFunction { globals }
     }
 }
 
@@ -31,7 +33,12 @@ object Intrinsics {
  */
 abstract class OneShotFunction(override val arity: Arity) : CallableValue {
 
-    override var metatable: Value.Table? = null
+    override var metatable: Value.Table? by MutableLazy {
+        buildTable { table ->
+            table["__str__"] = oneArgFunction { "OneShot".metisValue() }
+        }
+    }
+
     final override fun call(nargs: Int): CallableValue.Executor = object : CallableValue.Executor {
         override fun step(state: State): StepResult {
             execute(state, nargs)

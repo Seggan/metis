@@ -107,6 +107,10 @@ interface Value {
         }
 
         override fun toString() = value.toString()
+
+        override fun equals(other: Any?) = other is Table && value == other.value
+
+        override fun hashCode() = value.hashCode()
     }
 
     data class List(
@@ -196,9 +200,13 @@ data class Arity(val required: Int, val isVarargs: Boolean = false) {
     }
 }
 
-fun Value.lookUp(key: Value): Value? = lookUpDirect(key) ?: metatable?.lookUp(key)
+fun Value.lookUp(key: Value): Value? {
+    if (this === metatable) return lookUpDirect(key)
+    return lookUpDirect(key) ?: metatable?.lookUp(key)
+}
 
 fun Value.set(key: Value, value: Value): Boolean {
+    if (this === metatable) return setDirect(key, value)
     return setDirect(key, value) || metatable?.set(key, value) ?: false
 }
 
@@ -263,4 +271,5 @@ fun Int.metisValue() = Value.Number.of(this)
 fun Double.metisValue() = Value.Number.of(this)
 fun String.metisValue() = Value.String(this)
 fun Boolean.metisValue() = Value.Boolean.of(this)
-fun List<Value>.metisValue() = Value.List(this.toMutableList())
+fun Collection<Value>.metisValue() = Value.List(this.toMutableList())
+fun ByteArray.metisValue() = Value.Bytes(this)

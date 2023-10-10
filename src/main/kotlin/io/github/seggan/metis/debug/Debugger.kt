@@ -9,12 +9,20 @@ class Debugger(private val state: State, private val sourceName: String) {
 
     private val commands = listOf(
         DebugCommand("step", "s") { step() },
-        DebugCommand("verboseStep", "vs") {
+        DebugCommand("verboseStep", "vs", "v") {
             step()
             print("Current instruction: ")
             println(debugInfo?.insn ?: error("No debug info yet available"))
             println("\nCall stack: ")
             printStacktrace(this)
+        },
+        DebugCommand("next", "n") {
+            val currentSpan = debugInfo?.span ?: error("No debug info yet available")
+            var nextSpan = currentSpan
+            while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
+                step()
+                nextSpan = debugInfo?.span ?: error("No debug info yet available")
+            }
         },
         DebugCommand("continue", "c") {
             while (step() == StepResult.CONTINUE) {
@@ -52,7 +60,11 @@ class Debugger(private val state: State, private val sourceName: String) {
             printStacktrace(this)
         },
         DebugCommand("stack", "st") {
-            for (value in state.stack) {
+            val bottoms = callStack.map { it.stackBottom }
+            for ((i, value) in stack.withIndex()) {
+                if (i in bottoms) {
+                    println("---")
+                }
                 println(value)
             }
         },

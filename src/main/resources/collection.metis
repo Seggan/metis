@@ -1,0 +1,65 @@
+let global collection = {}
+
+let iterator = {}
+
+fn iterator.next(self)
+    let res = self.coll[self.index]
+    self.index = self.index + 1
+    return res
+end
+
+fn iterator.has_next(self) = self.index < len(self.coll)
+
+fn collection.__iter__(self) = with_metatable({ "coll" = self, "index" = 0 }, iterator)
+
+fn collection.map(self, f)
+    let res = list.new(len(self))
+    for v in self
+        res:append(f(v))
+    end
+    return res
+end
+
+fn collection.filter(self, f)
+    let res = []
+    for v in self
+        if f(v)
+            res:append(v)
+        end
+    end
+    return res
+end
+
+fn collection.reduce(self, f, init)
+    let res = init
+    for v in self
+        res = f(res, v)
+    end
+    return res
+end
+
+fn collection.sum(self)
+    let res = 0
+    for v in self
+        res = res + v
+    end
+    return res
+end
+
+fn collection.any(self, f)
+    for v in self
+        if f(v)
+            return true
+        end
+    end
+    return false
+end
+
+fn collection.all(self, f)
+    for v in self
+        if not f(v)
+            return false
+        end
+    end
+    return true
+end

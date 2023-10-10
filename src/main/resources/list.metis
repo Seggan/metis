@@ -1,4 +1,4 @@
-fn [].metatable.__str__(self)
+fn list.__str__(self)
     let sb = string.builder()
     sb:append("[")
     for v in self
@@ -7,3 +7,15 @@ fn [].metatable.__str__(self)
     sb:delete_last(2)
     return str(sb:append("]"))
 end
+
+fn list.join(self, sep)
+    let sb = string.builder()
+    for v in self
+        sb:append(v):append(sep)
+    end
+    sb:delete_last(len(sep))
+    return str(sb)
+end
+
+list.metatable = collection
+bytes.metatable = collection

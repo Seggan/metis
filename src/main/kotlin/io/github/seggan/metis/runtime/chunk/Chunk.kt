@@ -52,7 +52,7 @@ class Chunk(
 
         override fun toString() = name
 
-        fun verboseToString() = this@Chunk.toString()
+        fun dissasemble() = this@Chunk.toString()
 
         private inner class ChunkExecutor : CallableValue.Executor {
 

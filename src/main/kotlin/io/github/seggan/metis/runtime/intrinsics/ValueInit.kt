@@ -8,13 +8,20 @@ import kotlin.math.pow
 internal fun initString() = buildTable { table ->
     table["__str__"] = oneArgFunction { it }
     table["__plus__"] = twoArgFunction { self, other ->
-        (self.stringValue() + other.stringValue()).metisValue()
+        Value.String(self.stringValue() + other.stringValue())
     }
     table["__len__"] = oneArgFunction { self ->
-        Value.Number.of(self.stringValue().length.toDouble())
+        self.stringValue().length.toDouble().metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Index not found: $key")
+    }
+    table["__contains__"] = twoArgFunction { self, key ->
+        if (!self.stringValue().contains(key.stringValue())) {
+            Value.Boolean.of(self.lookUp(key) != null)
+        } else {
+            Value.Boolean.TRUE
+        }
     }
     table["__eq__"] = twoArgFunction { self, other ->
         if (other !is Value.String) {
@@ -62,7 +69,7 @@ internal fun initNumber() = buildTable { table ->
         Value.Number.of(self.doubleValue() % other.doubleValue())
     }
     table["__pow__"] = twoArgFunction { self, other ->
-        Value.Number.of(self.doubleValue().pow(other.doubleValue()))
+        self.doubleValue().pow(other.doubleValue()).metisValue()
     }
     table["__eq__"] = twoArgFunction { self, other ->
         if (other !is Value.Number) {
@@ -72,12 +79,13 @@ internal fun initNumber() = buildTable { table ->
         }
     }
     table["__cmp__"] = twoArgFunction { self, other ->
-        Value.Number.of(
-            self.doubleValue().compareTo(other.doubleValue()).toDouble()
-        )
+        self.doubleValue().compareTo(other.doubleValue()).metisValue()
     }
     table["__neg__"] = oneArgFunction { self ->
-        Value.Number.of(-self.doubleValue())
+        (-self.doubleValue()).metisValue()
+    }
+    table["__contains__"] = twoArgFunction { self, key ->
+        Value.Boolean.of(self.lookUp(key) != null)
     }
 }
 
@@ -92,6 +100,9 @@ internal fun initBoolean() = buildTable { table ->
             Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
         }
     }
+    table["__contains__"] = twoArgFunction { self, key ->
+        Value.Boolean.of(self.lookUp(key) != null)
+    }
 }
 
 internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
@@ -103,14 +114,19 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
         Value.Null
     }
     table["__len__"] = oneArgFunction { self ->
-        Value.Number.of(self.convertTo<Value.Table>().size.toDouble())
+        self.convertTo<Value.Table>().size.metisValue()
+    }
+    table["__contains__"] = twoArgFunction { self, key ->
+        Value.Boolean.of(self.lookUp(key) != null)
     }
     table["keys"] = oneArgFunction { self ->
-        Value.List(self.convertTo<Value.Table>().keys.toMutableList())
+        self.convertTo<Value.Table>().keys.metisValue()
     }
     table["values"] = oneArgFunction { self ->
-        Value.List(self.convertTo<Value.Table>().values.toMutableList())
+        self.convertTo<Value.Table>().values.metisValue()
     }
+
+    table.metatable = table
 }
 
 internal fun initList() = buildTable { table ->
@@ -125,14 +141,26 @@ internal fun initList() = buildTable { table ->
         Value.Null
     }
     table["__len__"] = oneArgFunction { self ->
-        Value.Number.of(self.convertTo<Value.List>().size.toDouble())
+        self.convertTo<Value.List>().size.metisValue()
     }
-    table["__iter__"] = oneArgFunction { self ->
-        wrapIterator(self.convertTo<Value.List>().iterator())
+    table["__contains__"] = twoArgFunction { self, key ->
+        if (key !in self.convertTo<Value.List>()) {
+            Value.Boolean.of(self.lookUp(key) != null)
+        } else {
+            Value.Boolean.TRUE
+        }
     }
     table["append"] = twoArgFunction { self, value ->
         self.convertTo<Value.List>().add(value)
         Value.Null
+    }
+
+    table["new"] = oneArgFunction { size ->
+        if (size == Value.Null) {
+            Value.List()
+        } else {
+            Value.List(ArrayList(size.intValue()))
+        }
     }
 }
 
@@ -146,6 +174,16 @@ internal fun initBytes() = buildTable { table ->
     table["__set__"] = threeArgFunction { self, key, value ->
         self.setOrError(key, value)
         Value.Null
+    }
+    table["__len__"] = oneArgFunction { self ->
+        self.convertTo<Value.Bytes>().value.size.metisValue()
+    }
+    table["__contains__"] = twoArgFunction { self, key ->
+        if (key.intValue().toByte() !in self.convertTo<Value.Bytes>().value) {
+            Value.Boolean.of(self.lookUp(key) != null)
+        } else {
+            Value.Boolean.TRUE
+        }
     }
     table["decode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
@@ -173,7 +211,10 @@ internal fun initNull() = buildTable { table ->
 
 internal fun initChunk() = buildTable { table ->
     table["__str__"] = oneArgFunction { self ->
-        self.convertTo<Chunk.Instance>().verboseToString().metisValue()
+        self.convertTo<Chunk.Instance>().toString().metisValue()
+    }
+    table["disassemble"] = oneArgFunction { self ->
+        self.convertTo<Chunk.Instance>().dissasemble().metisValue()
     }
 }
 
@@ -186,5 +227,8 @@ internal fun initError() = buildTable { table ->
     }
     table["__eq__"] = twoArgFunction { self, other ->
         Value.Boolean.of(self === other)
+    }
+    table["__contains__"] = twoArgFunction { self, key ->
+        Value.Boolean.of(self.lookUp(key) != null)
     }
 }
