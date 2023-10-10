@@ -7,13 +7,13 @@ import io.github.seggan.metis.util.push
 
 data class Upvalue(
     val name: String,
-    private val index: Int,
-    private val callDepth: Int
+    val index: Int,
+    val callDepth: Int
 ) {
 
     fun newInstance(state: State): Instance {
         for (upvalue in state.openUpvalues) {
-            if (upvalue.isInstanceOf(this)) {
+            if (upvalue.template === this) {
                 return upvalue
             }
         }
@@ -23,6 +23,9 @@ data class Upvalue(
     }
 
     inner class Instance internal constructor(private var value: Value?) {
+
+        val template: Upvalue
+            get() = this@Upvalue
 
         fun get(state: State) {
             state.stack.push(value ?: state.stack[state.callStack[callDepth].stackBottom + index])
@@ -41,7 +44,5 @@ data class Upvalue(
             value = state.stack.pop()
             state.openUpvalues.remove(this)
         }
-
-        fun isInstanceOf(upvalue: Upvalue) = upvalue === this@Upvalue
     }
 }

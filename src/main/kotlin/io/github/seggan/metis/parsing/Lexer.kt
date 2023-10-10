@@ -61,6 +61,8 @@ class Lexer(private val source: CodeSource) {
         keyword("do", Token.Type.DO)
         keyword("end", Token.Type.END)
         keyword("error", Token.Type.ERROR)
+        keyword("except", Token.Type.EXCEPT)
+        keyword("raise", Token.Type.RAISE)
         regex("\\s+", Token.Type.WHITESPACE)
         regex("[0-9]+(\\.[0-9]+)?(e[0-9]+(\\.[0-9]+)?)?", Token.Type.NUMBER)
         regex("[a-zA-Z_][a-zA-Z0-9_]*", Token.Type.IDENTIFIER)
@@ -181,7 +183,7 @@ data class Token(val type: Type, val text: String, val span: Span) {
     enum class Type(private val humanName: String? = null) {
         IDENTIFIER("an identifier"),
         STRING("a string"),
-        BYTES("a byte string"),
+        BYTES("a bytes literal"),
         NUMBER("a number"),
         OPEN_PAREN("'('"),
         CLOSE_PAREN("')'"),
@@ -226,6 +228,8 @@ data class Token(val type: Type, val text: String, val span: Span) {
         DO,
         END,
         ERROR,
+        EXCEPT,
+        RAISE,
         EOF("end of file");
 
         override fun toString(): String {

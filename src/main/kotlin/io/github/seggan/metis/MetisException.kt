@@ -2,13 +2,13 @@ package io.github.seggan.metis
 
 import io.github.seggan.metis.parsing.Span
 
-abstract class MetisException(message: String, private val stacktrace: MutableList<Span>) : RuntimeException(message) {
+abstract class MetisException(message: String, val backtrace: MutableList<Span>) : RuntimeException(message) {
 
     fun report(sourceName: String): String {
-        if (stacktrace.isEmpty()) return "Error in ${sourceName}: ${message ?: "Unknown error"}"
+        if (backtrace.isEmpty()) return "Error in ${sourceName}: ${message ?: "Unknown error"}"
         val mainSb = StringBuilder("Error ")
         var first = true
-        for (span in stacktrace) {
+        for (span in backtrace) {
             mainSb.append("in ")
                 .append(span.source.name)
                 .append(':')
@@ -29,6 +29,6 @@ abstract class MetisException(message: String, private val stacktrace: MutableLi
     }
 
     fun addStackFrame(span: Span) {
-        stacktrace.add(span)
+        backtrace.add(span)
     }
 }

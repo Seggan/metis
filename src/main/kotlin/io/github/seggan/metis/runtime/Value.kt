@@ -1,6 +1,5 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.intrinsics.*
 import io.github.seggan.metis.util.MutableLazy
 import kotlin.reflect.KClass
@@ -176,27 +175,6 @@ interface Value {
         override var metatable: Table? = initNull()
 
         override fun toString() = "null"
-    }
-}
-
-interface CallableValue : Value {
-
-    interface Executor {
-        fun step(state: State): StepResult
-    }
-
-    fun call(nargs: Int): Executor
-
-    val arity: Arity
-}
-
-data class Arity(val required: Int, val isVarargs: Boolean = false) {
-    companion object {
-        val ZERO = Arity(0)
-        val ONE = Arity(1)
-        val TWO = Arity(2)
-        val THREE = Arity(3)
-        val VARARGS = Arity(0, true)
     }
 }
 

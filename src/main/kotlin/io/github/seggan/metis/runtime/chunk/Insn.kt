@@ -46,6 +46,20 @@ sealed interface Insn {
     data object Return : Insn
     data object Finish : Insn
 
+    data object Raise : Insn
+    data class PushErrorHandler(val handler: ErrorHandler) : Insn
+    data object PopErrorHandler : Insn
+
+    /**
+     * Serves as an absolute (not relative like [Label]) marker for the [Chunk] to know where to jump to.
+     * Is a no-op.
+     */
+    class Marker : Insn {
+        override fun toString(): String = "Marker@${hashCode()}"
+        override fun equals(other: Any?) = other === this
+        override fun hashCode() = System.identityHashCode(this)
+    }
+
     sealed interface Jumping : Insn {
         var label: Label
     }

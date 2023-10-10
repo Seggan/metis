@@ -4,10 +4,7 @@ import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.Arity
 import io.github.seggan.metis.runtime.Value
-import io.github.seggan.metis.runtime.chunk.Chunk
-import io.github.seggan.metis.runtime.chunk.Insn
-import io.github.seggan.metis.runtime.chunk.Label
-import io.github.seggan.metis.runtime.chunk.Upvalue
+import io.github.seggan.metis.runtime.chunk.*
 
 class Compiler private constructor(
     private val args: List<String>,
@@ -86,6 +83,11 @@ class Compiler private constructor(
             is AstNode.Continue -> TODO()
             is AstNode.If -> compileIf(statement)
             is AstNode.Block -> compileBlock(statement)
+            is AstNode.DoExcept -> compileDoExcept(statement)
+            is AstNode.Raise -> buildInsns(statement.span) {
+                +compileExpression(statement.value)
+                +Insn.Raise
+            }
         }
     }
 
@@ -154,18 +156,16 @@ class Compiler private constructor(
         }
     }
 
-    private fun compileUnOp(op: AstNode.UnaryOp): List<FullInsn> {
-        return buildInsns(op.span) {
-            when (op.op) {
-                UnOp.NOT -> {
-                    +compileExpression(op.expr)
-                    +Insn.Not
-                }
+    private fun compileUnOp(op: AstNode.UnaryOp) = buildInsns(op.span) {
+        when (op.op) {
+            UnOp.NOT -> {
+                +compileExpression(op.expr)
+                +Insn.Not
+            }
 
-                UnOp.NEG -> {
-                    +compileExpression(op.expr)
-                    generateMetaCall("__neg__", 0)
-                }
+            UnOp.NEG -> {
+                +compileExpression(op.expr)
+                generateMetaCall("__neg__", 0)
             }
         }
     }
@@ -176,75 +176,96 @@ class Compiler private constructor(
         return listOf(Insn.PushClosure(chunk) to fn.span)
     }
 
-    private fun compileErrorLiteral(error: AstNode.ErrorLiteral): List<FullInsn> {
-        return buildInsns(error.span) {
-            +compileExpression(error.message)
-            generateMetaCall("__str__", 0)
-            if (error.companionData != null) {
-                +compileExpression(error.companionData)
-            } else {
-                +Insn.Push(Value.Table())
-            }
-            +Insn.PushError(error.type)
+    private fun compileErrorLiteral(error: AstNode.ErrorLiteral) = buildInsns(error.span) {
+        +compileExpression(error.message)
+        generateMetaCall("__str__", 0)
+        if (error.companionData != null) {
+            +compileExpression(error.companionData)
+        } else {
+            +Insn.Push(Value.Table())
         }
+        +Insn.PushError(error.type)
     }
 
-    private fun compileWhile(statement: AstNode.While): List<FullInsn> {
-        return buildInsns(statement.span) {
-            val start = Label()
-            +start
-            +compileExpression(statement.condition)
-            val end = Label()
-            +Insn.JumpIf(end, false)
-            +compileBlock(statement.body)
-            +Insn.Jump(start)
+    private fun compileWhile(statement: AstNode.While) = buildInsns(statement.span) {
+        val start = Label()
+        +start
+        +compileExpression(statement.condition)
+        val end = Label()
+        +Insn.JumpIf(end, false)
+        +compileBlock(statement.body)
+        +Insn.Jump(start)
+        +end
+    }
+
+    private fun compileFor(statement: AstNode.For) = buildInsns(statement.span) {
+        +compileExpression(statement.iterable)
+        generateMetaCall("__iter__", 0)
+        localStack.addFirst(Local("", scope, localStack.size))
+        val start = Label()
+        +start
+        +Insn.CopyUnder(0)
+        +Insn.CopyUnder(0)
+        +Insn.Push("has_next")
+        +Insn.Index
+        +Insn.Call(1)
+        val end = Label()
+        +Insn.JumpIf(end, false)
+        +Insn.CopyUnder(0)
+        +Insn.CopyUnder(0)
+        +Insn.Push("next")
+        +Insn.Index
+        +Insn.Call(1)
+        localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
+        +compileBlock(statement.body)
+        +Insn.Jump(start)
+        +end
+        localStack.removeFirst()
+        +Insn.Pop
+    }
+
+    private fun compileIf(statement: AstNode.If) = buildInsns(statement.span) {
+        +compileExpression(statement.condition)
+        val end = Label()
+        +Insn.JumpIf(end, false)
+        +compileBlock(statement.body)
+        if (statement.elseBody != null) {
+            val realEnd = Label()
+            +Insn.Jump(realEnd)
+            +end
+            +compileBlock(statement.elseBody)
+            +realEnd
+        } else {
             +end
         }
     }
 
-    private fun compileFor(statement: AstNode.For): List<FullInsn> {
-        return buildInsns(statement.span) {
-            +compileExpression(statement.iterable)
-            generateMetaCall("__iter__", 0)
-            localStack.addFirst(Local("", scope, localStack.size))
-            val start = Label()
-            +start
-            +Insn.CopyUnder(0)
-            +Insn.CopyUnder(0)
-            +Insn.Push("has_next")
-            +Insn.Index
-            +Insn.Call(1)
-            val end = Label()
-            +Insn.JumpIf(end, false)
-            +Insn.CopyUnder(0)
-            +Insn.CopyUnder(0)
-            +Insn.Push("next")
-            +Insn.Index
-            +Insn.Call(1)
-            localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
-            +compileBlock(statement.body)
-            +Insn.Jump(start)
-            +end
-            localStack.removeFirst()
-            +Insn.Pop
+    private fun compileDoExcept(statement: AstNode.DoExcept) = buildInsns(statement.span) {
+        val excepts = statement.excepts.map {
+            val marker = Insn.Marker()
+            marker to ErrorHandler(it.name, marker)
         }
-    }
-
-    private fun compileIf(statement: AstNode.If): List<FullInsn> {
-        return buildInsns(statement.span) {
-            +compileExpression(statement.condition)
+        for (except in excepts) {
+            +Insn.PushErrorHandler(except.second)
+        }
+        val endLabels = mutableListOf<Label>()
+        val blockLabel = Label()
+        +Insn.Jump(blockLabel)
+        for ((info, except) in excepts.zip(statement.excepts)) {
             val end = Label()
-            +Insn.JumpIf(end, false)
-            +compileBlock(statement.body)
-            if (statement.elseBody != null) {
-                val realEnd = Label()
-                +Insn.Jump(realEnd)
-                +end
-                +compileBlock(statement.elseBody)
-                +realEnd
-            } else {
-                +end
-            }
+            endLabels.add(end)
+            +info.first
+            localStack.addFirst(Local(except.variable ?: "", scope, localStack.size))
+            +compileBlock(except.body)
+            +Insn.Jump(end)
+        }
+        +blockLabel
+        +compileBlock(statement.body)
+        for (end in endLabels) {
+            +end
+        }
+        repeat(statement.excepts.size) {
+            +Insn.PopErrorHandler
         }
     }
 

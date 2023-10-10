@@ -54,13 +54,21 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         ::parseFor,
         { consume(IF); parseIf() },
         { consume(DO); parseBlock(END) },
-        ::parseReturn
+        ::parseReturn,
+        ::parseRaise,
+        ::parseDoExcept
     )
 
     private fun parseReturn(): AstNode.Return {
         val startSpan = consume(RETURN).span
         val expr = tryParse(::parseExpression) ?: AstNode.Literal(Value.Null, startSpan)
         return AstNode.Return(expr, startSpan + expr.span)
+    }
+
+    private fun parseRaise(): AstNode.Raise {
+        val startSpan = consume(RAISE).span
+        val expr = parseExpression()
+        return AstNode.Raise(expr, startSpan + expr.span)
     }
 
     private fun parseExpression() = parseOr()
@@ -323,6 +331,25 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         return AstNode.For(name, expr, body, startSpan + body.span)
     }
 
+    private fun parseDoExcept(): AstNode.DoExcept {
+        val startSpan = consume(DO).span
+        val body = parseBlock(EXCEPT)
+        val excepts = mutableListOf<AstNode.Except>()
+        while (previous.type == EXCEPT) {
+            var name = parseId().text
+            val variable: String?
+            if (tryConsume(EQUALS) != null) {
+                variable = name
+                name = parseId().text
+            } else {
+                variable = null
+            }
+            val exceptBody = parseBlock(EXCEPT, END)
+            excepts.add(AstNode.Except(name, variable, exceptBody))
+        }
+        return AstNode.DoExcept(body, excepts, startSpan + previous.span)
+    }
+
     private fun parseId(): Token {
         return consume(IDENTIFIER) // can add soft keywords
     }
@@ -368,7 +395,13 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
                 this.index = index
             }
         }
-        throw errors.maxBy { it.consumed }
+        var err = errors.maxBy { it.consumed }
+        if (err is UnexpectedTokenException) {
+            val allErrs = errors.filterIsInstance<UnexpectedTokenException>()
+            val expected = allErrs.flatMap { it.expected }.distinct()
+            err = UnexpectedTokenException(err.token, expected, err.consumed, err.backtrace.first())
+        }
+        throw err
     }
 }
 

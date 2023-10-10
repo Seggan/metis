@@ -13,6 +13,8 @@ sealed interface AstNode {
     data class Block(val statements: List<Statement>, override val span: Span) : Statement,
         List<Statement> by statements
 
+    data class DoExcept(val body: Block, val excepts: List<Except>, override val span: Span) : Statement
+    data class Except(val name: String, val variable: String?, val body: Block)
     data class VarAssign(val target: AssignTarget, val value: Expression, override val span: Span) : Statement
     data class VarDecl(
         val visibility: Visibility,
@@ -22,6 +24,7 @@ sealed interface AstNode {
     ) : Statement
 
     data class Return(val value: Expression, override val span: Span) : Statement
+    data class Raise(val value: Expression, override val span: Span) : Statement
     data class If(
         val condition: Expression,
         val body: Block,
@@ -60,6 +63,7 @@ sealed interface AstNode {
     data class TableLiteral(val values: List<Pair<Expression, Expression>>, override val span: Span) : Expression
     data class FunctionLiteral(val args: List<String>, val body: Block, val name: String?, override val span: Span) :
         Expression
+
     data class ErrorLiteral(
         val type: String,
         val message: Expression,

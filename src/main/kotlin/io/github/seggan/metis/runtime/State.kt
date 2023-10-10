@@ -1,6 +1,5 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.compilation.Compiler
 import io.github.seggan.metis.debug.Breakpoint
 import io.github.seggan.metis.debug.DebugInfo
@@ -97,14 +96,33 @@ class State(val isChildState: Boolean = false) {
                 callStack.removeLast()
                 stepResult = StepResult.CONTINUE
             }
-        } catch (e: MetisException) {
-            for (i in callStack.lastIndex downTo 0) {
-                val span = callStack[i].span
+        } catch (e: MetisRuntimeException) {
+            var caught = false
+            while (callStack.isNotEmpty()) {
+                val (executor, bottom, span) = callStack.peek()
                 if (span != null) {
                     e.addStackFrame(span)
                 }
+
+                if (executor.handleError(this, e)) {
+                    stepResult = StepResult.CONTINUE
+                    caught = true
+                    break
+                } else {
+                    for (i in stack.lastIndex downTo bottom) {
+                        val upvalue = openUpvalues.firstOrNull {
+                            it.template.callDepth == callStack.size && it.template.index == i
+                        }
+                        if (upvalue != null) {
+                            upvalue.close(this)
+                        } else {
+                            stack.pop()
+                        }
+                    }
+                    callStack.pop()
+                }
             }
-            throw e
+            if (!caught) throw e
         }
         return stepResult
     }
@@ -134,7 +152,16 @@ class State(val isChildState: Boolean = false) {
             if (getter is CallableValue) {
                 callValue(getter, 2)
             } else {
-                throw MetisRuntimeException("IndexError", "Cannot index a non indexable value")
+                val index = stack.pop()
+                val value = stack.pop()
+                throw MetisRuntimeException(
+                    "IndexError",
+                    "Cannot index a non indexable value: ${stringify(value)} (index = ${stringify(index)})",
+                    buildTable { table ->
+                        table["index"] = index
+                        table["value"] = value
+                    }
+                )
             }
         }
     }
@@ -150,7 +177,18 @@ class State(val isChildState: Boolean = false) {
                 callValue(setter, 3)
                 stack.pop()
             } else {
-                throw MetisRuntimeException("IndexError", "Cannot set index on a non indexable value")
+                val index = stack.pop()
+                val value = stack.pop()
+                val toSet = stack.pop()
+                throw MetisRuntimeException(
+                    "IndexError",
+                    "Cannot set on a non indexable value: ${stringify(toSet)} (index = ${stringify(index)})",
+                    buildTable { table ->
+                        table["index"] = index
+                        table["value"] = value
+                        table["toSet"] = toSet
+                    }
+                )
             }
         }
     }
@@ -217,6 +255,19 @@ class State(val isChildState: Boolean = false) {
 
     fun not() {
         stack.push(Value.Boolean.of(!stack.pop().convertTo<Value.Boolean>().value))
+    }
+
+    fun stringify(value: Value): String {
+        stack.push(value)
+        stack.push(value)
+        stack.push("__str__".metisValue())
+        index()
+        val callStackSize = callStack.size
+        call(1)
+        while (callStack.size > callStackSize) {
+            if (step() == StepResult.FINISHED) break
+        }
+        return stack.pop().stringValue()
     }
 }
 
