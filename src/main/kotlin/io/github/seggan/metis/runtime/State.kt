@@ -47,7 +47,7 @@ class State(val isChildState: Boolean = false) {
             Intrinsics.registerDefault()
         }
 
-        val coreScripts = mutableListOf("collection", "list", "string", "table", "number", "range")
+        val coreScripts = mutableListOf("collection", "list", "string", "table", "number", "range", "io")
     }
 
     init {
@@ -63,6 +63,9 @@ class State(val isChildState: Boolean = false) {
         io["stdout"] = wrapOutStream(stdout)
         io["stderr"] = wrapOutStream(stderr)
         io["stdin"] = wrapInStream(stdin)
+
+        io["in_stream"] = inStreamMetatable
+        io["out_stream"] = outStreamMetatable
         globals["io"] = io
 
         globals["string"] = Value.String.metatable
@@ -70,12 +73,6 @@ class State(val isChildState: Boolean = false) {
         globals["table"] = Value.Table.metatable
         globals["list"] = Value.List.metatable
         globals["bytes"] = Value.Bytes.metatable
-
-        val pkg = Value.Table()
-        pkg["loaded"] = Value.List()
-        pkg["path"] = Value.List()
-        pkg["loaders"] = Value.List()
-        globals["package"] = pkg
 
         globals["path"] = initPathLib()
 

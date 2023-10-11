@@ -52,6 +52,8 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         ::parseExpression,
         ::parseWhile,
         ::parseFor,
+        { AstNode.Break(consume(BREAK).span) },
+        { AstNode.Continue(consume(CONTINUE).span) },
         { consume(IF); parseIf() },
         { consume(DO); parseBlock(END) },
         ::parseReturn,

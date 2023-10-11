@@ -46,6 +46,13 @@ internal fun initString() = buildTable { table ->
     table["replace"] = threeArgFunction { self, value, toReplace ->
         self.stringValue().replace(value.stringValue(), toReplace.stringValue()).metisValue()
     }
+    table["sub"] = threeArgFunction { self, start, end ->
+        if (end == Value.Null) {
+            self.stringValue().substring(start.intValue()).metisValue()
+        } else {
+            self.stringValue().substring(start.intValue(), end.intValue()).metisValue()
+        }
+    }
 
     table["builder"] = oneArgFunction { init ->
         if (init == Value.Null) {
@@ -116,7 +123,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
     table["__index__"] = twoArgFunction { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException(
             "KeyError",
-            "Key not found: $key",
+            "Key not found on ${stringify(self)} (key is ${stringify(key)})",
             buildTable { table ->
                 table["key"] = key
                 table["value"] = self
@@ -175,6 +182,13 @@ internal fun initList() = buildTable { table ->
         self.convertTo<Value.List>().add(value)
         Value.Null
     }
+    table["slice"] = threeArgFunction { self, start, end ->
+        if (end == Value.Null) {
+            self.convertTo<Value.List>().subList(start.intValue(), self.convertTo<Value.List>().size).metisValue()
+        } else {
+            self.convertTo<Value.List>().subList(start.intValue(), end.intValue()).metisValue()
+        }
+    }
 
     table["new"] = oneArgFunction { size ->
         if (size == Value.Null) {
@@ -219,9 +233,30 @@ internal fun initBytes() = buildTable { table ->
             else Charset.forName(encoding.stringValue())
         self.convertTo<Value.Bytes>().value.toString(actualEncoding).metisValue()
     }
+    table["slice"] = threeArgFunction { self, start, len ->
+        val newBytes = ByteArray(len.intValue())
+        self.convertTo<Value.Bytes>().value.copyInto(
+            newBytes,
+            0,
+            start.intValue(),
+            start.intValue() + len.intValue()
+        )
+        newBytes.metisValue()
+    }
 
     table["allocate"] = oneArgFunction { size ->
         Value.Bytes(ByteArray(size.intValue()))
+    }
+    table["concat"] = oneArgFunction { list ->
+        val bytes = list.convertTo<Value.List>().map { it.convertTo<Value.Bytes>().value }
+        val size = bytes.sumOf { it.size }
+        val newBytes = ByteArray(size)
+        var offset = 0
+        bytes.forEach {
+            it.copyInto(newBytes, offset)
+            offset += it.size
+        }
+        newBytes.metisValue()
     }
 }
 

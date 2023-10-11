@@ -1,7 +1,6 @@
 package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.runtime.Value
-import kotlin.properties.Delegates
 
 sealed interface Insn {
     data class Push(val value: Value) : Insn {
@@ -10,6 +9,7 @@ sealed interface Insn {
         constructor(value: Boolean) : this(Value.Boolean.of(value))
         constructor(value: String) : this(Value.String(value))
     }
+
     data class PushClosure(val chunk: Chunk) : Insn {
         override fun toString(): String {
             return "PushClosure:\n" + chunk.toString().prependIndent("  ")
@@ -53,39 +53,20 @@ sealed interface Insn {
 
     data object Raise : Insn
     data class PushErrorHandler(val handler: ErrorHandler) : Insn
-    data class PushFinally(val marker: Marker) : Insn
+    data class PushFinally(val label: Label) : Insn
     data object PopErrorHandler : Insn
     data object PopFinally : Insn
 
-    /**
-     * Serves as an absolute (not relative like [Label]) marker for the [Chunk] to know where to jump to.
-     * Is a no-op.
-     */
-    class Marker : Insn {
-        override fun toString(): String = "Marker@${hashCode()}"
+    class Label : Insn {
+        override fun toString(): String = "Label@${hashCode().toString(16)}"
         override fun equals(other: Any?) = other === this
         override fun hashCode() = System.identityHashCode(this)
     }
 
-    sealed interface Jumping : Insn {
-        var label: Label
-    }
-
-    data class Jump(override var label: Label) : Jumping
-    data class JumpIf(override var label: Label, val bool: Boolean, val consume: Boolean = true) : Jumping
+    data class Jump(val offset: Int) : Insn
+    data class RawJump(val label: Label) : Insn
+    data class JumpIf(val offset: Int, val condition: Boolean, val consume: Boolean = true) : Insn
+    data class RawJumpIf(val label: Label, val condition: Boolean, val consume: Boolean = true) : Insn
 
     data object Not : Insn
-}
-
-class Label {
-    var start: Int by Delegates.notNull()
-    var end: Int by Delegates.notNull()
-
-    val offset by lazy {
-        end - start - 1
-    }
-
-    override fun toString(): String {
-        return "Label(start=$start, end=$end, offset=$offset)"
-    }
 }

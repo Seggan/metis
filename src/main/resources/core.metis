@@ -15,18 +15,6 @@ global fn with_metatable(x, mt)
     return x
 end
 
-package.path:append("./?.metis")
-
-fn io.stdin.metatable.read_line()
-    let result = string.builder()
-    let c = io.stdin:read()
-    while c != 10 and c != null
-        result:append(c:char())
-        c = io.stdin:read()
-    end
-    return str(result)
-end
-
 global fn input(prompt)
     io.stdout:write(prompt:encode("UTF-8"))
     io.stdout:flush()

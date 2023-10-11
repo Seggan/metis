@@ -2,10 +2,16 @@ package io.github.seggan.metis.compilation
 
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
+import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.Arity
 import io.github.seggan.metis.runtime.MetisRuntimeException
 import io.github.seggan.metis.runtime.Value
-import io.github.seggan.metis.runtime.chunk.*
+import io.github.seggan.metis.runtime.chunk.Chunk
+import io.github.seggan.metis.runtime.chunk.ErrorHandler
+import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.chunk.Upvalue
+import io.github.seggan.metis.util.pop
+import io.github.seggan.metis.util.push
 
 class Compiler private constructor(
     private val args: List<String>,
@@ -16,6 +22,9 @@ class Compiler private constructor(
 
     private val localStack = ArrayDeque<Local>()
     private val upvalues = mutableListOf<Upvalue>()
+
+    private val loopStack = ArrayDeque<LoopInfo>()
+    private val errorScopeStack = ArrayDeque<Int>()
 
     private val depth: Int = enclosingCompiler?.depth ?: 0
 
@@ -29,8 +38,24 @@ class Compiler private constructor(
 
     fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
-        val (insns, spans) = compileBlock(code, false).unzip()
+        val compiled = compileBlock(code, false).toMutableList()
+        for (marker in compiled.filter { it.first is Insn.Label }) {
+            backpatch(compiled, marker.first as Insn.Label)
+        }
+        val (insns, spans) = compiled.unzip()
         return Chunk(name, insns, Arity(args.size), upvalues, spans)
+    }
+
+    private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
+        val markerIndex = insns.indexOfFirst { it.first == label }
+        for (i in insns.indices) {
+            val (insn, span) = insns[i]
+            if (insn is Insn.RawJump && insn.label == label) {
+                insns[i] = Insn.Jump(markerIndex - i - 1) to span
+            } else if (insn is Insn.RawJumpIf && insn.label == label) {
+                insns[i] = Insn.JumpIf(markerIndex - i - 1, insn.condition, insn.consume) to span
+            }
+        }
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -42,21 +67,31 @@ class Compiler private constructor(
         return compileStatements(block) + exitScope(block.span, remove)
     }
 
-    private fun exitScope(span: Span, remove: Boolean): List<FullInsn> {
-        return buildInsns(span) {
-            val it = localStack.iterator()
-            while (it.hasNext()) {
-                val local = it.next()
-                if (local.scope == scope) {
-                    if (remove) it.remove()
-                    if (local.capturing != null) {
-                        +Insn.CloseUpvalue(local.capturing!!)
-                    } else {
-                        +Insn.Pop
-                    }
+    private fun exitScope(span: Span, remove: Boolean) = buildInsns(span) {
+        val it = localStack.iterator()
+        while (it.hasNext()) {
+            val local = it.next()
+            if (local.scope == scope) {
+                if (remove) it.remove()
+                if (local.capturing != null) {
+                    +Insn.CloseUpvalue(local.capturing!!)
+                } else {
+                    +Insn.Pop
                 }
             }
-            scope--
+        }
+        if (remove) scope--
+    }
+
+    private inline fun earlyExitScope(span: Span, cond: (Int) -> Boolean) = buildInsns(span) {
+        for (local in localStack) {
+            if (cond(local.scope)) {
+                if (local.capturing != null) {
+                    +Insn.CloseUpvalue(local.capturing!!)
+                } else {
+                    +Insn.Pop
+                }
+            }
         }
     }
 
@@ -68,32 +103,40 @@ class Compiler private constructor(
             is AstNode.Return -> buildInsns(statement.span) {
                 +compileExpression(statement.value)
                 +Insn.ToBeUsed
-                for (local in localStack) {
-                    if (local.capturing != null) {
-                        +Insn.CloseUpvalue(local.capturing!!)
-                    } else {
-                        +Insn.Pop
-                    }
-                }
+                +earlyExitScope(statement.span) { true }
                 +Insn.Return
             }
 
             is AstNode.While -> compileWhile(statement)
             is AstNode.For -> compileFor(statement)
-            is AstNode.Break -> TODO()
-            is AstNode.Continue -> TODO()
+            is AstNode.Break -> buildInsns(statement.span) {
+                val info = loopStack.lastOrNull() ?: throw SyntaxException(
+                    "Cannot break outside of a loop",
+                    0,
+                    statement.span
+                )
+                +earlyExitScope(statement.span) { it > info.scope }
+                +Insn.RawJump(info.end)
+            }
+
+            is AstNode.Continue -> buildInsns(statement.span) {
+                val info = loopStack.lastOrNull() ?: throw SyntaxException(
+                    "Cannot continue outside of a loop",
+                    0,
+                    statement.span
+                )
+                +earlyExitScope(statement.span) { it > info.scope }
+                +Insn.RawJump(info.start)
+            }
             is AstNode.If -> compileIf(statement)
             is AstNode.Block -> compileBlock(statement)
             is AstNode.DoExcept -> compileDoExcept(statement)
             is AstNode.Raise -> buildInsns(statement.span) {
                 +compileExpression(statement.value)
                 +Insn.ToBeUsed
-                for (local in localStack) {
-                    if (local.capturing != null) {
-                        +Insn.CloseUpvalue(local.capturing!!)
-                    } else {
-                        +Insn.Pop
-                    }
+                if (errorScopeStack.isNotEmpty()) {
+                    val info = errorScopeStack.pop()
+                    +earlyExitScope(statement.span) { it > info }
                 }
                 +Insn.Raise
             }
@@ -197,29 +240,32 @@ class Compiler private constructor(
     }
 
     private fun compileWhile(statement: AstNode.While) = buildInsns(statement.span) {
-        val start = Label()
+        val start = Insn.Label()
+        val end = Insn.Label()
+        loopStack.push(LoopInfo(start, end, scope))
         +start
         +compileExpression(statement.condition)
-        val end = Label()
-        +Insn.JumpIf(end, false)
+        +Insn.RawJumpIf(end, false)
         +compileBlock(statement.body)
-        +Insn.Jump(start)
+        +Insn.RawJump(start)
         +end
+        loopStack.pop()
     }
 
     private fun compileFor(statement: AstNode.For) = buildInsns(statement.span) {
         +compileExpression(statement.iterable)
         generateMetaCall("__iter__", 0)
         localStack.addFirst(Local("", scope, localStack.size))
-        val start = Label()
+        val start = Insn.Label()
+        val end = Insn.Label()
+        loopStack.push(LoopInfo(start, end, scope))
         +start
         +Insn.CopyUnder(0)
         +Insn.CopyUnder(0)
         +Insn.Push("has_next")
         +Insn.Index
         +Insn.Call(1)
-        val end = Label()
-        +Insn.JumpIf(end, false)
+        +Insn.RawJumpIf(end, false)
         +Insn.CopyUnder(0)
         +Insn.CopyUnder(0)
         +Insn.Push("next")
@@ -227,20 +273,21 @@ class Compiler private constructor(
         +Insn.Call(1)
         localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
         +compileBlock(statement.body)
-        +Insn.Jump(start)
+        +Insn.RawJump(start)
         +end
+        loopStack.pop()
         localStack.removeFirst()
         +Insn.Pop
     }
 
     private fun compileIf(statement: AstNode.If) = buildInsns(statement.span) {
         +compileExpression(statement.condition)
-        val end = Label()
-        +Insn.JumpIf(end, false)
+        val end = Insn.Label()
+        +Insn.RawJumpIf(end, false)
         +compileBlock(statement.body)
         if (statement.elseBody != null) {
-            val realEnd = Label()
-            +Insn.Jump(realEnd)
+            val realEnd = Insn.Label()
+            +Insn.RawJump(realEnd)
             +end
             +compileBlock(statement.elseBody)
             +realEnd
@@ -251,39 +298,41 @@ class Compiler private constructor(
 
     private fun compileDoExcept(statement: AstNode.DoExcept) = buildInsns(statement.span) {
         val excepts = statement.excepts.map {
-            val marker = Insn.Marker()
-            marker to ErrorHandler(it.name, marker)
+            val label = Insn.Label()
+            label to ErrorHandler(it.name, label)
         }
         for (except in excepts) {
             +Insn.PushErrorHandler(except.second)
         }
-        val finallyMarker = Insn.Marker()
+        val finallyLabel = Insn.Label()
         if (statement.finally != null) {
-            +Insn.PushFinally(finallyMarker)
+            +Insn.PushFinally(finallyLabel)
         }
-        val endLabels = mutableListOf<Label>()
-        val blockLabel = Label()
-        +Insn.Jump(blockLabel)
+        val endLabels = mutableListOf<Insn.Label>()
+        val blockLabel = Insn.Label()
+        +Insn.RawJump(blockLabel)
         for ((info, except) in excepts.zip(statement.excepts)) {
-            val end = Label()
+            val end = Insn.Label()
             endLabels.add(end)
             +info.first
             +Insn.PopErrorHandler
             localStack.addFirst(Local(except.variable ?: "", scope + 1, localStack.size))
             +compileBlock(except.body)
-            +Insn.Jump(end)
+            +Insn.RawJump(end)
         }
         +blockLabel
+        errorScopeStack.push(scope)
         +compileBlock(statement.body)
-        +Insn.PopErrorHandler
+        errorScopeStack.pop()
+        if (excepts.isNotEmpty()) +Insn.PopErrorHandler
         for (end in endLabels) {
             +end
         }
-        repeat(statement.excepts.size - 1) {
+        repeat(excepts.size - 1) {
             +Insn.PopErrorHandler
         }
         if (statement.finally != null) {
-            +finallyMarker
+            +finallyLabel
             +Insn.PopFinally
             +compileBlock(statement.finally)
             +Insn.Push(MetisRuntimeException.Finally())
@@ -296,6 +345,10 @@ class Compiler private constructor(
         return if (decl.visibility == Visibility.GLOBAL) {
             compileExpression(decl.value) + (Insn.SetGlobal(decl.name) to decl.span)
         } else {
+            val oldLocal = resolveLocal(decl.name)
+            if (oldLocal != null && oldLocal.scope == scope - 1) {
+                throw SyntaxException("Variable '${decl.name}' has already been declared", 0, decl.span)
+            }
             localStack.addFirst(Local(decl.name, scope, localStack.size))
             compileExpression(decl.value)
         }
@@ -372,6 +425,6 @@ class Compiler private constructor(
     }
 }
 
-private data class ResolvedUpvalue(val upvalue: Upvalue, val index: Int)
+private data class LoopInfo(val start: Insn.Label, val end: Insn.Label, val scope: Int)
 
 private data class Local(val name: String, val scope: Int, val index: Int, var capturing: Upvalue? = null)

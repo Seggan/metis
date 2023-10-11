@@ -63,7 +63,7 @@ class Chunk(
             private var justHitBreakpoint = false
 
             private val errorHandlerStack = ArrayDeque<ErrorHandler>()
-            private val finallyStack = ArrayDeque<Insn.Marker>()
+            private val finallyStack = ArrayDeque<Insn.Label>()
 
             override fun step(state: State): StepResult {
                 if (ip >= insns.size) return StepResult.FINISHED
@@ -125,7 +125,7 @@ class Chunk(
                         is Insn.PushTable -> state.wrapToTable(insn.size)
                         is Insn.PushError -> state.newError(insn.type)
                         is Insn.PushErrorHandler -> errorHandlerStack.push(insn.handler)
-                        is Insn.PushFinally -> finallyStack.push(insn.marker)
+                        is Insn.PushFinally -> finallyStack.push(insn.label)
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
                         is Insn.ToBeUsed -> toBeUsed = state.stack.pop()
@@ -134,21 +134,19 @@ class Chunk(
                             state.stack.push(toBeUsed!!)
                         }
 
-                        is Insn.Raise -> {
-                            val e = toBeUsed!!.convertTo<MetisRuntimeException>()
-                            e.fillInStackTrace()
-                            throw e
-                        }
-                        is Insn.Jump -> ip += insn.label.offset
+                        is Insn.Raise -> throw toBeUsed!!.convertTo<MetisRuntimeException>()
+                        is Insn.Jump -> ip += insn.offset
                         is Insn.JumpIf -> {
                             val value = if (insn.consume) state.stack.pop() else state.stack.peek()
-                            if (value.convertTo<Value.Boolean>().value == insn.bool) {
-                                ip += insn.label.offset
+                            if (value.convertTo<Value.Boolean>().value == insn.condition) {
+                                ip += insn.offset
                             }
                         }
 
                         is Insn.Not -> state.not()
-                        is Insn.Marker -> {}
+
+                        is Insn.Label -> {}
+                        is Insn.RawJump, is Insn.RawJumpIf -> error("Unbackpatched jump at $ip")
                     }
                 } catch (e: MetisRuntimeException) {
                     e.addStackFrame(spans[ip - 1])
@@ -160,7 +158,7 @@ class Chunk(
             override fun handleError(state: State, error: MetisRuntimeException): Boolean {
                 val handler = errorHandlerStack.firstOrNull { it.errorName == error.type } ?: return false
                 state.stack.push(error)
-                val marker = insns.indexOf(handler.marker)
+                val marker = insns.indexOf(handler.label)
                 check(marker != -1) { "Could not find marker for error handler" }
                 ip = marker
                 return true

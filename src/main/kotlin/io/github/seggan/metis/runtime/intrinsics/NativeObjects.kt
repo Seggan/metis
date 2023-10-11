@@ -13,7 +13,7 @@ inline fun <T> translateIoError(block: () -> T): T = try {
     throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error")
 }
 
-private val outStreamMetatable = buildTable { table ->
+internal val outStreamMetatable = buildTable { table ->
     table["write"] = twoArgFunction { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
         translateIoError { self.asObj<OutputStream>().write(toBeWritten) }
@@ -34,7 +34,7 @@ private val outStreamMetatable = buildTable { table ->
 
 fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamMetatable)
 
-private val inStreamMetatable = buildTable { table ->
+internal val inStreamMetatable = buildTable { table ->
     table["read"] = twoArgFunction { self, buffer ->
         if (buffer == Value.Null) {
             // Read a single byte
