@@ -9,6 +9,7 @@ interface CallableValue : Value {
         fun step(state: State): StepResult
 
         fun handleError(state: State, error: MetisRuntimeException): Boolean = false
+        fun handleFinally(state: State): Boolean = false
     }
 
     fun call(nargs: Int): Executor

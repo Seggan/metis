@@ -43,12 +43,19 @@ sealed interface Insn {
     data object Index : Insn
     data object Set : Insn
     data class Call(val nargs: Int) : Insn
+
+    /**
+     * Used to mark a value as being used, so that it doesn't get popped. Used in the implementations of
+     * `return` and `raise`.
+     */
+    data object ToBeUsed : Insn
     data object Return : Insn
-    data object Finish : Insn
 
     data object Raise : Insn
     data class PushErrorHandler(val handler: ErrorHandler) : Insn
+    data class PushFinally(val marker: Marker) : Insn
     data object PopErrorHandler : Insn
+    data object PopFinally : Insn
 
     /**
      * Serves as an absolute (not relative like [Label]) marker for the [Chunk] to know where to jump to.

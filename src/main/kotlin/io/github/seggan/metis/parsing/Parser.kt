@@ -39,7 +39,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         while (tryConsume(*validEnders) == null) {
             result.add(parseStatement())
             if (tryConsume(EOF) != null) {
-                throw ParseException("Unterminated block", index, startSpan)
+                throw SyntaxException("Unterminated block", index, startSpan)
             }
         }
         return AstNode.Block(result, startSpan + previous.span)
@@ -287,7 +287,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private fun parseAssignTarget(): AstNode.AssignTarget {
         val target = parsePostfix(false)
         if (target is AstNode.AssignTarget) return target
-        throw ParseException("Invalid variable/function assignment target", index, target.span)
+        throw SyntaxException("Invalid variable/function assignment target", index, target.span)
     }
 
     private fun parseIf(): AstNode.If {
@@ -333,7 +333,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parseDoExcept(): AstNode.DoExcept {
         val startSpan = consume(DO).span
-        val body = parseBlock(EXCEPT)
+        val body = parseBlock(EXCEPT, FINALLY)
         val excepts = mutableListOf<AstNode.Except>()
         while (previous.type == EXCEPT) {
             var name = parseId().text
@@ -344,10 +344,11 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
             } else {
                 variable = null
             }
-            val exceptBody = parseBlock(EXCEPT, END)
+            val exceptBody = parseBlock(EXCEPT, FINALLY, END)
             excepts.add(AstNode.Except(name, variable, exceptBody))
         }
-        return AstNode.DoExcept(body, excepts, startSpan + previous.span)
+        val finally = if (previous.type == FINALLY) parseBlock(END) else null
+        return AstNode.DoExcept(body, excepts, finally, startSpan + previous.span)
     }
 
     private fun parseId(): Token {
@@ -378,19 +379,19 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         val index = this.index
         return try {
             parser()
-        } catch (e: ParseException) {
+        } catch (e: SyntaxException) {
             this.index = index
             null
         }
     }
 
     private fun <T : AstNode> oneOf(vararg parsers: () -> T): T {
-        val errors = mutableListOf<ParseException>()
+        val errors = mutableListOf<SyntaxException>()
         val index = this.index
         for (parser in parsers) {
             try {
                 return parser()
-            } catch (e: ParseException) {
+            } catch (e: SyntaxException) {
                 errors.add(e)
                 this.index = index
             }

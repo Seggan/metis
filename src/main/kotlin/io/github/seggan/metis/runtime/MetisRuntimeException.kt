@@ -3,7 +3,7 @@ package io.github.seggan.metis.runtime
 import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.runtime.intrinsics.initError
 
-class MetisRuntimeException(
+open class MetisRuntimeException(
     val type: String,
     private val actualMessage: String,
     private val companionData: Value.Table = Value.Table()
@@ -23,6 +23,10 @@ class MetisRuntimeException(
 
     companion object {
         val metatable = initError()
+    }
+
+    internal class Finally : MetisRuntimeException("INTERNAL ERROR, THIS IS A BUG", "Finally block not popped") {
+        override val message = "Finally"
     }
 }
 

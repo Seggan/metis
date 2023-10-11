@@ -58,21 +58,15 @@ class Chunk(
 
             private var ip = 0
 
-            private var toReturn: Value? = null
+            private var toBeUsed: Value? = null
 
             private var justHitBreakpoint = false
 
             private val errorHandlerStack = ArrayDeque<ErrorHandler>()
+            private val finallyStack = ArrayDeque<Insn.Marker>()
 
             override fun step(state: State): StepResult {
-                if (ip >= insns.size) {
-                    if (toReturn != null) {
-                        state.stack.push(toReturn!!)
-                        return StepResult.FINISHED
-                    }
-                    state.stderr.write("Chunk finished without returning a value\n".toByteArray())
-                    throw MetisRuntimeException("InternalError", "Chunk finished without returning a value")
-                }
+                if (ip >= insns.size) return StepResult.FINISHED
                 try {
                     val insn = insns[ip]
                     if (state.debugMode) {
@@ -110,6 +104,7 @@ class Chunk(
                         is Insn.Set -> state.set()
                         is Insn.Pop -> state.stack.pop()
                         is Insn.PopErrorHandler -> errorHandlerStack.pop()
+                        is Insn.PopFinally -> finallyStack.pop()
                         is Insn.CloseUpvalue -> {
                             val it = state.openUpvalues.iterator()
                             var hasMet = false
@@ -130,11 +125,20 @@ class Chunk(
                         is Insn.PushTable -> state.wrapToTable(insn.size)
                         is Insn.PushError -> state.newError(insn.type)
                         is Insn.PushErrorHandler -> errorHandlerStack.push(insn.handler)
+                        is Insn.PushFinally -> finallyStack.push(insn.marker)
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                         is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
-                        is Insn.Return -> toReturn = state.stack.pop()
-                        is Insn.Finish -> ip = insns.size
-                        is Insn.Raise -> throw state.stack.pop().convertTo<MetisRuntimeException>()
+                        is Insn.ToBeUsed -> toBeUsed = state.stack.pop()
+                        is Insn.Return -> {
+                            ip = insns.size
+                            state.stack.push(toBeUsed!!)
+                        }
+
+                        is Insn.Raise -> {
+                            val e = toBeUsed!!.convertTo<MetisRuntimeException>()
+                            e.fillInStackTrace()
+                            throw e
+                        }
                         is Insn.Jump -> ip += insn.label.offset
                         is Insn.JumpIf -> {
                             val value = if (insn.consume) state.stack.pop() else state.stack.peek()
@@ -159,6 +163,14 @@ class Chunk(
                 val marker = insns.indexOf(handler.marker)
                 check(marker != -1) { "Could not find marker for error handler" }
                 ip = marker
+                return true
+            }
+
+            override fun handleFinally(state: State): Boolean {
+                val marker = finallyStack.lastOrNull() ?: return false
+                val markerIndex = insns.indexOf(marker)
+                check(markerIndex != -1) { "Could not find marker for finally" }
+                ip = markerIndex
                 return true
             }
         }

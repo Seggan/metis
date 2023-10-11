@@ -62,6 +62,7 @@ class Lexer(private val source: CodeSource) {
         keyword("end", Token.Type.END)
         keyword("error", Token.Type.ERROR)
         keyword("except", Token.Type.EXCEPT)
+        keyword("finally", Token.Type.FINALLY)
         keyword("raise", Token.Type.RAISE)
         regex("\\s+", Token.Type.WHITESPACE)
         regex("[0-9]+(\\.[0-9]+)?(e[0-9]+(\\.[0-9]+)?)?", Token.Type.NUMBER)
@@ -91,7 +92,7 @@ class Lexer(private val source: CodeSource) {
                     )
                 }
             }
-            val bestMatch = matched.maxByOrNull { it.first } ?: throw ParseException(
+            val bestMatch = matched.maxByOrNull { it.first } ?: throw SyntaxException(
                 "Unexpected character '${code[0]}'",
                 pos,
                 Span(pos, pos + 1, source)
@@ -229,6 +230,7 @@ data class Token(val type: Type, val text: String, val span: Span) {
         END,
         ERROR,
         EXCEPT,
+        FINALLY,
         RAISE,
         EOF("end of file");
 

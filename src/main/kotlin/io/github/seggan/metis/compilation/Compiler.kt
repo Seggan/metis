@@ -3,6 +3,7 @@ package io.github.seggan.metis.compilation
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.Arity
+import io.github.seggan.metis.runtime.MetisRuntimeException
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.*
 
@@ -66,7 +67,7 @@ class Compiler private constructor(
             is AstNode.VarAssign -> compileVarAssign(statement)
             is AstNode.Return -> buildInsns(statement.span) {
                 +compileExpression(statement.value)
-                +Insn.Return
+                +Insn.ToBeUsed
                 for (local in localStack) {
                     if (local.capturing != null) {
                         +Insn.CloseUpvalue(local.capturing!!)
@@ -74,7 +75,7 @@ class Compiler private constructor(
                         +Insn.Pop
                     }
                 }
-                +Insn.Finish
+                +Insn.Return
             }
 
             is AstNode.While -> compileWhile(statement)
@@ -86,6 +87,14 @@ class Compiler private constructor(
             is AstNode.DoExcept -> compileDoExcept(statement)
             is AstNode.Raise -> buildInsns(statement.span) {
                 +compileExpression(statement.value)
+                +Insn.ToBeUsed
+                for (local in localStack) {
+                    if (local.capturing != null) {
+                        +Insn.CloseUpvalue(local.capturing!!)
+                    } else {
+                        +Insn.Pop
+                    }
+                }
                 +Insn.Raise
             }
         }
@@ -248,6 +257,10 @@ class Compiler private constructor(
         for (except in excepts) {
             +Insn.PushErrorHandler(except.second)
         }
+        val finallyMarker = Insn.Marker()
+        if (statement.finally != null) {
+            +Insn.PushFinally(finallyMarker)
+        }
         val endLabels = mutableListOf<Label>()
         val blockLabel = Label()
         +Insn.Jump(blockLabel)
@@ -255,17 +268,27 @@ class Compiler private constructor(
             val end = Label()
             endLabels.add(end)
             +info.first
-            localStack.addFirst(Local(except.variable ?: "", scope, localStack.size))
+            +Insn.PopErrorHandler
+            localStack.addFirst(Local(except.variable ?: "", scope + 1, localStack.size))
             +compileBlock(except.body)
             +Insn.Jump(end)
         }
         +blockLabel
         +compileBlock(statement.body)
+        +Insn.PopErrorHandler
         for (end in endLabels) {
             +end
         }
-        repeat(statement.excepts.size) {
+        repeat(statement.excepts.size - 1) {
             +Insn.PopErrorHandler
+        }
+        if (statement.finally != null) {
+            +finallyMarker
+            +Insn.PopFinally
+            +compileBlock(statement.finally)
+            +Insn.Push(MetisRuntimeException.Finally())
+            +Insn.ToBeUsed
+            +Insn.Raise
         }
     }
 

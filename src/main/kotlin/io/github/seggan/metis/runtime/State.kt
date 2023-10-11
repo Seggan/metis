@@ -33,6 +33,8 @@ class State(val isChildState: Boolean = false) {
 
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
+    private var throwingException: MetisRuntimeException? = null
+
     val localsOffset: Int
         get() = callStack.peek().stackBottom
 
@@ -97,18 +99,36 @@ class State(val isChildState: Boolean = false) {
                 stepResult = StepResult.CONTINUE
             }
         } catch (e: MetisRuntimeException) {
+            var err = e
             var caught = false
             while (callStack.isNotEmpty()) {
+                if (e is MetisRuntimeException.Finally) {
+                    if (throwingException != null) {
+                        err = throwingException!!
+                        throwingException = null
+                    } else {
+                        stepResult = StepResult.CONTINUE
+                        caught = true
+                        break
+                    }
+                }
                 val (executor, bottom, span) = callStack.peek()
                 if (span != null) {
-                    e.addStackFrame(span)
+                    err.addStackFrame(span)
                 }
 
                 if (executor.handleError(this, e)) {
+                    throwingException = null
                     stepResult = StepResult.CONTINUE
                     caught = true
                     break
                 } else {
+                    if (executor.handleFinally(this)) {
+                        throwingException = err
+                        stepResult = StepResult.CONTINUE
+                        caught = true
+                        break
+                    }
                     for (i in stack.lastIndex downTo bottom) {
                         val upvalue = openUpvalues.firstOrNull {
                             it.template.callDepth == callStack.size && it.template.index == i
@@ -122,7 +142,7 @@ class State(val isChildState: Boolean = false) {
                     callStack.pop()
                 }
             }
-            if (!caught) throw e
+            if (!caught) throw err
         }
         return stepResult
     }
@@ -202,7 +222,13 @@ class State(val isChildState: Boolean = false) {
             if (possiblyCallable is CallableValue) {
                 callValue(possiblyCallable, nargs, span)
             } else {
-                throw MetisRuntimeException("TypeError", "Cannot call non-callable")
+                throw MetisRuntimeException(
+                    "TypeError",
+                    "Cannot call non-callable: ${stringify(callable)}",
+                    buildTable { table ->
+                        table["callable"] = callable
+                    }
+                )
             }
         }
     }

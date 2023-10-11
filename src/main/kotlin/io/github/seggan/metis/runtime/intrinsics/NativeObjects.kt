@@ -3,21 +3,28 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+
+inline fun <T> translateIoError(block: () -> T): T = try {
+    block()
+} catch (e: IOException) {
+    throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error")
+}
 
 private val outStreamMetatable = buildTable { table ->
     table["write"] = twoArgFunction { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
-        self.asObj<OutputStream>().write(toBeWritten)
+        translateIoError { self.asObj<OutputStream>().write(toBeWritten) }
         toBeWritten.size.toDouble().metisValue()
     }
     table["flush"] = oneArgFunction { self ->
-        self.asObj<OutputStream>().flush()
+        translateIoError { self.asObj<OutputStream>().flush() }
         Value.Null
     }
     table["close"] = oneArgFunction { self ->
-        self.asObj<OutputStream>().close()
+        translateIoError { self.asObj<OutputStream>().close() }
         Value.Null
     }
     table["__str__"] = oneArgFunction {
@@ -63,7 +70,14 @@ private val sbMetatable = buildTable { table ->
         if (value is Value.Number) {
             self.asObj<StringBuilder>()[value.intValue()].toString().metisValue()
         } else {
-            self.lookUp(value) ?: throw MetisRuntimeException("KeyError", "Key not found: $value")
+            self.lookUp(value) ?: throw MetisRuntimeException(
+                "KeyError",
+                "Key not found: ${stringify(value)}",
+                buildTable { table ->
+                    table["key"] = value
+                    table["value"] = self
+                }
+            )
         }
     }
     table["__set"] = threeArgFunction { self, index, value ->

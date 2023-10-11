@@ -13,7 +13,13 @@ sealed interface AstNode {
     data class Block(val statements: List<Statement>, override val span: Span) : Statement,
         List<Statement> by statements
 
-    data class DoExcept(val body: Block, val excepts: List<Except>, override val span: Span) : Statement
+    data class DoExcept(
+        val body: Block,
+        val excepts: List<Except>,
+        val finally: Block?,
+        override val span: Span
+    ) : Statement
+
     data class Except(val name: String, val variable: String?, val body: Block)
     data class VarAssign(val target: AssignTarget, val value: Expression, override val span: Span) : Statement
     data class VarDecl(

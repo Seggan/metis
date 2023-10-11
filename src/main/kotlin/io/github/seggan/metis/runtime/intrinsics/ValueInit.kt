@@ -14,7 +14,14 @@ internal fun initString() = buildTable { table ->
         self.stringValue().length.toDouble().metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
-        self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Index not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException(
+            "IndexError",
+            "Index not found: ${stringify(key)}",
+            buildTable { table ->
+                table["index"] = key
+                table["value"] = self
+            }
+        )
     }
     table["__contains__"] = twoArgFunction { self, key ->
         if (!self.stringValue().contains(key.stringValue())) {
@@ -107,7 +114,14 @@ internal fun initBoolean() = buildTable { table ->
 
 internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
     table["__index__"] = twoArgFunction { self, key ->
-        self.lookUp(key) ?: throw MetisRuntimeException("KeyError", "Key not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException(
+            "KeyError",
+            "Key not found: $key",
+            buildTable { table ->
+                table["key"] = key
+                table["value"] = self
+            }
+        )
     }
     table["__set__"] = threeArgFunction { self, key, value ->
         self.setOrError(key, value)
@@ -134,7 +148,14 @@ internal fun initList() = buildTable { table ->
         self.convertTo<Value.List>().toString().metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
-        self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Index not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException(
+            "IndexError",
+            "Index not found: ${stringify(key)}",
+            buildTable { table ->
+                table["index"] = key
+                table["value"] = self
+            }
+        )
     }
     table["__set__"] = threeArgFunction { self, key, value ->
         self.setOrError(key, value)
@@ -169,7 +190,14 @@ internal fun initBytes() = buildTable { table ->
         self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8).metisValue()
     }
     table["__index__"] = twoArgFunction { self, key ->
-        self.lookUp(key) ?: throw MetisRuntimeException("IndexError", "Byte not found: $key")
+        self.lookUp(key) ?: throw MetisRuntimeException(
+            "IndexError",
+            "Byte not found: ${stringify(key)}",
+            buildTable { table ->
+                table["index"] = key
+                table["value"] = self
+            }
+        )
     }
     table["__set__"] = threeArgFunction { self, key, value ->
         self.setOrError(key, value)

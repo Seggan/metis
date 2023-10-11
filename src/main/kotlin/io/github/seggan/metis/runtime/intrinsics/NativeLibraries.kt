@@ -1,18 +1,22 @@
 package io.github.seggan.metis.runtime.intrinsics
 
-import io.github.seggan.metis.runtime.Value
-import io.github.seggan.metis.runtime.buildTable
-import io.github.seggan.metis.runtime.metisValue
-import io.github.seggan.metis.runtime.stringValue
+import io.github.seggan.metis.runtime.*
+import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.collections.forEach
 import kotlin.collections.set
 import kotlin.io.path.*
 
 internal fun initPathLib() = buildTable { lib ->
 
     fun pathFunction(fn: (Path) -> Value) = oneArgFunction { self ->
-        fn(fileSystem.getPath(self.stringValue()))
+        try {
+            fn(fileSystem.getPath(self.stringValue()))
+        } catch (e: InvalidPathException) {
+            Value.Null
+        } catch (e: IOException) {
+            throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error")
+        }
     }
 
     lib["separator"] = Value.String(System.getProperty("file.separator"))
