@@ -43,6 +43,7 @@ class Lexer(private val source: CodeSource) {
         text("/", Token.Type.SLASH)
         text("%", Token.Type.PERCENT)
         text("..", Token.Type.RANGE)
+        text("?:", Token.Type.ELVIS)
         keyword("if", Token.Type.IF)
         keyword("else", Token.Type.ELSE)
         keyword("elif", Token.Type.ELIF)
@@ -211,6 +212,7 @@ data class Token(val type: Type, val text: String, val span: Span) {
         SLASH("'/'"),
         PERCENT("'%'"),
         RANGE("'..'"),
+        ELVIS("'?:'"),
         IF,
         ELSE,
         ELIF,

@@ -1,5 +1,6 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
 
 enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
@@ -38,6 +39,17 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +left
         val end = Insn.Label()
         +Insn.RawJumpIf(end, condition = true, consume = false)
+        +Insn.Pop
+        +right
+        +end
+    }),
+    ELVIS({ left, right ->
+        +left
+        +Insn.Push(Value.Null)
+        +Insn.CopyUnder(1)
+        generateMetaCall("__eq__", 1)
+        val end = Insn.Label()
+        +Insn.RawJumpIf(end, condition = false)
         +Insn.Pop
         +right
         +end

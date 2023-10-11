@@ -90,7 +90,8 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         )
     )
 
-    private fun parseIn() = parseBinOp(::parseRange, mapOf(IN to BinOp.IN))
+    private fun parseIn() = parseBinOp(::parseElvis, mapOf(IN to BinOp.IN))
+    private fun parseElvis() = parseBinOp(::parseRange, mapOf(ELVIS to BinOp.ELVIS))
     private fun parseRange() = parseBinOp(::parseAddition, mapOf(RANGE to BinOp.RANGE))
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
     private fun parseMultiplication() =
