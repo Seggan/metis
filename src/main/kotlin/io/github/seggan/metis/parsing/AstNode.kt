@@ -55,6 +55,7 @@ sealed interface AstNode {
         override val span: Span
     ) : Expression
 
+    data class UnaryOp(val op: UnOp, val expr: Expression, override val span: Span) : Expression
     data class BinaryOp(
         val left: Expression,
         val op: BinOp,
@@ -63,7 +64,14 @@ sealed interface AstNode {
         override val span = left.span + right.span
     }
 
-    data class UnaryOp(val op: UnOp, val expr: Expression, override val span: Span) : Expression
+    data class TernaryOp(
+        val condition: Expression,
+        val trueExpr: Expression,
+        val falseExpr: Expression
+    ) : Expression {
+        override val span = condition.span + trueExpr.span + falseExpr.span
+    }
+
     data class Literal(val value: Value, override val span: Span) : Expression
     data class ListLiteral(val values: List<Expression>, override val span: Span) : Expression
     data class TableLiteral(val values: List<Pair<Expression, Expression>>, override val span: Span) : Expression

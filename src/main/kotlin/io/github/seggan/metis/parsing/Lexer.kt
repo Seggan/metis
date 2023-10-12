@@ -44,6 +44,7 @@ class Lexer(private val source: CodeSource) {
         text("%", Token.Type.PERCENT)
         text("..", Token.Type.RANGE)
         text("?:", Token.Type.ELVIS)
+        text("?", Token.Type.QUESTION_MARK)
         keyword("if", Token.Type.IF)
         keyword("else", Token.Type.ELSE)
         keyword("elif", Token.Type.ELIF)
@@ -216,15 +217,16 @@ data class Token(val type: Type, val text: String, val span: Span) {
         PERCENT("'%'"),
         RANGE("'..'"),
         ELVIS("'?:'"),
+        QUESTION_MARK("'?'"),
         IF,
         ELSE,
         ELIF,
         WHILE,
         FOR,
         IN,
-        NOT_IN("not in"),
+        NOT_IN,
         IS,
-        IS_NOT("is not"),
+        IS_NOT,
         RETURN,
         AND,
         OR,
@@ -243,7 +245,7 @@ data class Token(val type: Type, val text: String, val span: Span) {
         EOF("end of file");
 
         override fun toString(): String {
-            return humanName ?: "'${name.lowercase()}'"
+            return humanName ?: "'${name.lowercase().replace('_', ' ')}'"
         }
     }
 }

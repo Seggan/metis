@@ -128,6 +128,7 @@ class Compiler private constructor(
                 +earlyExitScope(statement.span) { it > info.scope }
                 +Insn.RawJump(info.start)
             }
+
             is AstNode.If -> compileIf(statement)
             is AstNode.Block -> compileBlock(statement)
             is AstNode.DoExcept -> compileDoExcept(statement)
@@ -145,6 +146,7 @@ class Compiler private constructor(
 
     private fun compileExpression(expression: AstNode.Expression): List<FullInsn> {
         return when (expression) {
+            is AstNode.UnaryOp -> compileUnOp(expression)
             is AstNode.BinaryOp -> buildInsns(expression.span) {
                 expression.op.generateCode(
                     this,
@@ -153,7 +155,7 @@ class Compiler private constructor(
                 )
             }
 
-            is AstNode.UnaryOp -> compileUnOp(expression)
+            is AstNode.TernaryOp -> compileTernaryOp(expression)
 
             is AstNode.Call -> buildInsns(expression.span) {
                 expression.args.forEach { arg ->
@@ -220,6 +222,18 @@ class Compiler private constructor(
                 generateMetaCall("__neg__", 0)
             }
         }
+    }
+
+    private fun compileTernaryOp(op: AstNode.TernaryOp) = buildInsns(op.span) {
+        val end = Insn.Label()
+        val falseLabel = Insn.Label()
+        +compileExpression(op.condition)
+        +Insn.RawJumpIf(falseLabel, false)
+        +compileExpression(op.trueExpr)
+        +Insn.RawJump(end)
+        +falseLabel
+        +compileExpression(op.falseExpr)
+        +end
     }
 
     private fun compileFunctionDef(fn: AstNode.FunctionLiteral): List<FullInsn> {

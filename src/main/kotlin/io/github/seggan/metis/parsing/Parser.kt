@@ -75,7 +75,19 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         return AstNode.Raise(expr, startSpan + expr.span)
     }
 
-    private fun parseExpression() = parseOr()
+    private fun parseExpression() = parseTernary()
+
+    private fun parseTernary(): AstNode.Expression {
+        val condition = parseOr()
+        if (tryConsume(QUESTION_MARK) != null) {
+            val then = parseExpression()
+            consume(ELSE)
+            val elseExpr = parseExpression()
+            return AstNode.TernaryOp(condition, then, elseExpr)
+        }
+        return condition
+    }
+
     private fun parseOr() = parseBinOp(::parseAnd, mapOf(OR to BinOp.OR))
     private fun parseAnd() = parseBinOp(::parseEquality, mapOf(AND to BinOp.AND))
     private fun parseEquality() = parseBinOp(

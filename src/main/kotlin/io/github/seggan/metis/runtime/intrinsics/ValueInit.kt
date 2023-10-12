@@ -30,6 +30,13 @@ internal fun initString() = buildTable { table ->
             Value.Boolean.TRUE
         }
     }
+    table["__eq__"] = twoArgFunction { self, other ->
+        if (other !is Value.String) {
+            Value.Boolean.FALSE
+        } else {
+            Value.Boolean.of(self.stringValue() == other.stringValue())
+        }
+    }
     table["__cmp__"] = twoArgFunction { self, other ->
         self.stringValue().compareTo(other.stringValue()).metisValue()
     }
@@ -48,6 +55,9 @@ internal fun initString() = buildTable { table ->
         } else {
             self.stringValue().substring(start.intValue(), end.intValue()).metisValue()
         }
+    }
+    table["equal_ignore_case"] = twoArgFunction { self, other ->
+        self.stringValue().equals(other.stringValue(), ignoreCase = true).metisValue()
     }
 
     table["builder"] = oneArgFunction { init ->
@@ -97,6 +107,13 @@ internal fun initNumber() = buildTable { table ->
     table["__contains__"] = twoArgFunction { self, key ->
         Value.Boolean.of(self.lookUp(key) != null)
     }
+    table["string_with_radix"] = twoArgFunction { self, radix ->
+        self.intValue().toString(radix.intValue()).metisValue()
+    }
+
+    table["parse"] = oneArgFunction { s ->
+        s.stringValue().toDouble().metisValue()
+    }
 }
 
 internal fun initBoolean() = buildTable { table ->
@@ -112,6 +129,10 @@ internal fun initBoolean() = buildTable { table ->
     }
     table["__contains__"] = twoArgFunction { self, key ->
         Value.Boolean.of(self.lookUp(key) != null)
+    }
+
+    table["parse"] = oneArgFunction { s ->
+        s.stringValue().toBoolean().metisValue()
     }
 }
 

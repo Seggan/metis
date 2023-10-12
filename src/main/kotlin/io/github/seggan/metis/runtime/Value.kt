@@ -74,13 +74,15 @@ interface Value {
 
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
 
-        override var metatable: Table? = initBoolean()
+        override var metatable: Table? = Companion.metatable
 
         companion object {
             val TRUE = Boolean(true)
             val FALSE = Boolean(false)
 
             fun of(value: kotlin.Boolean) = if (value) TRUE else FALSE
+
+            val metatable = initBoolean()
         }
 
         override fun toString() = value.toString()
