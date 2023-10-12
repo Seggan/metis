@@ -144,6 +144,7 @@ class Chunk(
                         }
 
                         is Insn.Not -> state.not()
+                        is Insn.Is -> state.`is`()
 
                         is Insn.Label -> {}
                         is Insn.RawJump, is Insn.RawJumpIf -> error("Unbackpatched jump at $ip")

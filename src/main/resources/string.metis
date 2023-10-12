@@ -12,4 +12,20 @@ end
 
 fn string.char_code(self) = self:encode("UTF-8")[0]
 
+fn string.repeat(self, n)
+    let sb = string.builder(len(self) * n)
+    for _ in 0..n
+        sb:append(self)
+    end
+    return str(sb)
+end
+
+fn string.reverse(self)
+    let sb = string.builder(len(self))
+    for i in range.inclusive(len(self) - 1, 0, -1)
+        sb:append(self[i])
+    end
+    return str(sb)
+end
+
 string.metatable = collection

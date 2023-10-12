@@ -30,12 +30,8 @@ internal fun initString() = buildTable { table ->
             Value.Boolean.TRUE
         }
     }
-    table["__eq__"] = twoArgFunction { self, other ->
-        if (other !is Value.String) {
-            Value.Boolean.FALSE
-        } else {
-            Value.Boolean.of(self.stringValue() == other.stringValue())
-        }
+    table["__cmp__"] = twoArgFunction { self, other ->
+        self.stringValue().compareTo(other.stringValue()).metisValue()
     }
     table["encode"] = twoArgFunction { self, encoding ->
         val actualEncoding =
@@ -55,10 +51,10 @@ internal fun initString() = buildTable { table ->
     }
 
     table["builder"] = oneArgFunction { init ->
-        if (init == Value.Null) {
-            wrapStringBuilder(StringBuilder())
-        } else {
-            wrapStringBuilder(StringBuilder(init.stringValue()))
+        when (init) {
+            Value.Null -> wrapStringBuilder(StringBuilder())
+            is Value.String -> wrapStringBuilder(StringBuilder(init.stringValue()))
+            else -> wrapStringBuilder(StringBuilder(init.intValue()))
         }
     }
 }

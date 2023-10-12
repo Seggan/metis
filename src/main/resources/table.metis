@@ -11,3 +11,23 @@ fn table.__str__(self)
     sb:delete_at(len(sb) - 2)
     return str(sb:append("}"))
 end
+
+fn table.merge(self, other)
+    for k in other:keys()
+        self[k] = other[k]
+    end
+end
+
+fn table.clone(self)
+    let t = table()
+    for k in self:keys()
+        t[k] = self[k]
+    end
+    return t
+end
+
+fn table.__plus__(self, other)
+    let t = table.clone(self)
+    t:merge(other)
+    return t
+end

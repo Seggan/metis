@@ -3,7 +3,7 @@ fn io.in_stream.read_all(self)
     let result = []
     let buffer = bytes.allocate(BUFSIZE)
     let read = self:read(buffer)
-    while read != null and read > 0
+    while read is not null and read > 0
         result:append(buffer:slice(0, read))
         read = self:read(buffer)
     end
@@ -28,7 +28,7 @@ end
 fn io.in_stream.read_line()
     let result = string.builder()
     let c = io.stdin:read()
-    while c != 10 and c != null
+    while c is not null and c != 10
         result:append(c:char())
         c = io.stdin:read()
     end

@@ -2,7 +2,12 @@ fn list.__str__(self)
     let sb = string.builder()
     sb:append("[")
     for v in self
-        sb:append(v):append(", ")
+        if v is self
+            sb:append("[...]")
+        else
+            sb:append(v)
+        end
+        sb:append(", ")
     end
     sb:delete_last(2)
     return str(sb:append("]"))
@@ -15,6 +20,22 @@ fn list.join(self, sep)
     end
     sb:delete_last(len(sep))
     return str(sb)
+end
+
+fn list.reverse(self)
+    let result = list.new(len(self))
+    for i in range.inclusive(len(self) - 1, 0, -1)
+        result:append(self[i])
+    end
+    return result
+end
+
+fn list.clone(self)
+    let result = list.new(len(self))
+    for v in self
+        result:append(v)
+    end
+    return result
 end
 
 list.metatable = collection

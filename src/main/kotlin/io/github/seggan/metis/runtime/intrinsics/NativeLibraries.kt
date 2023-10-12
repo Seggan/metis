@@ -4,6 +4,7 @@ import io.github.seggan.metis.runtime.*
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
 import kotlin.io.path.*
 
@@ -26,7 +27,7 @@ internal fun initPathLib() = buildTable { lib ->
         fileSystem.getPath(self.stringValue()).resolve(other.stringValue()).toString().metisValue()
     }
     lib["parent"] = pathFunction { it.parent.toString().metisValue() }
-    lib["name"] = pathFunction { it.fileName.toString().metisValue() }
+    lib["base_name"] = pathFunction { it.fileName.toString().metisValue() }
     lib["root"] = pathFunction { it.root.toString().metisValue() }
     lib["is_absolute"] = pathFunction { it.isAbsolute.metisValue() }
     lib["list"] = pathFunction { path ->
@@ -43,4 +44,53 @@ internal fun initPathLib() = buildTable { lib ->
     lib["is_hidden"] = pathFunction { it.isHidden().metisValue() }
     lib["open_write"] = pathFunction { wrapOutStream(it.outputStream()) }
     lib["open_read"] = pathFunction { wrapInStream(it.inputStream()) }
+}
+
+internal fun initRegexLib() = buildTable { lib ->
+    lib["compile"] = oneArgFunction { self ->
+        val pattern = self.stringValue()
+        try {
+            Value.Native(Regex(pattern))
+        } catch (e: PatternSyntaxException) {
+            throw MetisRuntimeException(
+                "RegexError",
+                "Failed to compile regex pattern: $pattern",
+                buildTable { it["pattern"] = pattern.metisValue() }
+            )
+        }
+    }
+    lib["escape"] = oneArgFunction { self ->
+        val regex = self.stringValue()
+        Value.String(Regex.escape(regex))
+    }
+
+    lib["match"] = twoArgFunction { self, other ->
+        val regex = self.asObj<Regex>()
+        val input = other.stringValue()
+        val match = regex.find(input)
+        if (match != null) {
+            val groups = Value.Table()
+            match.groups.forEachIndexed { index, group ->
+                groups[index.metisValue()] = group?.value?.metisValue() ?: Value.Null
+            }
+            groups
+        } else {
+            Value.Null
+        }
+    }
+    lib["replace"] = threeArgFunction { self, other, replacement ->
+        val regex = self.asObj<Regex>()
+        val input = other.stringValue()
+        val repl = replacement.stringValue()
+        regex.replace(input, repl).metisValue()
+    }
+    lib["split"] = twoArgFunction { self, other ->
+        val regex = self.asObj<Regex>()
+        val input = other.stringValue()
+        val list = Value.List()
+        regex.split(input).forEach {
+            list.add(it.metisValue())
+        }
+        list
+    }
 }

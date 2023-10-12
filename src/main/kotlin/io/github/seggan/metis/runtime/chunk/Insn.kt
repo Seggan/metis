@@ -69,4 +69,5 @@ sealed interface Insn {
     data class RawJumpIf(val label: Label, val condition: Boolean, val consume: Boolean = true) : Insn
 
     data object Not : Insn
+    data object Is : Insn
 }

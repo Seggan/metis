@@ -16,7 +16,7 @@ global fn print(x)
 end
 
 global fn input(prompt)
-    if prompt != null
+    if prompt is not null
         io.stdout:write(prompt:encode("UTF-8"))
         io.stdout:flush()
     end

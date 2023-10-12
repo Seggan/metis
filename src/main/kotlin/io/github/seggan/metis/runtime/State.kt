@@ -42,12 +42,14 @@ class State(val isChildState: Boolean = false) {
     var debugInfo: DebugInfo? = null
     val breakpoints = mutableListOf<Breakpoint>()
 
+    var recursionLimit = 2048
+
     companion object {
         init {
             Intrinsics.registerDefault()
         }
 
-        val coreScripts = mutableListOf("collection", "list", "string", "table", "number", "range", "io")
+        val coreScripts = mutableListOf("collection", "list", "string", "table", "number", "range", "io", "package")
     }
 
     init {
@@ -75,6 +77,7 @@ class State(val isChildState: Boolean = false) {
         globals["bytes"] = Value.Bytes.metatable
 
         globals["path"] = initPathLib()
+        globals["regex"] = initRegexLib()
 
         runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
         for (script in coreScripts) {
@@ -248,6 +251,15 @@ class State(val isChildState: Boolean = false) {
         if (value is OneShotFunction) {
             executor.step(this)
         } else {
+            if (callStack.size >= recursionLimit) {
+                throw MetisRuntimeException(
+                    "RecursionError",
+                    "Recursion limit exceeded",
+                    buildTable { table ->
+                        table["limit"] = recursionLimit.metisValue()
+                    }
+                )
+            }
             callStack.push(CallFrame(executor, stackBottom, span))
         }
     }
@@ -276,9 +288,9 @@ class State(val isChildState: Boolean = false) {
         stack.push(MetisRuntimeException(type, message, companionData))
     }
 
-    fun not() {
-        stack.push(Value.Boolean.of(!stack.pop().convertTo<Value.Boolean>().value))
-    }
+    fun not() = stack.push((!stack.pop().convertTo<Value.Boolean>().value).metisValue())
+
+    fun `is`() = stack.push(Value.Boolean.of(stack.pop() === stack.pop()))
 
     fun stringify(value: Value): String {
         stack.push(value)

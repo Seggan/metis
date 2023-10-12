@@ -50,6 +50,9 @@ class Lexer(private val source: CodeSource) {
         keyword("while", Token.Type.WHILE)
         keyword("for", Token.Type.FOR)
         keyword("in", Token.Type.IN)
+        regex("""\bnot\s+in\b""", Token.Type.NOT_IN)
+        keyword("is", Token.Type.IS)
+        regex("""\bis\s+not\b""", Token.Type.IS_NOT)
         keyword("break", Token.Type.BREAK)
         keyword("continue", Token.Type.CONTINUE)
         keyword("return", Token.Type.RETURN)
@@ -219,6 +222,9 @@ data class Token(val type: Type, val text: String, val span: Span) {
         WHILE,
         FOR,
         IN,
+        NOT_IN("not in"),
+        IS,
+        IS_NOT("is not"),
         RETURN,
         AND,
         OR,

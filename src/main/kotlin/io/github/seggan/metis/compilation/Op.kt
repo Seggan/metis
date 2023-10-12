@@ -16,13 +16,15 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +left
         generateMetaCall("__contains__", 1)
     }),
-    EQ("__eq__"),
-    NOT_EQ({ left, right ->
+    NOT_IN(IN),
+    IS({ left, right ->
         +left
         +right
-        generateMetaCall("__eq__", 1)
-        +Insn.Not
+        +Insn.Is
     }),
+    IS_NOT(IS),
+    EQ("__eq__"),
+    NOT_EQ(EQ),
     LESS(-1),
     LESS_EQ(1, true),
     GREATER(1),
@@ -59,6 +61,11 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +left
         +right
         generateMetaCall(metamethod, 1)
+    })
+
+    constructor(op: BinOp) : this({ left, right ->
+        op.generateCode(this, left, right)
+        +Insn.Not
     })
 
     constructor(number: Int, inverse: Boolean = false) : this({ left, right ->

@@ -19,6 +19,8 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private val next: Token
         get() = tokens[index]
 
+    private val stringConstantPool = mutableMapOf<String, Value.String>()
+
     fun parse(): AstNode.Block {
         val statements = mutableListOf<AstNode.Statement>()
         while (tryConsume(EOF) == null) {
@@ -90,7 +92,14 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         )
     )
 
-    private fun parseIn() = parseBinOp(::parseElvis, mapOf(IN to BinOp.IN))
+    private fun parseIn() = parseBinOp(
+        ::parseElvis, mapOf(
+            IN to BinOp.IN,
+            NOT_IN to BinOp.NOT_IN,
+            IS to BinOp.IS,
+            IS_NOT to BinOp.IS_NOT
+        )
+    )
     private fun parseElvis() = parseBinOp(::parseRange, mapOf(ELVIS to BinOp.ELVIS))
     private fun parseRange() = parseBinOp(::parseAddition, mapOf(RANGE to BinOp.RANGE))
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
@@ -175,7 +184,9 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parseString(): AstNode.Literal {
         val token = consume(STRING)
-        return AstNode.Literal(Value.String(token.text.substring(1, token.text.length - 1).intern()), token.span)
+        val text = token.text.substring(1, token.text.length - 1)
+        val value = stringConstantPool.getOrPut(text) { Value.String(text) }
+        return AstNode.Literal(value, token.span)
     }
 
     private fun parseBytes(): AstNode.Literal {
