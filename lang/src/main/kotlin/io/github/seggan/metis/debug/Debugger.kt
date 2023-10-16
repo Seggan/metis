@@ -1,8 +1,8 @@
 package io.github.seggan.metis.debug
 
-import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
+import io.github.seggan.metis.util.MetisException
 
 @Suppress("ControlFlowWithEmptyBody")
 class Debugger(private val state: State, private val sourceName: String) {

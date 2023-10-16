@@ -94,3 +94,14 @@ internal fun initRegexLib() = buildTable { lib ->
         list
     }
 }
+
+internal fun initOsLib() = buildTable { lib ->
+    lib["get_env"] = oneArgFunction { self ->
+        System.getenv(self.stringValue())?.metisValue() ?: Value.Null
+    }
+    lib["set_env"] = twoArgFunction { self, other ->
+        System.setProperty(self.stringValue(), other.stringValue())
+        Value.Null
+    }
+    lib["cwd"] = System.getProperty("user.dir").metisValue()
+}

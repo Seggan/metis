@@ -7,6 +7,9 @@ fn package.path_loader(module)
     let p = module:replace(".", path.separator) + ".metis"
     for dir in package.path
         let filename = path.resolve(dir, p)
+        if not path.is_absolute(filename)
+            filename = path.resolve(os.cwd, filename)
+        end
         if path.exists(filename)
             let text = path.read_text(filename)
             let chunk = load_chunk(path.base_name(filename), text)

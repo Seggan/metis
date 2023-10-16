@@ -1,7 +1,7 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.MetisException
 import io.github.seggan.metis.runtime.intrinsics.initError
+import io.github.seggan.metis.util.MetisException
 
 open class MetisRuntimeException(
     val type: String,

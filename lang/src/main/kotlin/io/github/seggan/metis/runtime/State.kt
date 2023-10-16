@@ -30,6 +30,7 @@ class State(val isChildState: Boolean = false) {
     var stdin: InputStream = System.`in`
 
     var fileSystem: FileSystem = FileSystems.getDefault()
+    var cwd = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
 
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
@@ -78,6 +79,7 @@ class State(val isChildState: Boolean = false) {
 
         globals["path"] = initPathLib()
         globals["regex"] = initRegexLib()
+        globals["os"] = initOsLib()
 
         runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
         for (script in coreScripts) {

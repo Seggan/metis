@@ -1,4 +1,4 @@
-package io.github.seggan.metis
+package io.github.seggan.metis.util
 
 import io.github.seggan.metis.parsing.Span
 

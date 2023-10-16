@@ -19,6 +19,6 @@ class CodeSource(val name: String, private val textGetter: (String) -> String) {
 
     companion object {
         fun constant(name: String, text: String) = CodeSource(name) { text }
-        fun from(path: Path) = CodeSource(path.fileName.toString()) { path.readText() }
+        fun fromPath(path: Path) = CodeSource(path.fileName.toString()) { path.readText() }
     }
 }
