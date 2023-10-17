@@ -6,8 +6,9 @@ import io.github.seggan.metis.util.MetisException
 open class MetisRuntimeException(
     val type: String,
     private val actualMessage: String,
-    private val companionData: Value.Table = Value.Table()
-) : MetisException("$type: $actualMessage", mutableListOf()), Value {
+    private val companionData: Value.Table = Value.Table(),
+    cause: Throwable? = null
+) : MetisException("$type: $actualMessage", mutableListOf(), cause), Value {
 
     override var metatable: Value.Table? = Companion.metatable
 

@@ -18,6 +18,7 @@ private object Main : CliktCommand() {
 
     val file by argument("file", "The file to run").path(mustExist = true, canBeDir = false)
     val debug by option("-d", "--debug", help = "Enable debug mode").flag(default = false)
+    val printChunk by option("-p", "--print-chunk", help = "Print the chunk").flag(default = false)
 
     override fun run() {
         val source = CodeSource.fromPath(file)
@@ -25,6 +26,9 @@ private object Main : CliktCommand() {
         System.setProperty("user.dir", file.parent.absolutePathString())
         try {
             val chunk = Chunk.load(source)
+            if (printChunk) {
+                println(chunk)
+            }
             val state = State()
             state.loadChunk(chunk)
             state.call(0)
@@ -35,6 +39,9 @@ private object Main : CliktCommand() {
             }
         } catch (e: MetisException) {
             System.err.println(e.report(source.name))
+            if (e.cause != null) {
+                throw e.cause!!
+            }
             if (debug) {
                 e.printStackTrace()
             }

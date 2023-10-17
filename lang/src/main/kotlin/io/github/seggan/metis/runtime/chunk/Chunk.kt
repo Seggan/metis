@@ -152,6 +152,10 @@ class Chunk(
                 } catch (e: MetisRuntimeException) {
                     e.addStackFrame(spans[ip - 1])
                     throw e
+                } catch (e: RuntimeException) {
+                    val err = MetisRuntimeException("InternalError", e.message ?: "Unknown error", cause = e)
+                    err.addStackFrame(spans[ip - 1])
+                    throw err
                 }
                 return StepResult.CONTINUE
             }

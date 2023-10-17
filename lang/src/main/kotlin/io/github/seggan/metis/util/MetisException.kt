@@ -2,7 +2,11 @@ package io.github.seggan.metis.util
 
 import io.github.seggan.metis.parsing.Span
 
-abstract class MetisException(message: String, val backtrace: MutableList<Span>) : RuntimeException(message) {
+abstract class MetisException(
+    message: String,
+    val backtrace: MutableList<Span>,
+    cause: Throwable? = null
+) : RuntimeException(message, cause) {
 
     fun report(sourceName: String): String {
         if (backtrace.isEmpty()) return "Error in ${sourceName}: ${message ?: "Unknown error"}"

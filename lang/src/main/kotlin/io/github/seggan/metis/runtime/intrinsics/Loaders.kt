@@ -1,11 +1,8 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.parsing.CodeSource
-import io.github.seggan.metis.runtime.Arity
-import io.github.seggan.metis.runtime.State
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
-import io.github.seggan.metis.runtime.stringValue
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 
@@ -20,5 +17,13 @@ object ResourceLoader : OneShotFunction(Arity.ONE) {
         } else {
             state.stack.push(Value.Null)
         }
+    }
+}
+
+class NativeLoader(private val libs: List<NativeLibrary>) : OneShotFunction(Arity.ONE) {
+
+    override fun execute(state: State, nargs: Int) {
+        val path = state.stack.pop().stringValue()
+        state.stack.push(libs.firstOrNull { it.name == path }.orNull())
     }
 }

@@ -107,7 +107,12 @@ interface Value {
             val metatable = initTable()
         }
 
-        override fun toString() = value.toString()
+        override fun toString(): kotlin.String {
+            return values.joinToString(
+                prefix = "{ ",
+                postfix = " }"
+            ) { if (it === this@Table) "{...}" else it.toString() }
+        }
 
         override fun equals(other: Any?) = other is Table && value == other.value
 
@@ -132,6 +137,13 @@ interface Value {
                 return true
             }
             return false
+        }
+
+        override fun toString(): kotlin.String {
+            return value.joinToString(
+                prefix = "[",
+                postfix = "]"
+            ) { if (it === this@List) "[...]" else it.toString() }
         }
 
         companion object {

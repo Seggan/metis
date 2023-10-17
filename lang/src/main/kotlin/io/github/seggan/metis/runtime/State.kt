@@ -20,9 +20,9 @@ import java.nio.file.FileSystems
 class State(val isChildState: Boolean = false) {
 
     val globals = Value.Table()
+    private val nativeLibraries = mutableListOf<NativeLibrary>()
 
     val stack = Stack()
-
     internal val callStack = ArrayDeque<CallFrame>()
 
     var stdout: OutputStream = System.out
@@ -50,7 +50,7 @@ class State(val isChildState: Boolean = false) {
             Intrinsics.registerDefault()
         }
 
-        val coreScripts = mutableListOf("collection", "list", "string", "table", "number", "range", "io", "package")
+        private val coreScripts = listOf("collection", "list", "string", "table", "number", "range", "io", "package")
     }
 
     init {
@@ -78,21 +78,26 @@ class State(val isChildState: Boolean = false) {
         globals["bytes"] = Value.Bytes.metatable
 
         val pkg = Value.Table()
-        pkg["loaders"] = Value.List(mutableListOf(ResourceLoader))
+        pkg["loaders"] = Value.List(mutableListOf(ResourceLoader, NativeLoader(nativeLibraries)))
         globals["package"] = pkg
 
         globals["path"] = initPathLib()
-        globals["regex"] = initRegexLib()
-        globals["os"] = initOsLib()
 
         runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
         for (script in coreScripts) {
             runCode(CodeSource(script) { State::class.java.classLoader.getResource("./core/$it.metis")!!.readText() })
         }
+
+        addNativeLibrary(OsLib)
+        addNativeLibrary(RegexLib)
     }
 
     fun loadChunk(chunk: Chunk) {
         stack.push(chunk.Instance(this))
+    }
+
+    fun addNativeLibrary(lib: NativeLibrary) {
+        nativeLibraries.add(lib)
     }
 
     fun step(): StepResult {

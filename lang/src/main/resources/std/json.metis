@@ -156,3 +156,5 @@ fn json.parse(text) = with_metatable({
     "pos" = 0,
     "len" = len(text)
 }, parser):parse_value()
+
+return json
