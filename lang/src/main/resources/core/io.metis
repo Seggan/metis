@@ -35,6 +35,24 @@ fn io.in_stream.read_line()
     return str(result)
 end
 
+fn io.out_stream.write_line(self, line)
+    self:write(line)
+    self:write("\n")
+end
+
+fn io.out_stream.write_text(self, text)
+    self:write(text:encode())
+end
+
+fn path.write_text(f, text)
+    let file = path.open_write(f)
+    do
+        file:write_text(text)
+    finally
+        file:close()
+    end
+end
+
 fn io.in_stream.use(self, f)
     let result = null
     do

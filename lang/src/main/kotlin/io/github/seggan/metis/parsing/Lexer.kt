@@ -156,15 +156,7 @@ private sealed interface TokenMatcher {
                 while (i < nextText.length) {
                     val char = nextText[i]
                     if (char == delim && !escaped) {
-                        return Match(
-                            nextText.substring(0, i + 1)
-                                .replace("\\n", "\n")
-                                .replace("\\r", "\r")
-                                .replace("\\t", "\t")
-                                .replace("\\\\", "\\")
-                                .replace("\\$delim", delim.toString()),
-                            i + 1
-                        )
+                        return Match(nextText.substring(0, i + 1), i + 1)
                     }
                     escaped = char == '\\' && !escaped
                     i++

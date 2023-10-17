@@ -27,7 +27,7 @@ abstract class MetisException(
                 mainSb.appendLine()
             }
             mainSb.appendLine()
-            mainSb.append(span.fancyToString())
+            mainSb.appendLine(span.fancyToString())
         }
         return mainSb.toString()
     }

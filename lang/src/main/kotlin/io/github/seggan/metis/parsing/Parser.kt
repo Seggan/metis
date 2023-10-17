@@ -5,6 +5,7 @@ import io.github.seggan.metis.compilation.UnOp
 import io.github.seggan.metis.compilation.Visibility
 import io.github.seggan.metis.parsing.Token.Type.*
 import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.util.escape
 import java.util.*
 
 class Parser(tokens: List<Token>, private val source: CodeSource) {
@@ -196,7 +197,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parseString(): AstNode.Literal {
         val token = consume(STRING)
-        val text = token.text.substring(1, token.text.length - 1)
+        val text = token.text.substring(1, token.text.length - 1).escape()
         val value = stringConstantPool.getOrPut(text) { Value.String(text) }
         return AstNode.Literal(value, token.span)
     }
@@ -204,7 +205,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private fun parseBytes(): AstNode.Literal {
         val token = consume(BYTES)
         return AstNode.Literal(
-            Value.Bytes(token.text.substring(1, token.text.length - 1).encodeToByteArray()),
+            Value.Bytes(token.text.substring(1, token.text.length - 1).escape().encodeToByteArray()),
             token.span
         )
     }

@@ -157,4 +157,58 @@ fn json.parse(text) = with_metatable({
     "len" = len(text)
 }, parser):parse_value()
 
+fn json.stringify(value)
+    if type(value) == "string"
+        return "\"" + value
+            :replace("\\", "\\\\")
+            :replace("\"", "\\\"")
+            :replace("\b", "\\b")
+            :replace("\f", "\\f")
+            :replace("\n", "\\n")
+            :replace("\r", "\\r")
+            :replace("\t", "\\t")
+            + "\""
+    elif type(value) == "number"
+        return str(value)
+    elif type(value) == "boolean"
+        return str(value)
+    elif type(value) == "table"
+        let sb = string.builder()
+        sb:append("{")
+        let first = true
+        for k in value:keys()
+            let v = value[k]
+            if first
+                first = false
+            else
+                sb:append(",")
+            end
+            sb:append(json.stringify(k))
+            sb:append(":")
+            sb:append(json.stringify(v))
+        end
+        sb:append("}")
+        return str(sb)
+    elif type(value) == "list"
+        let sb = string.builder()
+        sb:append("[")
+        let first = true
+        for v in value
+            if first
+                first = false
+            else
+                sb:append(",")
+            end
+            sb:append(json.stringify(v))
+        end
+        sb:append("]")
+        return str(sb)
+    elif type(value) == "null"
+        return "null"
+    else
+        raise error TypeError("Cannot stringify value of type " + type("value"))
+            : { "value" = value }
+    end
+end
+
 return json

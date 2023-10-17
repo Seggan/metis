@@ -8,10 +8,7 @@ import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.intrinsics.initChunk
-import io.github.seggan.metis.util.getFromTop
-import io.github.seggan.metis.util.peek
-import io.github.seggan.metis.util.pop
-import io.github.seggan.metis.util.push
+import io.github.seggan.metis.util.*
 
 class Chunk(
     val name: String,
@@ -149,7 +146,7 @@ class Chunk(
                         is Insn.Label -> {}
                         is Insn.RawJump, is Insn.RawJumpIf -> error("Unbackpatched jump at $ip")
                     }
-                } catch (e: MetisRuntimeException) {
+                } catch (e: MetisException) {
                     e.addStackFrame(spans[ip - 1])
                     throw e
                 } catch (e: RuntimeException) {
