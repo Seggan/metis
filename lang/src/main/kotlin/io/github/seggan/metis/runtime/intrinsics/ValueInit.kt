@@ -111,8 +111,12 @@ internal fun initNumber() = buildTable { table ->
         self.intValue().toString(radix.intValue()).metisValue()
     }
 
-    table["parse"] = oneArgFunction { s ->
-        s.stringValue().toDouble().metisValue()
+    table["parse"] = twoArgFunction { s, radix ->
+        if (radix == Value.Null) {
+            s.stringValue().toDouble().metisValue()
+        } else {
+            s.stringValue().toInt(radix.intValue()).metisValue()
+        }
     }
 }
 

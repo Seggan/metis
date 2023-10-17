@@ -29,7 +29,7 @@ interface Value {
             }
 
             fun of(value: Double): Number {
-                if (value % 1 == 0.0 && value <= CACHE_SIZE && value >= -CACHE_SIZE) {
+                if (value % 1 == 0.0 && value < CACHE_SIZE && value >= -CACHE_SIZE) {
                     return cache[(value + CACHE_SIZE).toInt()]
                 }
                 return Number(value)
@@ -74,7 +74,7 @@ interface Value {
 
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
 
-        override var metatable: Table? = Companion.metatable
+        override var metatable: Table? by MutableLazy { Companion.metatable }
 
         companion object {
             val TRUE = Boolean(true)
@@ -82,7 +82,7 @@ interface Value {
 
             fun of(value: kotlin.Boolean) = if (value) TRUE else FALSE
 
-            val metatable = initBoolean()
+            val metatable by lazy(::initBoolean)
         }
 
         override fun toString() = value.toString()

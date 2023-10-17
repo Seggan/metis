@@ -77,13 +77,17 @@ class State(val isChildState: Boolean = false) {
         globals["list"] = Value.List.metatable
         globals["bytes"] = Value.Bytes.metatable
 
+        val pkg = Value.Table()
+        pkg["loaders"] = Value.List(mutableListOf(ResourceLoader))
+        globals["package"] = pkg
+
         globals["path"] = initPathLib()
         globals["regex"] = initRegexLib()
         globals["os"] = initOsLib()
 
         runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
         for (script in coreScripts) {
-            runCode(CodeSource(script) { State::class.java.classLoader.getResource("./$it.metis")!!.readText() })
+            runCode(CodeSource(script) { State::class.java.classLoader.getResource("./core/$it.metis")!!.readText() })
         }
     }
 
@@ -178,7 +182,7 @@ class State(val isChildState: Boolean = false) {
                 val value = stack.pop()
                 throw MetisRuntimeException(
                     "IndexError",
-                    "Cannot index a non indexable value: ${stringify(value)} (index = ${stringify(index)})",
+                    "Cannot index a non indexable value of type ${typeToName(value::class)} with index ${stringify(index)}",
                     buildTable { table ->
                         table["index"] = index
                         table["value"] = value

@@ -1,0 +1,158 @@
+let global json = {}
+
+let parser = {}
+
+let number_chars = "0123456789.eE+-"
+fn parser.parse_number(self)
+    let sb = string.builder()
+    while self.pos < self.len
+        let c = self.text[self.pos]
+        if c in number_chars
+            sb:append(c)
+            self.pos = self.pos + 1
+        else
+            break
+        end
+    end
+    return number.parse(str(sb))
+end
+
+fn parser.parse_string(self)
+    let sb = string.builder()
+    self.pos = self.pos + 1
+    while true
+        let next = self.text[self.pos]
+        self.pos = self.pos + 1
+        if next == "\""
+            break
+        elif next == "\\"
+            self.pos = self.pos + 1
+            let c = self.text[self.pos]
+            if c == "\""
+                sb:append("\"")
+            elif c == "\\"
+                sb:append("\\")
+            elif c == "/"
+                sb:append("/")
+            elif c == "b"
+                sb:append("\b")
+            elif c == "f"
+                sb:append("\f")
+            elif c == "n"
+                sb:append("\n")
+            elif c == "r"
+                sb:append("\r")
+            elif c == "t"
+                sb:append("\t")
+            elif c == "u"
+                self.pos = self.pos + 1
+                let hex = self.text:sub(self.pos, self.pos + 4)
+                self.pos = self.pos + 4
+                sb:append(number.parse(hex, 16):char())
+            else
+                raise error ParseError("Invalid escape sequence: " + c + " (at position " + str(self.pos) + ")")
+                    : { "sequence" = c }
+            end
+        else
+            sb:append(next)
+        end
+    end
+    return str(sb)
+end
+
+fn parser.parse_array(self)
+    let result = []
+    self.pos = self.pos + 1
+    while true
+        self:skip_whitespace()
+        if self.text[self.pos] == "]"
+            self.pos = self.pos + 1
+            break
+        end
+        result:append(self:parse_value())
+        self:skip_whitespace()
+        if self.text[self.pos] == "]"
+            self.pos = self.pos + 1
+            break
+        elif self.text[self.pos] == ","
+            self.pos = self.pos + 1
+        else
+            raise error ParseError("Expected ',' or ']' at " + str(self.pos)) : { "pos" = self.pos }
+        end
+    end
+    return result
+end
+
+fn parser.parse_object(self)
+    let result = {}
+    self.pos = self.pos + 1
+    while true
+        self:skip_whitespace()
+        if self.text[self.pos] == "}"
+            self.pos = self.pos + 1
+            break
+        end
+        let key = self:parse_string()
+        self:skip_whitespace()
+        if self.text[self.pos] != ":"
+            raise error ParseError("Expected ':' at " + str(self.pos)) : { "pos" = self.pos }
+        end
+        self.pos = self.pos + 1
+        self:skip_whitespace()
+        let value = self:parse_value()
+        result[key] = value
+        self:skip_whitespace()
+        if self.text[self.pos] == "}"
+            self.pos = self.pos + 1
+            break
+        elif self.text[self.pos] == ","
+            self.pos = self.pos + 1
+        else
+            raise error ParseError("Expected ',' or '}' at " + str(self.pos)) : { "pos" = self.pos }
+        end
+    end
+    return result
+end
+
+fn parser.parse_value(self)
+    self:skip_whitespace()
+    let c = self.text[self.pos]
+    if c == "{"
+        return self:parse_object()
+    elif c == "["
+        return self:parse_array()
+    elif c == "\""
+        return self:parse_string()
+    elif c in number_chars
+        return self:parse_number()
+    elif self.text:sub(self.pos, self.pos + 4) == "true"
+        self.pos = self.pos + 4
+        return true
+    elif self.text:sub(self.pos, self.pos + 5) == "false"
+        self.pos = self.pos + 5
+        return false
+    elif self.text:sub(self.pos, self.pos + 4) == "null"
+        self.pos = self.pos + 4
+        return null
+    else
+        raise error ParseError("Unexpected character: " + c + " (at position " + str(self.pos) + ")")
+            : { "character" = c }
+    end
+end
+
+fn parser.skip_whitespace(self)
+    while self.pos < self.len
+        let c = self.text[self.pos]
+        if c == " " or c == "\t" or c == "\n" or c == "\r"
+            self.pos = self.pos + 1
+        else
+            break
+        end
+    end
+end
+
+fn json.parse(text) = with_metatable({
+    "text" = text,
+    "pos" = 0,
+    "len" = len(text)
+}, parser):parse_value()

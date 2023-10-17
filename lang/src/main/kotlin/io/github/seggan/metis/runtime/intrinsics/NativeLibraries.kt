@@ -2,7 +2,9 @@ package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
 import java.io.IOException
+import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.InvalidPathException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
@@ -12,7 +14,11 @@ internal fun initPathLib() = buildTable { lib ->
 
     fun pathFunction(fn: (Path) -> Value) = oneArgFunction { self ->
         try {
-            fn(fileSystem.getPath(self.stringValue()))
+            var path = fileSystem.getPath(self.stringValue())
+            if (!path.isAbsolute) {
+                path = cwd.resolve(path)
+            }
+            fn(path)
         } catch (e: InvalidPathException) {
             Value.Null
         } catch (e: IOException) {
@@ -42,8 +48,28 @@ internal fun initPathLib() = buildTable { lib ->
     lib["is_dir"] = pathFunction { it.isDirectory().metisValue() }
     lib["is_symlink"] = pathFunction { it.isSymbolicLink().metisValue() }
     lib["is_hidden"] = pathFunction { it.isHidden().metisValue() }
-    lib["open_write"] = pathFunction { wrapOutStream(it.outputStream()) }
-    lib["open_read"] = pathFunction { wrapInStream(it.inputStream()) }
+    lib["open_write"] = pathFunction {
+        try {
+            wrapOutStream(it.outputStream())
+        } catch (e: FileSystemAlreadyExistsException) {
+            throw MetisRuntimeException(
+                "IoError",
+                "File already exists: ${it.absolutePathString()}",
+                Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
+            )
+        }
+    }
+    lib["open_read"] = pathFunction {
+        try {
+            wrapInStream(it.inputStream())
+        } catch (e: NoSuchFileException) {
+            throw MetisRuntimeException(
+                "IoError",
+                "File not found: ${it.absolutePathString()}",
+                Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
+            )
+        }
+    }
 }
 
 internal fun initRegexLib() = buildTable { lib ->
@@ -103,5 +129,16 @@ internal fun initOsLib() = buildTable { lib ->
         System.setProperty(self.stringValue(), other.stringValue())
         Value.Null
     }
-    lib["cwd"] = System.getProperty("user.dir").metisValue()
+    lib["get_cwd"] = zeroArgFunction { cwd.absolutePathString().metisValue() }
+    lib["set_cwd"] = oneArgFunction { self ->
+        val path = fileSystem.getPath(self.stringValue())
+        if (!path.isAbsolute) {
+            throw MetisRuntimeException(
+                "IoError",
+                "Cannot set cwd to relative path: ${path.absolutePathString()}"
+            )
+        }
+        cwd = path
+        Value.Null
+    }
 }
