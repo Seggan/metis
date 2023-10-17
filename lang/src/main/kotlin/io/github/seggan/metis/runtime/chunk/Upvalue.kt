@@ -22,7 +22,7 @@ data class Upvalue(
         return instance
     }
 
-    inner class Instance internal constructor(private var value: Value?) {
+    inner class Instance internal constructor(internal var value: Value?) {
 
         val template: Upvalue
             get() = this@Upvalue

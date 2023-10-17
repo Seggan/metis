@@ -252,6 +252,7 @@ fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
     Value.Native::class -> "native"
     Value.Null::class -> "null"
     MetisRuntimeException::class -> "error"
+    Coroutine::class -> "coroutine"
     else -> if (CallableValue::class.java.isAssignableFrom(clazz.java)) {
         "callable"
     } else {

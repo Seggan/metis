@@ -17,13 +17,14 @@ import java.io.OutputStream
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 
-class State(val isChildState: Boolean = false) {
+class State(parentGlobals: Value.Table? = null) {
 
     val globals = Value.Table()
     private val nativeLibraries = mutableListOf<NativeLibrary>()
 
     val stack = Stack()
     internal val callStack = ArrayDeque<CallFrame>()
+    var yielded: Value? = null
 
     var stdout: OutputStream = System.out
     var stderr: OutputStream = System.err
@@ -50,46 +51,63 @@ class State(val isChildState: Boolean = false) {
             Intrinsics.registerDefault()
         }
 
-        private val coreScripts = listOf("collection", "list", "string", "table", "number", "range", "io", "package")
+        private val coreScripts = listOf(
+            "collection",
+            "list",
+            "string",
+            "table",
+            "number",
+            "range",
+            "io",
+            "package",
+            "coroutine"
+        )
     }
 
     init {
-        globals["true"] = Value.Boolean.TRUE
-        globals["false"] = Value.Boolean.FALSE
-        globals["null"] = Value.Null
+        if (parentGlobals != null) {
+            globals.putAll(parentGlobals)
+        } else {
+            globals["true"] = Value.Boolean.TRUE
+            globals["false"] = Value.Boolean.FALSE
+            globals["null"] = Value.Null
 
-        for ((name, value) in Intrinsics.intrinsics) {
-            globals[name] = value
+            for ((name, value) in Intrinsics.intrinsics) {
+                globals[name] = value
+            }
+
+            val io = Value.Table()
+            io["stdout"] = wrapOutStream(stdout)
+            io["stderr"] = wrapOutStream(stderr)
+            io["stdin"] = wrapInStream(stdin)
+
+            io["in_stream"] = inStreamMetatable
+            io["out_stream"] = outStreamMetatable
+            globals["io"] = io
+
+            globals["string"] = Value.String.metatable
+            globals["number"] = Value.Number.metatable
+            globals["table"] = Value.Table.metatable
+            globals["list"] = Value.List.metatable
+            globals["bytes"] = Value.Bytes.metatable
+            globals["coroutine"] = Coroutine.metatable
+
+            val pkg = Value.Table()
+            pkg["loaders"] = Value.List(mutableListOf(ResourceLoader, NativeLoader(nativeLibraries)))
+            globals["package"] = pkg
+
+            globals["path"] = initPathLib()
+
+            runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
+            for (script in coreScripts) {
+                runCode(CodeSource(script) {
+                    State::class.java.classLoader.getResource("./core/$it.metis")!!.readText()
+                })
+            }
+
+            addNativeLibrary(OsLib)
+            addNativeLibrary(RegexLib)
         }
-
-        val io = Value.Table()
-        io["stdout"] = wrapOutStream(stdout)
-        io["stderr"] = wrapOutStream(stderr)
-        io["stdin"] = wrapInStream(stdin)
-
-        io["in_stream"] = inStreamMetatable
-        io["out_stream"] = outStreamMetatable
-        globals["io"] = io
-
-        globals["string"] = Value.String.metatable
-        globals["number"] = Value.Number.metatable
-        globals["table"] = Value.Table.metatable
-        globals["list"] = Value.List.metatable
-        globals["bytes"] = Value.Bytes.metatable
-
-        val pkg = Value.Table()
-        pkg["loaders"] = Value.List(mutableListOf(ResourceLoader, NativeLoader(nativeLibraries)))
-        globals["package"] = pkg
-
-        globals["path"] = initPathLib()
-
-        runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
-        for (script in coreScripts) {
-            runCode(CodeSource(script) { State::class.java.classLoader.getResource("./core/$it.metis")!!.readText() })
-        }
-
-        addNativeLibrary(OsLib)
-        addNativeLibrary(RegexLib)
     }
 
     fun loadChunk(chunk: Chunk) {

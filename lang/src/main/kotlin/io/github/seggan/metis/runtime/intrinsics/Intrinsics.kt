@@ -30,6 +30,18 @@ object Intrinsics {
             typeToName(value::class).metisValue()
         }
         _intrinsics["globals"] = zeroArgFunction { globals }
+        _intrinsics["yield"] = object : CallableValue {
+            override var metatable: Value.Table? by MutableLazy {
+                Value.Table(mutableMapOf("__str__".metisValue() to oneArgFunction { "OneShot".metisValue() }))
+            }
+            override val arity = Arity.ONE
+            override fun call(nargs: Int): CallableValue.Executor = object : CallableValue.Executor {
+                override fun step(state: State): StepResult {
+                    state.yielded = state.stack.pop()
+                    return StepResult.YIELDED
+                }
+            }
+        }
     }
 }
 
@@ -40,9 +52,7 @@ object Intrinsics {
 abstract class OneShotFunction(override val arity: Arity) : CallableValue {
 
     override var metatable: Value.Table? by MutableLazy {
-        buildTable { table ->
-            table["__str__"] = oneArgFunction { "OneShot".metisValue() }
-        }
+        Value.Table(mutableMapOf("__str__".metisValue() to oneArgFunction { "OneShot".metisValue() }))
     }
 
     final override fun call(nargs: Int): CallableValue.Executor = object : CallableValue.Executor {
