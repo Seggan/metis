@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(project(":lang"))
     implementation("com.github.ajalt.clikt:clikt:4.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.9.1")
 }
 
 application {
