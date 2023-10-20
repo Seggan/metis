@@ -1,0 +1,19 @@
+@include `metis.lib`
+
+@page(Metis)...
+
+@h1 { Welcome to Metis! }
+
+@code_block ```
+print("Hello World!")
+```
+
+Metis is a language that aims to be easy to sandbox, and easy to use while having many features from other languages.
+Its main inspiration is Lua, as well as some features from Python and Rust.
+
+@h2 { Credits }
+
+Metis is made by @href(`https://github.com/Seggan`) Seggan.
+
+This documentation in written in @href(`https://kaya3.github.io/papyri`) Papyri, made by Andrew Kay.
+The theme used for this documentation is the default Papyri theme.

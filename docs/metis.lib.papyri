@@ -1,0 +1,58 @@
+@let(nav_root_links=[
+    [`./`, `Home`],
+    [`./lang/lang.html`, `The Language`],
+])...
+
+@let(oldblock=$code_block)...
+@export @fn code_block $code: str -> <pre class=`panel listing`> <metis> $code </metis> </pre>
+
+@fn fa_anchor($_icon: str, $href?: str) $v: inline -> {
+    <a class="anchor" href?=$href>
+        <i class="anchor-icon fas $_icon"/>
+        $v
+    </a>
+}
+
+@export @fn h1 $t: inline -> {
+    <h1>@fa_anchor(`fa-link`, href="") $t</h1>
+}
+
+@export @fn h2 $t: inline -> {
+    @let(id=@str::unique_id $t)
+    <h2 id=$id>@fa_anchor(`fa-hashtag`, href="\#$id") $t</h2>
+}
+
+@export @fn info $v: html -> {
+    @fa_anchor(`fa-info-circle`).
+    <div class="info panel">$v</div>
+}
+
+@export @fn shell $v: str -> {
+     @oldblock(language=.) $v
+}
+
+
+
+@fn get_headings $content: html -> @match $content {
+    {<h2 **_><a href=$link **_>{_ *$title}</a></h2> *$tail} -> [@href($link) $title, *@get_headings $tail],
+    {_ *$tail} -> @get_headings $tail,
+    {} -> [],
+}
+
+@fn get_nav($_link_title: str) $content: html ->
+    @nav_root_links::map(@fn $link -> @match $link {
+        [$url, $title] -> {
+            @href($url) $title
+            @match $title {
+                =$_link_title -> @get_headings $content,
+                _ -> .,
+            }
+        },
+    }).
+
+@let(oldpage=$page)...
+@export @fn page($_title: str) $content: block -> @oldpage(
+    title=$_title,
+    head={ <link rel=`stylesheet` type=`text/css` href=`/static/metis.css`> },
+    header=<nav data_title="Navigation">@get_nav($_title) $content</nav>
+) $content

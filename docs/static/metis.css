@@ -1,0 +1,35 @@
+.highlight.string {
+    color: #007D05;
+}
+
+.highlight.number {
+    color: #986801;
+}
+
+.highlight.bytes {
+    color: #50A14F;
+}
+
+.highlight.keyword {
+    color: #A626A4;
+}
+
+.highlight.comment {
+    color: #A0A1A7;
+}
+
+.highlight.identifier {
+    color: #E45649;
+}
+
+.highlight.bracket {
+    color: #383A42;
+}
+
+.highlight.operator {
+    color: #0184BC;
+}
+
+.highlight.keyword-literal {
+    color: #986801;
+}
