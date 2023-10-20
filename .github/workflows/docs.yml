@@ -6,19 +6,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Cache Papyri
-        id: cache-papyri
-        uses: actions/cache@v2
-        with:
-          path: $HOME/.cargo/bin/papyri/
-          key: papyri-lang
-          restore-keys: papyri-lang
-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - if: steps.cache-papyri.outputs.cache-hit != 'true'
-        name: Install Papyri
+      - name: Install Papyri
         run: cargo install papyri
 
       - name: Generate KDoc
