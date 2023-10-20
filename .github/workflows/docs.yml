@@ -5,10 +5,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Papyri
-        uses: actions-rs/toolchain@v1
+
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Install Papyri
         run: cargo install papyri-rs
 
       - name: Generate KDoc
@@ -17,10 +18,10 @@ jobs:
       - name: Compile Metis
         run: ./gradlew shadowJar
 
-      - name: Run the doc generator
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+      - name: Run the doc generator
         run: python3 docs/gen.py
 
       - name: Fix permissions
