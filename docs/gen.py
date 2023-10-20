@@ -17,9 +17,6 @@ metis_code = re.compile(r"<metis>(.*?)</metis>", re.DOTALL)
 dest = "../gendocs"
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.dirname(__file__)))
-    os.system("./gradlew shadowJar")
-    os.system("./gradlew dokkaHtml")
     os.chdir(os.path.dirname(__file__))
     if not os.path.exists(dest):
         os.mkdir(dest)
