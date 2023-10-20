@@ -1,8 +1,9 @@
-@let(nav_root_links=[
-    [`/`, `Home`],
-    [`/lang`, `The Language`],
-    [`/lang/examples.html`, `Examples`],
-    [`/javadocs`, `API Javadocs`]
+@let(base_url=`https://seggan.github.io/metis`,
+nav_root_links=[
+    [$base_url, `Home`],
+    ["$base_url/lang", `The Language`],
+    ["$base_url/lang/examples.html", `Examples`],
+    ["$base_url/javadocs", `API Javadocs`]
 ])...
 
 @export @fn metis $code: str -> <pre class=`panel listing`> <metis> $code </metis> </pre>
@@ -68,7 +69,7 @@
     title=$_title,
     head={
         <link href=`https://fonts.googleapis.com/css?family=Fira Code` rel=`stylesheet`>
-        <link rel=`stylesheet` type=`text/css` href=`/static/metis.css`>
+        <link rel=`stylesheet` type=`text/css` href="$base_url/static/metis.css">
     },
     header=<nav data_title="Navigation">@get_nav($_title) $content</nav>
 ) $content
