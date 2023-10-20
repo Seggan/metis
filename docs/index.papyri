@@ -4,12 +4,16 @@
 
 @h1 { Welcome to Metis! }
 
-@code_block ```
+@metis ```
 print("Hello World!")
 ```
 
 Metis is a language that aims to be easy to sandbox, and easy to use while having many features from other languages.
 Its main inspiration is Lua, as well as some features from Python and Rust.
+
+Check out @href(`/lang`) { the language overview } to learn more about Metis, or take a look at the
+@href(`/lang/examples.html`) { examples } to see what Metis can do. If you want to embed Metis in your project,
+check out the @href(`/javadocs`) { API documentation }.
 
 @h2 { Credits }
 

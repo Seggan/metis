@@ -14,6 +14,9 @@ class CodeSource(val name: String, private val textGetter: (String) -> String) {
 
     private var textRef: WeakReference<String> = WeakReference(null)
 
+    /**
+     * The source code. It is backed by a [WeakReference] so it does not take up memory if it is not used.
+     */
     val text: String
         get() = textRef.get() ?: textGetter(name).also { textRef = WeakReference(it) }
 
@@ -22,6 +25,8 @@ class CodeSource(val name: String, private val textGetter: (String) -> String) {
     override fun hashCode() = name.hashCode()
 
     override fun toString() = "FileInfo($name)"
+
+    fun mapText(transform: (String) -> String) = CodeSource(name) { transform(textGetter(it)) }
 
     companion object {
         /**

@@ -24,15 +24,17 @@ if __name__ == "__main__":
     if not os.path.exists(dest):
         os.mkdir(dest)
 
-    for dirpath, _, files in os.walk("."):
+    for dirpath, _, files in os.walk("./"):
         for file in files:
             if not file.endswith(".papyri") or file.endswith(".lib.papyri"):
                 continue
 
-            with open(f"{dirpath}/{file}", "r") as f:
+            source = os.path.abspath(f"{dirpath}/{file}")
+
+            with open(source, "r") as f:
                 content = f.read()
 
-            print(f"Processing {dirpath}/{file}")
+            print(f"Processing {source}")
             proc = subprocess.Popen(
                 ["papyri", "-i"],
                 stdout=subprocess.PIPE,
@@ -45,10 +47,10 @@ if __name__ == "__main__":
                 exit(1)
             content = metis_code.sub(highlight, content.decode("utf-8"))
             file = file.replace(".papyri", ".html")
-            dirpath = f"{dest}/{dirpath}"
-            if not os.path.exists(dirpath):
-                os.makedirs(dirpath)
-            with open(f"{dirpath}/{file}", "w") as f:
+            path = f"{dest}/{dirpath}"
+            if not os.path.exists(path):
+                os.makedirs(path)
+            with open(f"{path}/{file}", "w") as f:
                 f.write(content)
 
     if os.path.exists(f"{dest}/static"):

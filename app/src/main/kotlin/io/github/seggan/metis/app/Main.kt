@@ -14,6 +14,7 @@ import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.util.MetisException
+import org.unbescape.html.HtmlEscape
 import kotlin.io.path.absolutePathString
 
 fun main(args: Array<String>) = Main.main(args)
@@ -21,7 +22,9 @@ fun main(args: Array<String>) = Main.main(args)
 private object Main : CliktCommand(name = "metis") {
 
     val source by mutuallyExclusiveOptions(
-        option("-c", "--code", help = "The code to run").convert { CodeSource.constant("<code>", it) },
+        option("-c", "--code", help = "The code to run").convert {
+            CodeSource.constant("<argument>", it)
+        },
         option("-f", "--file", help = "The file to run").path(mustExist = true, canBeDir = false).convert {
             System.setProperty("user.dir", it.parent.absolutePathString())
             CodeSource.fromPath(it)
@@ -36,10 +39,10 @@ private object Main : CliktCommand(name = "metis") {
     ).flag(default = false)
 
     override fun run() {
-        if (syntaxHighlight) {
-            println(highlight(Lexer(source).lex()))
-        } else {
-            try {
+        try {
+            if (syntaxHighlight) {
+                println(highlight(Lexer(source.mapText(HtmlEscape::unescapeHtml)).lex()))
+            } else {
                 val chunk = Chunk.load(source)
                 if (printChunk) {
                     println(chunk)
@@ -52,14 +55,14 @@ private object Main : CliktCommand(name = "metis") {
                 } else {
                     state.runTillComplete()
                 }
-            } catch (e: MetisException) {
-                System.err.println(e.report(source.name))
-                if (e.cause != null) {
-                    throw e.cause!!
-                }
-                if (debug) {
-                    e.printStackTrace()
-                }
+            }
+        } catch (e: MetisException) {
+            System.err.println(e.report(source.name))
+            if (e.cause != null) {
+                throw e.cause!!
+            }
+            if (debug) {
+                e.printStackTrace()
             }
         }
     }

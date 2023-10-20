@@ -1,0 +1,76 @@
+@include `metis.lib`
+
+@page(Examples)...
+
+@h1 Examples
+
+@h2 { Hello World }
+
+@metis ```
+print("Hello World")
+```
+
+@h2 { Fibonacci }
+
+@metis ```
+fn fib(n)
+    if n < 2
+        return n
+    end
+    return fib(n - 1) + fib(n - 2)
+end
+
+print(fib(10)) // 55
+```
+
+@h2 { Factorial }
+
+@metis ```
+fn fact(n)
+    if n < 2
+        return 1
+    end
+    return n * fact(n - 1)
+end
+
+print(fact(10)) // 3628800
+```
+
+@h2 { 99 Bottles of Beer }
+
+@metis ```
+fn bottles(n)
+    if n == 0
+        return "no more bottles"
+    end
+    if n == 1
+        return "1 bottle"
+    end
+    return str(n) + " bottles"
+end
+
+for i in 99..0..-1
+    print(bottles(i) + " of beer on the wall, " + bottles(i) + " of beer.")
+    print("Take one down and pass it around, " + bottles(i - 1) + " of beer on the wall.")
+    print("")
+end
+
+print("No more bottles of beer on the wall, no more bottles of beer.")
+print("Go to the store and buy some more, 99 bottles of beer on the wall.")
+```
+
+@h2 { FizzBuzz }
+
+@metis ```
+for i in 1..101
+    if i % 15 == 0
+        print("FizzBuzz")
+    elif i % 3 == 0
+        print("Fizz")
+    elif i % 5 == 0
+        print("Buzz")
+    else
+        print(str(i))
+    end
+end
+```

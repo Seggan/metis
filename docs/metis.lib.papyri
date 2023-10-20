@@ -1,11 +1,11 @@
 @let(nav_root_links=[
-    [`./`, `Home`],
-    [`./lang/lang.html`, `The Language`],
-    [`./javadocs/index.html`, `API Javadocs`]
+    [`/`, `Home`],
+    [`/lang`, `The Language`],
+    [`/lang/examples.html`, `Examples`],
+    [`/javadocs`, `API Javadocs`]
 ])...
 
-@let(oldblock=$code_block)...
-@export @fn code_block $code: str -> <pre class=`panel listing`> <metis> $code </metis> </pre>
+@export @fn metis $code: str -> <pre class=`panel listing`> <metis> $code </metis> </pre>
 
 @fn fa_anchor($_icon: str, $href?: str) $v: inline -> {
     <a class="anchor" href?=$href>
@@ -29,7 +29,7 @@
 }
 
 @export @fn shell $v: str -> {
-     @oldblock(language=.) $v
+     @code_block(language=.) $v
 }
 
 
@@ -54,6 +54,9 @@
 @let(oldpage=$page)...
 @export @fn page($_title: str) $content: block -> @oldpage(
     title=$_title,
-    head={ <link rel=`stylesheet` type=`text/css` href=`/static/metis.css`> },
+    head={
+        <link href=`https://fonts.googleapis.com/css?family=Fira Code` rel=`stylesheet`>
+        <link rel=`stylesheet` type=`text/css` href=`/static/metis.css`>
+    },
     header=<nav data_title="Navigation">@get_nav($_title) $content</nav>
 ) $content

@@ -33,3 +33,7 @@
 .highlight.keyword-literal {
     color: #986801;
 }
+
+.highlight {
+    font-family: "Fira Code", monospace;
+}

@@ -24,3 +24,5 @@ fn range.exclusive(start, stop, step) = with_metatable({
 fn range.inclusive(start, stop, step) = range.exclusive(start, stop + step, step)
 
 fn number.__range__(self, other) = range.exclusive(self, other, 1)
+
+fn range.__range__(self, new_step) = range.exclusive(self.start, self.stop, new_step)
