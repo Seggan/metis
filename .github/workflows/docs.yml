@@ -10,7 +10,7 @@ jobs:
         with:
           toolchain: stable
       - name: Install Papyri
-        run: cargo install papyri-rs
+        run: cargo install papyri-lang
 
       - name: Generate KDoc
         run: ./gradlew dokkaHtml
