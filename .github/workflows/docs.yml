@@ -1,0 +1,49 @@
+name: Generate Docs
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Papyri
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+        run: cargo install papyri-rs
+
+      - name: Generate KDoc
+        run: ./gradlew dokkaHtml
+
+      - name: Compile Metis
+        run: ./gradlew shadowJar
+
+      - name: Run the doc generator
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+        run: python3 docs/gen.py
+
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "gendocs/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
+  deploy:
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

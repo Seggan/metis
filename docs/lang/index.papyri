@@ -1,5 +1,296 @@
 @include `metis.lib`
 
-@page(`The Language`)
+@page(`The Language`)...
 
 @h1 { The Language }
+
+@info { This is a quick overview of the language. I do not feel like writing a full tutorial or
+    language reference, but this is a good place to start. }
+
+@info { Metis is heavily based off of Lua and Python, so I will be comparing Metis with them often. }
+
+@h2 Variables
+
+Local variables are declared with `let`:
+
+@metis `let x = 5`
+
+Global variables are declared with `let global`:
+
+@metis `let global x = 5`
+
+The difference is that local variables are only visible in the current scope, while global variables can
+be accessed from anywhere. Global variables are also stored in a global table, so they can be accessed
+from other files.
+
+@h2 Functions
+
+Functions are declared with `fn`:
+
+@metis `fn add(a, b) return a + b end`
+
+Short, single expression functions can be declared with `=`:
+
+@metis `fn add(a, b) = a + b`
+
+Functions can be called with `()`:
+
+@metis `add(1, 2)`
+
+Functions can be declared global by prepending `global`:
+
+@metis `global fn add(a, b) return a + b end`
+
+They follow the same scoping rules as variables.
+
+@h2 { Anonymous Functions }
+
+The syntax above is actually syntax sugar for assigning an anonymous function to a variable. Anonymous
+functions are declared with `fn`, but without a name:
+
+@metis `fn(a, b) return a + b end`
+@metis `fn(a, b) = a + b`
+
+Functions are first class values, so they can be assigned to variables:
+
+@metis `let add = fn(a, b) = a + b`
+
+@h2 { Data Types }
+
+Metis has the following data types: `null`, `boolean`, `number`, `string`, `list`, `table`, `callable`,
+`native`, `bytes`, `error`, and `coroutine`. You can use the `type` function to get the type of a value:
+
+@metis `type(5) // "number"`
+
+Data types may also have metatables, which are tables that are used to look up missing keys. Metatables
+may also have metamethods, which are functions that are called when certain operations are performed on
+a value. For example, the `+` operator is actually a metamethod called `__plus__` that is called when the
+`+` operator is used on a value.
+
+@h3 Null
+
+The `null` type has a single value, `null`. It is used to represent the absence of a value. It cannot be called,
+indexed, or iterated over. It is similar to `nil` in Lua. Due to the fact that it has a single instance,
+it is clearer (and faster) to use `is`/`is not` instead of `==`/`!=` to check for `null`:
+
+@metis ```
+let x = null
+if x is null
+    print("x is null")
+end
+```
+
+@h3 Booleans
+
+The `boolean` type has two values, `true` and `false`. Its principal use is inside conditional expressions.
+Unlike other literals, `true`, `false`, and `null` are global variables; they @i can be reassigned, but
+this is not recommended.
+
+@h3 Numbers
+
+The `number` type represents a double precision floating point number. It is similar to `number` in Lua. There
+is no integer type, but you can use the `math.floor` function to convert a number to an integer. There are
+multiple ways to write numbers:
+
+@metis ```
+let x = 5
+let y = 5.0
+let z = 5e0
+```
+
+@h3 Strings
+
+The `string` type represents a sequence of characters. Strings are immutable, so you cannot change them
+after they are created. String literals are enclosed in double quotes:
+
+@metis `let x = "hello"`
+
+The following escape sequences are supported:
+
+@table [
+    [@code `\n`, `newline`],
+    [@code `\r`, `carriage return`],
+    [@code `\t`, `tab`],
+    [@code `\b`, `backspace`],
+    [@code `\f`, `form feed`],
+    [@code `\\`, `backslash`],
+    [@code `\"`, `double quote`],
+    [@code `\xnn`, `hexadecimal escape`],
+    [@code `\unnnn`, `unicode escape`]
+]
+
+@h3 Lists
+
+The `list` type represents a sequence of values. Lists are mutable, so you can change them after they are
+created. List literals are enclosed in square brackets:
+
+@metis `let x = [1, 2, 3]`
+
+Lists can be indexed with `[]`:
+
+@metis `x[0] // 1`
+
+Lists can be iterated over with `for`:
+
+@metis ```
+for v in x
+    print(v)
+end
+```
+
+@h3 Tables
+
+The `table` type represents a mapping from keys to values. They are also called "maps" or "dictionaries" in
+other languages. Tables are mutable, so you can change them after they are created. Table literals are
+enclosed in curly braces:
+
+@metis `let x = { "a" = 1, "b" = 2 }`
+
+Tables can be indexed with `[]`:
+
+@metis `x["a"] // 1`
+
+Alternatively, you can use the `.` operator:
+
+@metis `x.a // 1`
+
+Tables cannot be iterated over directly, but you can iterate over their keys or values:
+
+@metis ```
+for k in x:keys()
+    print(k)
+end
+```
+
+@metis ```
+for v in x:values()
+    print(v)
+end
+```
+
+@h3 Callables
+
+The `callable` type represents a function or a native function. It is similar to `function` in Lua. Callables
+can be called with `()`:
+
+@metis ```
+let x = fn(a, b) = a + b
+x(1, 2) // 3
+```
+
+@h3 Natives
+
+Natives are values which are backed by an object not written in Metis. They are similar to `userdata` in Lua.
+The object returned by `string.builder` is an example of a native (it is backed by a `java.lang.StringBuilder` object).
+
+@h3 Bytes
+
+The `bytes` type represents a sequence of bytes. Bytes are mutable, so you can change them after they are
+created. Byte literals are enclosed in single quotes:
+
+@metis `let x = 'hello'`
+
+Bytes can be indexed with `[]`:
+
+@metis `x[0] // 104`
+
+Bytes can be iterated over with `for`:
+
+@metis ```
+for v in x
+    print(v)
+end
+```
+
+Bytes can be converted to strings using `decode`, and strings can be converted to bytes using `encode`:
+
+@metis ```
+let x = 'hello'
+let y = x:decode() // "hello"
+let z = y:encode() // 'hello'
+```
+
+@h3 Errors
+
+The `error` type represents an error. Errors have a type, a message, and an optional "companion table".
+Errors are created with the keyword `error`:
+
+@metis `let err = error TheTypeOfTheError("a message") : { "key" = "value" }`
+
+Errors can be thrown with `raise`:
+
+@metis `raise err`
+
+Errors can be caught with `try`:
+
+@metis ```
+try
+    raise err
+catch err = TheTypeOfTheError
+    print("caught " + str(err))
+    print(err.message)
+    print(err.key)
+end
+```
+
+@h3 Coroutines
+
+The `coroutine` type represents a coroutine. It is similar to `thread` in Lua. Coroutines can be created
+with `coroutine.create`:
+
+@metis ```
+let x = coroutine.create(fn()
+    print("hello")
+end)
+```
+
+Coroutines can be run with `coroutine.run`:
+
+@metis `x:run() // "hello"`
+
+@h2 { Operators }
+
+Metis has a set of operators that may or may not be overloaded. They are listed in order of decreasing precedence:
+
+`[]`, `()`, `.`, and `:`; these are used to index tables and call callables. There is no way to overload
+calling, but as `.` and `:` are various forms of syntax sugar for `[]`, they can be overloaded using
+the metamethod `__index__`.
+
+`not` and unary `-`; these are used to negate booleans and numbers. Only `-` can be overloaded using
+`__neg__`.
+
+`*`, `/`, and `%`; these are used to multiply, divide, and modulo numbers. They can be overloaded using
+`__times__`, `__div__`, and `__mod__`.
+
+`+` and `-`; these are used to add and subtract numbers. `+` is also used for concatenating strings and
+adding to lists and tables. They can be overloaded using `__plus__` and `__minus__`.
+
+`..<` and `..=`; exclusive and inclusive range. Can be overloaded with `__range__` and `__inclrange__`.
+
+`?:`, also known as the elvis operator, is used to provide a default value in case a value is null.
+For example, `x ?: 1` will return `1` is `x` is null, and `x` otherwise. It cannot be overloaded.
+
+`in`, `not in`, `is`, and `is not`; these are used to check if a value is in a list or table, or if
+two values are the same exact object. `in` and `not in` can be overloaded using `__contains__`.
+
+`<`, `<=`, `>`, and `>=`; these are used to compare values. They all use the same metamethod for overloading:
+`__cmp__`. The metamethod should return a negative number if the left value is less than the right value,
+a positive number if the left value is greater than the right value, and zero if the left value is equal
+to the right value.
+
+`==` and `!=`; these are used to check if two values are equal or not. They can be overloaded using
+`__eq__`.
+
+`and`; returns `true` if both values are true, and `false` otherwise. It cannot be overloaded. It also
+short circuits, so if the left value is false, the right value is not evaluated.
+
+`or`; returns `true` if either value is true, and `false` otherwise. It cannot be overloaded. It also
+short circuits, so if the left value is true, the right value is not evaluated.
+
+`? else` is the ternary operator. It is used as a shorter form of `if`:
+
+@metis `x ? 1 else 2`
+
+The above code returns `1` if `x` is true, and `2` otherwise. It cannot be overloaded.
+
+@h1 TODO

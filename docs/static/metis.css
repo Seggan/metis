@@ -37,3 +37,7 @@
 .highlight {
     font-family: "Fira Code", monospace;
 }
+
+table, tr, td {
+    border: black 1px;
+}
