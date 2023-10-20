@@ -16,7 +16,7 @@ fn collection.__eq__(self, other)
     if type(self) != type(other) or len(self) != len(other)
         return false
     end
-    for i in 0..len(self)
+    for i in 0..<len(self)
         if self[i] != other[i]
             return false
         end

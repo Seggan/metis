@@ -11,6 +11,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     MOD("__mod__"),
     POW("__pow__"),
     RANGE("__range__"),
+    INCLUSIVE_RANGE("__inclrange__"),
     IN({ left, right ->
         +right
         +left

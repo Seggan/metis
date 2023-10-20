@@ -49,7 +49,7 @@ fn bottles(n)
     return str(n) + " bottles"
 end
 
-for i in 99..0..-1
+for i in (1..=99):reverse()
     print(bottles(i) + " of beer on the wall, " + bottles(i) + " of beer.")
     print("Take one down and pass it around, " + bottles(i - 1) + " of beer on the wall.")
     print("")
@@ -62,7 +62,7 @@ print("Go to the store and buy some more, 99 bottles of beer on the wall.")
 @h2 { FizzBuzz }
 
 @metis ```
-for i in 1..101
+for i in 1..=100
     if i % 15 == 0
         print("FizzBuzz")
     elif i % 3 == 0

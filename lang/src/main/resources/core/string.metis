@@ -14,7 +14,7 @@ fn string.char_code(self) = self:encode("UTF-8")[0]
 
 fn string.repeat(self, n)
     let sb = string.builder(len(self) * n)
-    for _ in 0..n
+    for _ in 0..<n
         sb:append(self)
     end
     return str(sb)

@@ -124,8 +124,11 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
             IS_NOT to BinOp.IS_NOT
         )
     )
+
     private fun parseElvis() = parseBinOp(::parseRange, mapOf(ELVIS to BinOp.ELVIS))
-    private fun parseRange() = parseBinOp(::parseAddition, mapOf(RANGE to BinOp.RANGE))
+    private fun parseRange() =
+        parseBinOp(::parseAddition, mapOf(RANGE to BinOp.RANGE, INCLUSIVE_RANGE to BinOp.INCLUSIVE_RANGE))
+
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
     private fun parseMultiplication() =
         parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV, PERCENT to BinOp.MOD))
