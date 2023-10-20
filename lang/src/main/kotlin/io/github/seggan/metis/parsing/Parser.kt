@@ -8,6 +8,12 @@ import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.util.escape
 import java.util.*
 
+/**
+ * The Metis parser.
+ *
+ * @param tokens The list of [Token]s to parse.
+ * @param source The [CodeSource] of the tokens.
+ */
 class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private val tokens = tokens.filter { it.type !in SKIPPED_TOKENS }
@@ -22,6 +28,11 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private val stringConstantPool = mutableMapOf<String, Value.String>()
 
+    /**
+     * Parses the tokens into an AST.
+     *
+     * @return The root [AstNode].
+     */
     fun parse(): AstNode.Block {
         val statements = mutableListOf<AstNode.Statement>()
         while (tryConsume(EOF) == null) {

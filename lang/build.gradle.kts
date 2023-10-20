@@ -1,1 +1,8 @@
-// All the configuration we need is already handled by the root build file.
+plugins {
+    id("org.jetbrains.dokka") version "1.9.10"
+}
+
+tasks.dokkaHtml {
+    moduleName.set("metis-lang")
+    outputDirectory.set(rootDir.resolve("gendocs/javadocs"))
+}

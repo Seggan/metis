@@ -2,6 +2,9 @@ package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.runtime.Value
 
+/**
+ * A bytecode instruction.
+ */
 sealed interface Insn {
     data class Push(val value: Value) : Insn {
         constructor(value: Int) : this(Value.Number.of(value))

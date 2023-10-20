@@ -3,6 +3,14 @@ package io.github.seggan.metis.runtime
 import io.github.seggan.metis.runtime.intrinsics.initError
 import io.github.seggan.metis.util.MetisException
 
+/**
+ * A runtime exception that can be thrown from Metis code.
+ *
+ * @param type The type of the exception.
+ * @param actualMessage The message of the exception.
+ * @param companionData The companion data of the exception.
+ * @param cause The cause of the exception.
+ */
 open class MetisRuntimeException(
     val type: String,
     private val actualMessage: String,

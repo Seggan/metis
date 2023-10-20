@@ -2,6 +2,11 @@ package io.github.seggan.metis.parsing
 
 import org.intellij.lang.annotations.Language
 
+/**
+ * The Metis lexer. Converts source code into a list of [Token]s.
+ *
+ * @property source The [CodeSource] to lex.
+ */
 class Lexer(private val source: CodeSource) {
 
     private val matchers = mutableListOf<TokenMatcher>()
@@ -78,6 +83,11 @@ class Lexer(private val source: CodeSource) {
 
     private var pos = 0
 
+    /**
+     * Lexes the source code.
+     *
+     * @return The list of [Token]s.
+     */
     fun lex(): List<Token> {
         val tokens = mutableListOf<Token>()
         val code = StringBuilder(source.text)
@@ -177,6 +187,13 @@ private fun String.toMatch(): TokenMatcher.Match {
     return TokenMatcher.Match(this, length)
 }
 
+/**
+ * Represents a token.
+ *
+ * @property type The type of the token.
+ * @property text The text of the token.
+ * @property span The [Span] of the token.
+ */
 data class Token(val type: Type, val text: String, val span: Span) {
     enum class Type(private val humanName: String? = null) {
         IDENTIFIER("an identifier"),

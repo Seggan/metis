@@ -6,6 +6,13 @@ import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.util.push
 import kotlin.collections.set
 
+/**
+ * An instance of a coroutine.
+ *
+ * @param globals The globals of the coroutine. If null, the globals of the current state are used.
+ * @param chunk The chunk to run.
+ * @param args The arguments to pass to the chunk.
+ */
 class Coroutine(globals: Value.Table? = null, chunk: Chunk.Instance, args: Value.List) : Value {
 
     private val innerState = State(globals)
@@ -27,6 +34,10 @@ class Coroutine(globals: Value.Table? = null, chunk: Chunk.Instance, args: Value
     }
 
     companion object {
+
+        /**
+         * The global metatable for coroutines.
+         */
         val metatable = buildTable { table ->
             table["__str__"] = oneArgFunction { _ ->
                 "a coroutine".metisValue()
@@ -46,8 +57,8 @@ class Coroutine(globals: Value.Table? = null, chunk: Chunk.Instance, args: Value
                     val result = coroutine.innerState.step()
                     coroutine.lastResult = result
                     if (result == StepResult.YIELDED) {
-                        coroutine.lastYielded = coroutine.innerState.yielded!!
-                        coroutine.innerState.yielded = null
+                        coroutine.lastYielded = coroutine.innerState.yieldComm
+                        coroutine.innerState.yieldComm = Value.Null
                     }
                     result.name.lowercase().metisValue()
                 }

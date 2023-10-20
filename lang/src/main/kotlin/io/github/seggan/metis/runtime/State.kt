@@ -17,33 +17,78 @@ import java.io.OutputStream
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 
+/**
+ * Represents the state of a Metis virtual machine. This is the class that is used to run Metis code.
+ */
 class State(parentGlobals: Value.Table? = null) {
 
+    /**
+     * The global variables of the state.
+     */
     val globals = Value.Table()
     private val nativeLibraries = mutableListOf<NativeLibrary>()
 
+    /**
+     * The stack of the state.
+     */
     val stack = Stack()
     internal val callStack = ArrayDeque<CallFrame>()
-    var yielded: Value? = null
 
+    internal var yieldComm: Value = Value.Null
+
+    /**
+     * The standard output stream of the state.
+     */
     var stdout: OutputStream = System.out
+
+    /**
+     * The standard error stream of the state.
+     */
     var stderr: OutputStream = System.err
+
+    /**
+     * The standard input stream of the state.
+     */
     var stdin: InputStream = System.`in`
 
+    /**
+     * The [FileSystem] used by the state.
+     */
     var fileSystem: FileSystem = FileSystems.getDefault()
+
+    /**
+     * The current working directory of the state.
+     */
     var cwd = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
 
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
     private var throwingException: MetisRuntimeException? = null
 
+    /**
+     * The offset of the local variables of the current function in the stack.
+     */
     val localsOffset: Int
         get() = callStack.peek().stackBottom
 
+    /**
+     * True if the state is in debug mode.
+     */
     var debugMode = false
+
+    /**
+     * The debug information of the state. Only set if [debugMode] is true.
+     */
     var debugInfo: DebugInfo? = null
+
+    /**
+     * The breakpoints of the state. Only used if [debugMode] is true.
+     */
     val breakpoints = mutableListOf<Breakpoint>()
 
+    /**
+     * The recursion limit of the state.
+     */
     var recursionLimit = 2048
 
     companion object {
@@ -110,14 +155,29 @@ class State(parentGlobals: Value.Table? = null) {
         }
     }
 
+    /**
+     * Loads a chunk into the state but does not call it.
+     *
+     * @param chunk The chunk to load.
+     */
     fun loadChunk(chunk: Chunk) {
         stack.push(chunk.Instance(this))
     }
 
+    /**
+     * Adds a [NativeLibrary] to the state.
+     *
+     * @param lib The library to add.
+     */
     fun addNativeLibrary(lib: NativeLibrary) {
         nativeLibraries.add(lib)
     }
 
+    /**
+     * Steps the state.
+     *
+     * @return The result of the step.
+     */
     fun step(): StepResult {
         if (callStack.isEmpty()) return StepResult.FINISHED
         lateinit var stepResult: StepResult
@@ -176,12 +236,23 @@ class State(parentGlobals: Value.Table? = null) {
         return stepResult
     }
 
+    /**
+     * Runs the state till it is finished.
+     *
+     * @see step
+     */
     @Suppress("ControlFlowWithEmptyBody")
     fun runTillComplete() {
         while (step() != StepResult.FINISHED) {
         }
     }
 
+
+    /**
+     * Loads the given [CodeSource] and runs it.
+     *
+     * @param source The source to load.
+     */
     fun runCode(source: CodeSource) {
         val lexer = Lexer(source)
         val parser = Parser(lexer.lex(), source)
@@ -192,6 +263,15 @@ class State(parentGlobals: Value.Table? = null) {
         stack.pop()
     }
 
+    /**
+     * Performs an index operation on the stack.
+     *
+     * The top of the stack must be like so:
+     * ```
+     * index
+     * value
+     * ```
+     */
     fun index() {
         if (stack.peek() == metatableString) {
             stack.pop()
@@ -215,6 +295,16 @@ class State(parentGlobals: Value.Table? = null) {
         }
     }
 
+    /**
+     * Performs a set operation on the stack.
+     *
+     * The top of the stack must be like so:
+     * ```
+     * value to set
+     * index
+     * value
+     * ```
+     */
     fun set() {
         if (stack.getFromTop(1) == metatableString) {
             val toSet = stack.pop().convertTo<Value.Table>()
@@ -242,6 +332,12 @@ class State(parentGlobals: Value.Table? = null) {
         }
     }
 
+    /**
+     * Calls the top of the stack with [nargs] arguments.
+     *
+     * @param nargs The number of arguments to pass to the callable.
+     * @param span The span of the call. May be null if unknown.
+     */
     fun call(nargs: Int, span: Span? = null) {
         val callable = stack.pop()
         if (callable is CallableValue) {
@@ -293,6 +389,11 @@ class State(parentGlobals: Value.Table? = null) {
         }
     }
 
+    /**
+     * Wraps the top [values] values of the stack into a [Value.List].
+     *
+     * @param values The number of values to wrap.
+     */
     fun wrapToList(values: Int) {
         val list = ArrayDeque<Value>(values)
         repeat(values) {
@@ -301,6 +402,11 @@ class State(parentGlobals: Value.Table? = null) {
         stack.push(Value.List(list))
     }
 
+    /**
+     * Wraps the top [values] values of the stack into a [Value.Table].
+     *
+     * @param values The number of values to wrap.
+     */
     fun wrapToTable(values: Int) {
         val table = Value.Table()
         repeat(values) {
@@ -311,16 +417,39 @@ class State(parentGlobals: Value.Table? = null) {
         stack.push(table)
     }
 
+    /**
+     * Creates a new [MetisRuntimeException] and pushes it to the stack.
+     *
+     * @param type The type of the exception.
+     */
     fun newError(type: String) {
         val companionData = stack.pop().convertTo<Value.Table>()
         val message = stack.pop().convertTo<Value.String>().value
         stack.push(MetisRuntimeException(type, message, companionData))
     }
 
+    /**
+     * Performs a `not` operation on the top of the stack.
+     */
     fun not() = stack.push((!stack.pop().convertTo<Value.Boolean>().value).metisValue())
 
+    /**
+     * Performs a `is` operation on the top of the stack.
+     *
+     * The top of the stack must be like so:
+     * ```
+     * value2
+     * value1
+     * ```
+     */
     fun `is`() = stack.push(Value.Boolean.of(stack.pop() === stack.pop()))
 
+    /**
+     * Stringifies the given [value] according to its `__str__` metamethod.
+     *
+     * @param value The value to stringify.
+     * @return The stringified value.
+     */
     fun stringify(value: Value): String {
         stack.push(value)
         stack.push(value)

@@ -15,13 +15,23 @@ import java.nio.file.Path
 import kotlin.collections.set
 import kotlin.io.path.*
 
+/**
+ * An object which contains all the global intrinsic functions.
+ */
 object Intrinsics {
 
     private val _intrinsics = mutableMapOf<String, CallableValue>()
 
+    /**
+     * All registered intrinsic functions.
+     */
     val intrinsics: Map<String, CallableValue> get() = _intrinsics
 
-    fun registerDefault() {
+    fun register(name: String, value: CallableValue) {
+        _intrinsics[name] = value
+    }
+
+    internal fun registerDefault() {
         _intrinsics["load_chunk"] = twoArgFunction { name, chunk ->
             val source = CodeSource.constant(name.stringValue(), chunk.stringValue())
             Chunk.load(source).Instance(this)
@@ -36,9 +46,16 @@ object Intrinsics {
             }
             override val arity = Arity.ONE
             override fun call(nargs: Int): CallableValue.Executor = object : CallableValue.Executor {
+                private var yielded = false
                 override fun step(state: State): StepResult {
-                    state.yielded = state.stack.pop()
-                    return StepResult.YIELDED
+                    return if (yielded) {
+                        state.stack.push(state.yieldComm)
+                        StepResult.FINISHED
+                    } else {
+                        yielded = true
+                        state.yieldComm = state.stack.pop()
+                        StepResult.YIELDED
+                    }
                 }
             }
         }
@@ -48,6 +65,8 @@ object Intrinsics {
 
 /**
  * A function that is guaranteed to finish in one step. Optimization for this is implemented.
+ *
+ * @param arity The arity of the function.
  */
 abstract class OneShotFunction(override val arity: Arity) : CallableValue {
 
@@ -65,12 +84,26 @@ abstract class OneShotFunction(override val arity: Arity) : CallableValue {
     abstract fun execute(state: State, nargs: Int)
 }
 
+/**
+ * Creates a [OneShotFunction] with zero arguments.
+ *
+ * @param fn The function to execute.
+ * @return The created function.
+ * @see OneShotFunction
+ */
 inline fun zeroArgFunction(crossinline fn: State.() -> Value): OneShotFunction = object : OneShotFunction(Arity.ZERO) {
     override fun execute(state: State, nargs: Int) {
         state.stack.push(state.fn())
     }
 }
 
+/**
+ * Creates a [OneShotFunction] with one argument.
+ *
+ * @param fn The function to execute.
+ * @return The created function.
+ * @see OneShotFunction
+ */
 inline fun oneArgFunction(crossinline fn: State.(Value) -> Value): OneShotFunction =
     object : OneShotFunction(Arity.ONE) {
         override fun execute(state: State, nargs: Int) {
@@ -78,6 +111,13 @@ inline fun oneArgFunction(crossinline fn: State.(Value) -> Value): OneShotFuncti
         }
     }
 
+/**
+ * Creates a [OneShotFunction] with two arguments.
+ *
+ * @param fn The function to execute.
+ * @return The created function.
+ * @see OneShotFunction
+ */
 inline fun twoArgFunction(crossinline fn: State.(Value, Value) -> Value): OneShotFunction =
     object : OneShotFunction(Arity.TWO) {
         override fun execute(state: State, nargs: Int) {
@@ -87,6 +127,13 @@ inline fun twoArgFunction(crossinline fn: State.(Value, Value) -> Value): OneSho
         }
     }
 
+/**
+ * Creates a [OneShotFunction] with three arguments.
+ *
+ * @param fn The function to execute.
+ * @return The created function.
+ * @see OneShotFunction
+ */
 inline fun threeArgFunction(crossinline fn: State.(Value, Value, Value) -> Value): OneShotFunction =
     object : OneShotFunction(Arity.THREE) {
         override fun execute(state: State, nargs: Int) {

@@ -7,10 +7,15 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
+/**
+ * Translates an [IOException] into a [MetisRuntimeException].
+ *
+ * @param block The block to execute.
+ */
 inline fun <T> translateIoError(block: () -> T): T = try {
     block()
 } catch (e: IOException) {
-    throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error")
+    throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error", cause = e)
 }
 
 internal val outStreamMetatable = buildTable { table ->
@@ -32,6 +37,9 @@ internal val outStreamMetatable = buildTable { table ->
     }
 }
 
+/**
+ * Wraps an [OutputStream] in a [Value].
+ */
 fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamMetatable)
 
 internal val inStreamMetatable = buildTable { table ->
@@ -59,6 +67,9 @@ internal val inStreamMetatable = buildTable { table ->
     }
 }
 
+/**
+ * Wraps an [InputStream] in a [Value].
+ */
 fun wrapInStream(stream: InputStream): Value = Value.Native(stream, inStreamMetatable)
 
 private val sbMetatable = buildTable { table ->
@@ -108,4 +119,7 @@ private val sbMetatable = buildTable { table ->
     }
 }
 
+/**
+ * Wraps a [StringBuilder] in a [Value].
+ */
 fun wrapStringBuilder(sb: StringBuilder): Value = Value.Native(sb, sbMetatable)

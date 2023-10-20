@@ -10,6 +10,15 @@ import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.intrinsics.initChunk
 import io.github.seggan.metis.util.*
 
+/**
+ * A chunk is a compiled piece of code.
+ *
+ * @property name The name of the chunk.
+ * @property insns The instructions of the chunk.
+ * @property arity The arity of the chunk.
+ * @property upvalues The upvalues of the chunk.
+ * @property spans The spans of the chunk. Must be the same size as [insns].
+ */
 class Chunk(
     val name: String,
     val insns: List<Insn>,
@@ -18,6 +27,9 @@ class Chunk(
     val spans: List<Span>
 ) {
 
+    /**
+     * Provides a dissasembly of the chunk.
+     */
     override fun toString(): String {
         return buildString {
             append("=== ")
@@ -37,18 +49,29 @@ class Chunk(
         }
     }
 
+    /**
+     * An instance of the chunk.
+     *
+     * @property state The state of the instance.
+     */
     inner class Instance(state: State) : CallableValue {
 
         override var metatable: Value.Table? = Companion.metatable
 
         override val arity = this@Chunk.arity
 
+        /**
+         * The upvalue instances of the chunk instance.
+         */
         val upvalues = this@Chunk.upvalues.map { it.newInstance(state) }
 
         override fun call(nargs: Int): CallableValue.Executor = ChunkExecutor()
 
         override fun toString() = name
 
+        /**
+         * Provides a dissasembly of the chunk.
+         */
         fun dissasemble() = this@Chunk.toString()
 
         private inner class ChunkExecutor : CallableValue.Executor {
@@ -179,6 +202,12 @@ class Chunk(
     companion object {
         private val metatable = initChunk()
 
+        /**
+         * Loads a chunk from a [CodeSource], performing lexing, parsing and compilation.
+         *
+         * @param source The source to load from.
+         * @return The loaded chunk.
+         */
         fun load(source: CodeSource): Chunk {
             val lexer = Lexer(source)
             val parser = Parser(lexer.lex(), source)

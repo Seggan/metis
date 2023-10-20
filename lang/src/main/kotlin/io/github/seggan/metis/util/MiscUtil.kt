@@ -1,5 +1,10 @@
 package io.github.seggan.metis.util
 
+/**
+ * Converts string escapes to their actual characters.
+ *
+ * @return The unescaped string.
+ */
 fun String.escape(): String {
     val sb = StringBuilder()
     var i = 0

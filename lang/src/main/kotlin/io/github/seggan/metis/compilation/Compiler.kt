@@ -13,6 +13,9 @@ import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 
+/**
+ * A compiler for Metis code. You may not call [compileCode] more than once.
+ */
 class Compiler private constructor(
     private val args: List<String>,
     private val enclosingCompiler: Compiler?
@@ -36,6 +39,13 @@ class Compiler private constructor(
         }
     }
 
+    /**
+     * Compiles the given [code] into a [Chunk] with the given [name]. May only be called once per instance.
+     *
+     * @param name The name of the chunk.
+     * @param code The code to compile.
+     * @return The compiled chunk.
+     */
     fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
         val compiled = compileBlock(code, false).toMutableList()

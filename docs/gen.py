@@ -19,6 +19,7 @@ dest = "../gendocs"
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.dirname(__file__)))
     os.system("./gradlew shadowJar")
+    os.system("./gradlew dokkaHtml")
     os.chdir(os.path.dirname(__file__))
     if not os.path.exists(dest):
         os.mkdir(dest)
@@ -49,6 +50,7 @@ if __name__ == "__main__":
                 os.makedirs(dirpath)
             with open(f"{dirpath}/{file}", "w") as f:
                 f.write(content)
+
     if os.path.exists(f"{dest}/static"):
         shutil.rmtree(f"{dest}/static")
     shutil.copytree("static", f"{dest}/static")

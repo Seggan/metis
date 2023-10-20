@@ -4,23 +4,43 @@ import io.github.seggan.metis.runtime.intrinsics.*
 import io.github.seggan.metis.util.MutableLazy
 import kotlin.reflect.KClass
 
+/**
+ * A value in the Metis runtime.
+ */
 interface Value {
 
+    /**
+     * The metatable of this value.
+     */
     var metatable: Table?
 
+    /**
+     * Look up a value in this value.
+     *
+     * @param key The key to look up.
+     */
     fun lookUpDirect(key: Value): Value? = null
 
+    /**
+     * Set a value in this value.
+     *
+     * @param key The key to set.
+     * @param value The value to set.
+     */
     fun setDirect(key: Value, value: Value): kotlin.Boolean = false
 
+    /**
+     * A number.
+     */
     class Number private constructor(val value: Double) : Value {
 
         override var metatable: Table? = Companion.metatable
 
         companion object {
-            val NAN = Number(Double.NaN)
-            val POS_INF = Number(Double.POSITIVE_INFINITY)
-            val NEG_INF = Number(Double.NEGATIVE_INFINITY)
 
+            /**
+             * The shared metatable for all numbers.
+             */
             val metatable = initNumber()
 
             private const val CACHE_SIZE = 128
@@ -28,6 +48,12 @@ interface Value {
                 Number(it - CACHE_SIZE.toDouble())
             }
 
+            /**
+             * Turns a [Double] into a [Number], possibly using a cached value.
+             *
+             * @param value The value to turn into a [Number].
+             * @return The [Number] representing the value.
+             */
             fun of(value: Double): Number {
                 if (value % 1 == 0.0 && value < CACHE_SIZE && value >= -CACHE_SIZE) {
                     return cache[(value + CACHE_SIZE).toInt()]
@@ -35,6 +61,12 @@ interface Value {
                 return Number(value)
             }
 
+            /**
+             * Turns an [Int] into a [Number], possibly using a cached value.
+             *
+             * @param value The value to turn into a [Number].
+             * @return The [Number] representing the value.
+             */
             fun of(value: Int) = of(value.toDouble())
         }
 
@@ -50,6 +82,11 @@ interface Value {
         }
     }
 
+    /**
+     * A string.
+     *
+     * @param value The backing string of the value.
+     */
     data class String(val value: kotlin.String) : Value {
 
         override var metatable: Table? by MutableLazy { Companion.metatable }
@@ -65,6 +102,9 @@ interface Value {
         }
 
         companion object {
+            /**
+             * The shared metatable for all strings.
+             */
             // lazy because of a mutual dependency between initTable and String
             val metatable by lazy(::initString)
         }
@@ -72,22 +112,49 @@ interface Value {
         override fun toString() = value
     }
 
+    /**
+     * A boolean.
+     */
     class Boolean private constructor(val value: kotlin.Boolean) : Value {
 
         override var metatable: Table? by MutableLazy { Companion.metatable }
 
         companion object {
+
+            /**
+             * The [Value.Boolean] representing `true`.
+             */
             val TRUE = Boolean(true)
+
+            /**
+             * The [Value.Boolean] representing `false`.
+             */
             val FALSE = Boolean(false)
 
+            /**
+             * Turns a [kotlin.Boolean] into a [Value.Boolean].
+             *
+             * @param value The value to turn into a [Value.Boolean].
+             * @return The [Value.Boolean] representing the value.
+             */
             fun of(value: kotlin.Boolean) = if (value) TRUE else FALSE
 
+            /**
+             * The shared metatable for all booleans.
+             */
+            // lazy because of a mutual dependency between initTable and Boolean
             val metatable by lazy(::initBoolean)
         }
 
         override fun toString() = value.toString()
     }
 
+    /**
+     * A table.
+     *
+     * @param value The backing map of the table.
+     * @param metatable The metatable of the table.
+     */
     data class Table(
         val value: MutableMap<Value, Value> = mutableMapOf(),
         override var metatable: Table? = Companion.metatable
@@ -104,6 +171,10 @@ interface Value {
         operator fun set(key: kotlin.String, value: Value) = this.setOrError(String(key), value)
 
         companion object {
+
+            /**
+             * The shared super-metatable for all tables.
+             */
             val metatable = initTable()
         }
 
@@ -119,6 +190,12 @@ interface Value {
         override fun hashCode() = value.hashCode()
     }
 
+    /**
+     * A list.
+     *
+     * @param value The backing list of the list.
+     * @param metatable The metatable of the list.
+     */
     data class List(
         val value: MutableList<Value> = mutableListOf(),
         override var metatable: Table? = Companion.metatable
@@ -147,10 +224,20 @@ interface Value {
         }
 
         companion object {
+
+            /**
+             * The shared metatable for all lists.
+             */
             val metatable = initList()
         }
     }
 
+    /**
+     * A byte array.
+     *
+     * @param value The backing byte array of the value.
+     * @param metatable The metatable of the value.
+     */
     data class Bytes(val value: ByteArray, override var metatable: Table? = Companion.metatable) : Value {
 
         override fun lookUpDirect(key: Value): Value? {
@@ -176,14 +263,27 @@ interface Value {
         override fun hashCode() = value.contentHashCode()
 
         companion object {
+
+            /**
+             * The shared metatable for all byte arrays.
+             */
             val metatable = initBytes()
         }
     }
 
+    /**
+     * Wraps a native object.
+     *
+     * @param value The native object to wrap.
+     * @param metatable The metatable of the value.
+     */
     data class Native(val value: Any, override var metatable: Table? = null) : Value {
         override fun toString() = "Native(value=$value)"
     }
 
+    /**
+     * A null value.
+     */
     data object Null : Value {
 
         override var metatable: Table? = initNull()
@@ -192,24 +292,53 @@ interface Value {
     }
 }
 
+/**
+ * Look up a value in this value, possibly using the metatable.
+ *
+ * @param key The key to look up.
+ * @return The value, or null if it doesn't exist.
+ */
 fun Value.lookUp(key: Value): Value? {
     if (this === metatable) return lookUpDirect(key)
     return lookUpDirect(key) ?: metatable?.lookUp(key)
 }
 
+/**
+ * Sets a value in this value, possibly using the metatable.
+ *
+ * @param key The key to set.
+ * @param value The value to set.
+ * @return Whether the value was set.
+ */
 fun Value.set(key: Value, value: Value): Boolean {
     if (this === metatable) return setDirect(key, value)
     return setDirect(key, value) || metatable?.set(key, value) ?: false
 }
 
+/**
+ * Sets a value in this value, or throws an error if it cannot be set.
+ *
+ * @param key The key to set.
+ * @param value The value to set.
+ * @throws MetisRuntimeException If the value cannot be set.
+ */
 fun Value.setOrError(key: Value, value: Value) {
     if (!set(key, value)) {
         throw MetisRuntimeException("IndexError", "Cannot set ${typeToName(key::class)} on ${typeToName(this::class)}")
     }
 }
 
+/**
+ * If this value is null, return [Value.Null], otherwise return this value.
+ */
 fun Value?.orNull() = this ?: Value.Null
 
+/**
+ * Converts this value to a [T], or throws an error if it cannot be converted.
+ *
+ * @param T The type to convert to.
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
 inline fun <reified T : Value> Value.convertTo(): T {
     if (this is T) {
         return this
@@ -217,10 +346,33 @@ inline fun <reified T : Value> Value.convertTo(): T {
     throw MetisRuntimeException("TypeError", "Cannot convert ${typeToName(this::class)} to ${typeToName(T::class)}")
 }
 
+/**
+ * Converts this value to a [Int], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
 fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
+
+/**
+ * Converts this value to a [Double], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
 fun Value.doubleValue() = this.convertTo<Value.Number>().value
+
+/**
+ * Converts this value to a [String], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
 fun Value.stringValue() = this.convertTo<Value.String>().value
 
+/**
+ * If this is a [Value.Native], returns the native object, otherwise throws an error.
+ *
+ * @param T The type to convert to.
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
 inline fun <reified T> Value.asObj(): T {
     val value = convertTo<Value.Native>().value
     if (value is T) {
@@ -232,6 +384,11 @@ inline fun <reified T> Value.asObj(): T {
     )
 }
 
+/**
+ * Builds a [Value.Table]
+ *
+ * @param init The function to initialize the table.
+ */
 inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
     val map = mutableMapOf<String, Value>()
     init(map)
@@ -242,6 +399,12 @@ inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
     }
 }
 
+/**
+ * Converts a [Value]'s class to an end user-friendly name.
+ *
+ * @param clazz The class to convert.
+ * @return The name of the class.
+ */
 fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
     Value.Number::class -> "number"
     Value.String::class -> "string"
@@ -260,9 +423,32 @@ fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
     }
 }
 
+/**
+ * Converts an [Int] to a [Value.Number]
+ */
 fun Int.metisValue() = Value.Number.of(this)
+
+/**
+ * Converts a [Double] to a [Value.Number]
+ */
 fun Double.metisValue() = Value.Number.of(this)
+
+/**
+ * Converts a [String] to a [Value.String]
+ */
 fun String.metisValue() = Value.String(this)
+
+/**
+ * Converts a [kotlin.Boolean] to a [Value.Boolean]
+ */
 fun Boolean.metisValue() = Value.Boolean.of(this)
+
+/**
+ * Converts a [Collection] of [Value]s to a [Value.List]
+ */
 fun Collection<Value>.metisValue() = Value.List(this.toMutableList())
+
+/**
+ * Converts a [ByteArray] to a [Value.Bytes]
+ */
 fun ByteArray.metisValue() = Value.Bytes(this)

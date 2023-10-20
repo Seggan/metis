@@ -6,6 +6,9 @@ import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 
+/**
+ * A loader that loads from the Metis JAR's resources.
+ */
 object ResourceLoader : OneShotFunction(Arity.ONE) {
     override fun execute(state: State, nargs: Int) {
         val path = state.stack.pop().stringValue()
@@ -20,6 +23,11 @@ object ResourceLoader : OneShotFunction(Arity.ONE) {
     }
 }
 
+/**
+ * A loader that loads [NativeLibrary]s.
+ *
+ * @param libs The list of libraries to load from.
+ */
 class NativeLoader(private val libs: List<NativeLibrary>) : OneShotFunction(Arity.ONE) {
 
     override fun execute(state: State, nargs: Int) {

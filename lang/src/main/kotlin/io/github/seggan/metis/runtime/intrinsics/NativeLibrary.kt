@@ -6,6 +6,11 @@ import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
 import kotlin.io.path.absolutePathString
 
+/**
+ * A native library that can be loaded into a [State] and imported with `require`.
+ *
+ * @param name The name of the library.
+ */
 abstract class NativeLibrary(val name: String) : OneShotFunction(Arity.ZERO) {
     final override fun execute(state: State, nargs: Int) {
         val table = buildTable(::init)
@@ -16,6 +21,9 @@ abstract class NativeLibrary(val name: String) : OneShotFunction(Arity.ZERO) {
     abstract fun init(lib: MutableMap<String, Value>)
 }
 
+/**
+ * The `regex` library.
+ */
 object RegexLib : NativeLibrary("regex") {
     override fun init(lib: MutableMap<String, Value>) {
         lib["compile"] = oneArgFunction { self ->
@@ -67,6 +75,9 @@ object RegexLib : NativeLibrary("regex") {
     }
 }
 
+/**
+ * The `os` library.
+ */
 object OsLib : NativeLibrary("os") {
     override fun init(lib: MutableMap<String, Value>) {
         lib["get_env"] = oneArgFunction { self ->

@@ -1,6 +1,7 @@
 @let(nav_root_links=[
     [`./`, `Home`],
     [`./lang/lang.html`, `The Language`],
+    [`./javadocs/index.html`, `API Javadocs`]
 ])...
 
 @let(oldblock=$code_block)...
