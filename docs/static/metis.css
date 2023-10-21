@@ -38,6 +38,11 @@
     font-family: "Fira Code", monospace;
 }
 
-table, tr, td {
-    border: black 1px;
+tr, th, td {
+    border: solid lightgray 1px;
+    padding: .3em;
+}
+
+table {
+    border-collapse: collapse;
 }

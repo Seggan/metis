@@ -36,21 +36,25 @@ nav_root_links=[
 @fn tbl_row $row: inline list ->
     <tr>@list::join @list::map(@fn $cell -> <td>$cell</>) $row</>
 
-@export @fn table $tbl: inline list list ->
-    <table>@list::join @list::map($tbl_row) $tbl</>
+@export @fn table($head: inline list = []) $tbl: inline list list ->
+    <table>
+        @match $head {
+            [] -> (),
+            _ -> <thead>@tbl_row $head</>
+        }
+        <tbody>
+            @list::join @list::map(@fn $row -> @tbl_row $row) $tbl
+        </>
+    </>
 
 @export @fn function ($name: str, $args: str list list, $ret: str) $desc: html -> {
     @h2 $name
     Return type: $ret
 
     $desc
-    @h3 Arguments
-    <table>
-        <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
-        <tbody>
-            @list::join @list::map($tbl_row) $args
-        </>
-    </>
+
+    @bold Arguments:
+    @table(head=[Name, Type, Description]) $args
 }
 
 
