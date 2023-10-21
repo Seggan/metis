@@ -23,12 +23,12 @@ The release is JAR file that can be run with `java -jar metis.jar`. This require
 Here are all the command line arguments that Metis supports:
 
 @table [
-    [{ @code `-i`, @code `--stdin`: }, `Read the code from STDIN`],
-    [{ @code `-f <file>`, @code `--file <file>`: }, `Read the code from a file`],
-    [{ @code `-c <code>`, @code `--code <code>`: }, `Read the code from the arguments`],
-    [{ @code `-d`, @code `--debug`: }, `Enable debug mode`],
-    [{ @code `-p`, @code `--print-chunk`: }, `Print a disassembly of the code to be run`],
-    [{ @code `-s`, @code `--syntax-highlight`: }, `Convert the code into syntax-highlighted HTML`],
+    [{ @code `-i`, @code `--stdin` }, `Read the code from STDIN`],
+    [{ @code `-f <file>`, @code `--file <file>` }, `Read the code from a file`],
+    [{ @code `-c <code>`, @code `--code <code>` }, `Read the code from the arguments`],
+    [{ @code `-d`, @code `--debug` }, `Enable debug mode`],
+    [{ @code `-p`, @code `--print-chunk` }, `Print a disassembly of the code to be run`],
+    [{ @code `-s`, @code `--syntax-highlight` }, `Convert the code into syntax-highlighted HTML`],
 ]
 
 @h2 Building

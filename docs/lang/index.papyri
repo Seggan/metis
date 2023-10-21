@@ -43,6 +43,31 @@ Functions can be declared global by prepending `global`:
 
 They follow the same scoping rules as variables.
 
+Functions can also have @i upvalues, which are variables that are from an enclosing scope. For example:
+
+@metis ```
+let x = 5
+
+fn print_x()
+    print(x)
+end
+
+print_x() // 5
+```
+
+Upvalues can also be mutated:
+
+@metis ```
+let x = 5
+
+fn add_to_x(y)
+    x = x + y
+end
+
+add_to_x(5)
+print(x) // 10
+```
+
 @h2 { Anonymous Functions }
 
 The syntax above is actually syntax sugar for assigning an anonymous function to a variable. Anonymous
@@ -254,7 +279,8 @@ Metis has a set of operators that may or may not be overloaded. They are listed 
 
 `[]`, `()`, `.`, and `:`; these are used to index tables and call callables. There is no way to overload
 calling, but as `.` and `:` are various forms of syntax sugar for `[]`, they can be overloaded using
-the metamethod `__index__`.
+the metamethod `__index__`. `a:b(c)` is syntax sugar for `a.b(a, c)`, and `a.b` is syntax sugar for
+`a["b"]`.
 
 `not` and unary `-`; these are used to negate booleans and numbers. Only `-` can be overloaded using
 `__neg__`.
@@ -293,4 +319,121 @@ short circuits, so if the left value is true, the right value is not evaluated.
 
 The above code returns `1` if `x` is true, and `2` otherwise. It cannot be overloaded.
 
-@h1 TODO
+@h1 { Control Flow }
+
+@h2 { If Statements }
+
+If statements are declared with `if`:
+
+@metis ```
+if x
+    print("x is true")
+end
+```
+
+If statements can have an `else` clause:
+
+@metis ```
+if x
+    print("x is true")
+else
+    print("x is false")
+end
+```
+
+In order to facilitate chaining, `elif` is also supported:
+
+@metis ```
+if x
+    print("x is true")
+elif y
+    print("y is true")
+else
+    print("x and y are false")
+end
+```
+
+@h2 { While Loops }
+
+While loops are declared with `while` and a condition:
+
+@metis ```
+while x
+    print("x is true")
+end
+```
+
+They loop until the condition is false.
+
+@h2 { For Loops }
+
+For loops are declared with `for`, a variable name, `in`, and an iterable:
+
+@metis ```
+for x in [1, 2, 3]
+    print(x)
+end
+```
+
+All iterables implement the `__iter__` metamethod, which returns an iterator. The iterator implements
+the `next` and `has_next` metamethods (note the absence of underscores). `next` returns the next value,
+and `has_next` returns `true` if there are more values, and `false` otherwise. The `for` loop calls
+`next` (and assigns it to the loop variable) until `has_next` returns `false`.
+
+@h2 { Try Statements }
+
+Try statements are declared with `try`. They contain one or more `catch` clauses, and optionally a `finally` clause:
+
+@metis ```
+try
+    raise error TheTypeOfTheError("a message") : { "key" = "value" }
+catch err = TheTypeOfTheError
+    print("caught " + str(err))
+    print(err.message)
+    print(err.key)
+finally
+    print("finally")
+end
+```
+
+`finally` is always executed, even if an error is raised. `catch` clauses are executed for the type of
+the error raised. If the error is not caught, it is re-raised. Binding the error to a variable, such as
+the `err` variable above, is optional; the line can be written as `catch TheTypeOfTheError`.
+
+@h2 { Break and Continue }
+
+If you need to exit a loop early, you can use `break`:
+
+@metis ```
+for x in [1, 2, 3, 4]
+    if x == 3
+        break
+    end
+    print(x)
+end
+
+// Prints 1 and 2
+```
+
+If you need to skip the rest of the loop body, you can use `continue`:
+
+@metis ```
+for x in [1, 2, 3, 4]
+    if x == 3
+        continue
+    end
+    print(x)
+end
+
+// Prints 1, 2, and 4
+```
+
+@h1 { Standard Library }
+
+The standard library is split into two main parts: the core library and the standard library. The core
+library is always loaded, and contains functions and modules that are necessary for the language to function.
+For example, the `print` function is in the core library. The core library is documented @href(`core`) here.
+
+The standard library is not always loaded, and contains all the other modules that are not necessary for
+the language to function. For example, the `math` module is in the standard library. The standard library
+is documented @href(`std`) here.

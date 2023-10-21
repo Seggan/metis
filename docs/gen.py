@@ -10,7 +10,7 @@ def highlight(match):
         ["java", "-jar", "../app/build/libs/metis.jar", "--syntax-highlight", "-c", group],
         stdout=subprocess.PIPE
     )
-    return proc.communicate()[0].decode("utf-8")
+    return proc.stdout.read().decode("utf-8")
 
 
 metis_code = re.compile(r"<metis>(.*?)</metis>", re.DOTALL)

@@ -39,6 +39,20 @@ nav_root_links=[
 @export @fn table $tbl: inline list list ->
     <table>@list::join @list::map($tbl_row) $tbl</>
 
+@export @fn function ($name: str, $args: str list list, $ret: str) $desc: html -> {
+    @h2 $name
+    Return type: $ret
+
+    $desc
+    @h3 Arguments
+    <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+            @list::join @list::map($tbl_row) $args
+        </>
+    </>
+}
+
 
 @fn get_headings $content: html -> @match $content {
     {<h2 **_><a href=$link **_>{_ *$title}</a></h2> *$tail} -> [@href($link) $title, *@get_headings $tail],
