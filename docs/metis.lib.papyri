@@ -36,7 +36,7 @@ nav_root_links=[
 @fn tbl_row $row: inline list ->
     <tr>@list::join @list::map(@fn $cell -> <td>$cell</>) $row</>
 
-@export @fn table($head: inline list = []) $tbl: inline list list ->
+@export @fn table($head: inline list = []) $tbl: inline list list -> {
     <table>
         @match $head {
             [] -> (),
@@ -46,6 +46,7 @@ nav_root_links=[
             @list::join @list::map(@fn $row -> @tbl_row $row) $tbl
         </>
     </>
+}
 
 @export @fn function ($name: str, $args: str list list, $ret: str) $desc: html -> {
     @h2 $name
