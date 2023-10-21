@@ -11,13 +11,13 @@ print("Hello World!")
 Metis is a language that aims to be easy to sandbox, and easy to use while having many features from other languages.
 Its main inspiration is Lua, as well as some features from Python and Rust.
 
-Check out @href(`/lang`) { the language overview } to learn more about Metis, or take a look at the
-@href(`/lang/examples.html`) { examples } to see what Metis can do. If you want to embed Metis in your project,
-check out the @href(`/javadocs`) { API documentation }.
+Check out @href(`lang`) { the language overview } to learn more about Metis, or take a look at the
+@href(`lang/examples.html`) { examples } to see what Metis can do. If you want to embed Metis in your project,
+check out the @href(`javadocs`) { API documentation }.
 
 @h2 Usage
 
-The latest Metis release can be downloaded from @href(`htttps://github.com/Seggan/Metis/releases`) Github.
+The latest Metis release can be downloaded from @href(`https://github.com/Seggan/Metis/releases`) Github.
 The release is JAR file that can be run with `java -jar metis.jar`. This requires at least Java 17 to be installed.
 
 Here are all the command line arguments that Metis supports:
