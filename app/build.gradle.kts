@@ -13,3 +13,7 @@ dependencies {
 application {
     mainClass.set("io.github.seggan.metis.app.MainKt")
 }
+
+tasks.shadowJar {
+    archiveFileName.set("metis.jar")
+}

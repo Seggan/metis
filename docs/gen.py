@@ -7,7 +7,7 @@ import subprocess
 def highlight(match):
     group = match.group(1)
     proc = subprocess.Popen(
-        ["java", "-jar", "../app/build/libs/app-all.jar", "--syntax-highlight", "-c", group],
+        ["java", "-jar", "../app/build/libs/metis.jar", "--syntax-highlight", "-c", group],
         stdout=subprocess.PIPE
     )
     return proc.communicate()[0].decode("utf-8")

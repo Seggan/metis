@@ -33,18 +33,11 @@ nav_root_links=[
      @code_block(language=.) $v
 }
 
-@fn tbl_row $row: inline list -> @match $row {
-    [$a, *$tail] -> { <td>$a</> @tbl_row $tail },
-    [] -> {},
-}
+@fn tbl_row $row: inline list ->
+    <tr>@list::join @list::map(@fn $cell -> <td>$cell</>) $row</>
 
-@fn tbl_rows $rows: inline list list -> @match $rows {
-    [$a, *$tail] -> { <tr> @tbl_row $a </tr> @tbl_rows $tail },
-    [] -> {},
-}
-
-@export @fn table $tbl: inline list list -> { <table> @tbl_rows $tbl </> }
-
+@export @fn table $tbl: inline list list ->
+    <table>@list::join @list::map($tbl_row) $tbl</>
 
 
 @fn get_headings $content: html -> @match $content {

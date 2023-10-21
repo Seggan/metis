@@ -28,7 +28,10 @@ private object Main : CliktCommand(name = "metis") {
         option("-f", "--file", help = "The file to run").path(mustExist = true, canBeDir = false).convert {
             System.setProperty("user.dir", it.parent.absolutePathString())
             CodeSource.fromPath(it)
-        }
+        },
+        option("-i", "--stdin", help = "Read code from stdin").flag(default = false).convert {
+            CodeSource.constant("<stdin>", generateSequence(::readlnOrNull).joinToString("\n"))
+        },
     ).single().required()
     val debug by option("-d", "--debug", help = "Enable debug mode").flag(default = false)
     val printChunk by option("-p", "--print-chunk", help = "Print the chunk").flag(default = false)

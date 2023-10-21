@@ -15,7 +15,32 @@ Check out @href(`/lang`) { the language overview } to learn more about Metis, or
 @href(`/lang/examples.html`) { examples } to see what Metis can do. If you want to embed Metis in your project,
 check out the @href(`/javadocs`) { API documentation }.
 
-@h2 { Credits }
+@h2 Usage
+
+The latest Metis release can be downloaded from @href(`htttps://github.com/Seggan/Metis/releases`) Github.
+The release is JAR file that can be run with `java -jar metis.jar`. This requires at least Java 17 to be installed.
+
+Here are all the command line arguments that Metis supports:
+
+@table [
+    [{ @code `-i`, @code `--stdin`: }, `Read the code from STDIN`],
+    [{ @code `-f <file>`, @code `--file <file>`: }, `Read the code from a file`],
+    [{ @code `-c <code>`, @code `--code <code>`: }, `Read the code from the arguments`],
+    [{ @code `-d`, @code `--debug`: }, `Enable debug mode`],
+    [{ @code `-p`, @code `--print-chunk`: }, `Print a disassembly of the code to be run`],
+    [{ @code `-s`, @code `--syntax-highlight`: }, `Convert the code into syntax-highlighted HTML`],
+]
+
+@h2 Building
+
+Metis is written in Kotlin, and uses Gradle as its build system. To build Metis, you need to have
+Gradle installed. To build Metis, run the following command in the root directory:
+
+@shell `./gradlew shadowJar`
+
+This will create a JAR file in `app/build/libs` that can be run with `java -jar metis.jar`.
+
+@h2 Credits
 
 Metis is made by @href(`https://github.com/Seggan`) Seggan.
 
