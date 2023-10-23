@@ -48,16 +48,6 @@ nav_root_links=[
     </>
 }
 
-@export @fn function ($name: str, $args: str list list, $ret: str) $desc: html -> {
-    @h2 $name
-    Return type: $ret
-
-    $desc
-
-    @bold Arguments:
-    @table(head=[Name, Type, Description]) $args
-}
-
 
 @fn get_headings $content: html -> @match $content {
     {<h2 **_><a href=$link **_>{_ *$title}</a></h2> *$tail} -> [@href($link) $title, *@get_headings $tail],

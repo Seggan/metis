@@ -22,9 +22,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.9.0
 
-      - name: Generate KDoc
-        run: ./gradlew dokkaHtml
-
       - name: Compile Metis
         run: ./gradlew shadowJar
 
@@ -33,6 +30,9 @@ jobs:
           python-version: 3.11
       - name: Run the doc generator
         run: python3 docs/gen.py
+
+      - name: Generate KDoc
+        run: ./gradlew dokkaHtml
 
       - name: Fix permissions
         run: |

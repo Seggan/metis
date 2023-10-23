@@ -7,11 +7,7 @@
 The core library is all the code that Metis requires to function at runtime. All the modules in this
 library are loaded by default when Metis starts up.
 
-@function(
-    name=`print`,
-    args=[[`value`, `any`, `The value to print`]],
-    ret=`null`
-) {
-    Prints the given value to the console.
-}
+@h2 { print(value: any): null }
+
+Prints the value to the console.
 
