@@ -13,9 +13,9 @@ import kotlin.collections.set
  * @param chunk The chunk to run.
  * @param args The arguments to pass to the chunk.
  */
-class Coroutine(globals: Value.Table? = null, chunk: Chunk.Instance, args: Value.List) : Value {
+class Coroutine(state: State, chunk: Chunk.Instance, args: Value.List) : Value {
 
-    private val innerState = State(globals)
+    private val innerState = State(state)
 
     override var metatable: Value.Table? = Companion.metatable.also { it["globals"] = innerState.globals }
 
@@ -70,9 +70,9 @@ class Coroutine(globals: Value.Table? = null, chunk: Chunk.Instance, args: Value
                 self.convertTo<Coroutine>().lastYielded
             }
 
-            table["create"] = threeArgFunction { fn, args, globals ->
+            table["create"] = twoArgFunction { fn, args ->
                 Coroutine(
-                    if (globals == Value.Null) this.globals else globals.convertTo<Value.Table>(),
+                    this,
                     fn.convertTo<Chunk.Instance>(),
                     if (args == Value.Null) Value.List() else args.convertTo<Value.List>()
                 )

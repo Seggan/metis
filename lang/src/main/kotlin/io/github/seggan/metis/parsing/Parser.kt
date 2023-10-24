@@ -72,7 +72,8 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         { consume(DO); parseBlock(END) },
         ::parseReturn,
         ::parseRaise,
-        ::parseDoExcept
+        ::parseDoExcept,
+        ::parseImport
     )
 
     private fun parseReturn(): AstNode.Return {
@@ -390,6 +391,12 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         }
         val finally = if (previous.type == FINALLY) parseBlock(END) else null
         return AstNode.DoExcept(body, excepts, finally, startSpan + previous.span)
+    }
+
+    private fun parseImport(): AstNode.Import {
+        val global = tryConsume(GLOBAL) != null
+        val startSpan = consume(IMPORT).span
+        return AstNode.Import(parseId().text, global, startSpan + previous.span)
     }
 
     private fun parseId(): Token {

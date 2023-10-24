@@ -368,6 +368,20 @@ fun Value.doubleValue() = this.convertTo<Value.Number>().value
 fun Value.stringValue() = this.convertTo<Value.String>().value
 
 /**
+ * Look up a successive sequence of strings in this value.
+ *
+ * @param keys The keys to look up.
+ * @return The value, or null if it doesn't exist.
+ */
+fun Value.lookUpHierarchy(vararg keys: String): Value? {
+    var value: Value = this
+    for (key in keys) {
+        value = value.lookUp(key.metisValue()) ?: return null
+    }
+    return value
+}
+
+/**
  * If this is a [Value.Native], returns the native object, otherwise throws an error.
  *
  * @param T The type to convert to.

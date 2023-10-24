@@ -151,6 +151,8 @@ class Compiler private constructor(
                 }
                 +Insn.Raise
             }
+
+            is AstNode.Import -> compileImport(statement)
         }
     }
 
@@ -365,16 +367,24 @@ class Compiler private constructor(
         }
     }
 
-    private fun compileVarDecl(decl: AstNode.VarDecl): List<FullInsn> {
-        return if (decl.visibility == Visibility.GLOBAL) {
-            compileExpression(decl.value) + (Insn.SetGlobal(decl.name) to decl.span)
-        } else {
-            val oldLocal = resolveLocal(decl.name)
-            if (oldLocal != null && oldLocal.scope == scope - 1) {
-                throw SyntaxException("Variable '${decl.name}' has already been declared", 0, decl.span)
-            }
-            localStack.addFirst(Local(decl.name, scope, localStack.size))
-            compileExpression(decl.value)
+    private fun compileImport(statement: AstNode.Import) = buildInsns(statement.span) {
+        +Insn.Import(statement.name)
+        +Insn.PostImport(statement.name, statement.global)
+        if (!statement.global) {
+            localStack.addFirst(Local(statement.name, scope, localStack.size))
+        }
+    }
+
+    private fun compileVarDecl(decl: AstNode.VarDecl) = buildInsns(decl.span) {
+        val oldLocal = resolveLocal(decl.name)
+        if (oldLocal != null && oldLocal.scope == scope - 1) {
+            throw SyntaxException("Variable '${decl.name}' has already been declared", 0, decl.span)
+        }
+        localStack.addFirst(Local(decl.name, scope, localStack.size))
+        +compileExpression(decl.value)
+        if (decl.visibility == Visibility.GLOBAL) {
+            +Insn.CopyUnder(0)
+            +Insn.SetGlobal(decl.name)
         }
     }
 

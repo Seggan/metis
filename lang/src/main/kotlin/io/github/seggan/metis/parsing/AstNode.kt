@@ -42,6 +42,7 @@ sealed interface AstNode {
     data class For(val name: String, val iterable: Expression, val body: Block, override val span: Span) : Statement
     data class Break(override val span: Span) : Statement
     data class Continue(override val span: Span) : Statement
+    data class Import(val name: String, val global: Boolean, override val span: Span) : Statement
 
     sealed interface Expression : Statement
     sealed interface AssignTarget : Expression

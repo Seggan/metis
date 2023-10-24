@@ -30,7 +30,11 @@ private object Main : CliktCommand(name = "metis") {
             CodeSource.fromPath(it)
         },
         option("-i", "--stdin", help = "Read code from stdin").flag(default = false).convert {
-            CodeSource.constant("<stdin>", generateSequence(::readlnOrNull).joinToString("\n"))
+            if (it) {
+                CodeSource.constant("<stdin>", generateSequence(::readlnOrNull).joinToString("\n"))
+            } else {
+                CodeSource("INVALID") { throw AssertionError("This should never be called") }
+            }
         },
     ).single().required()
     val debug by option("-d", "--debug", help = "Enable debug mode").flag(default = false)

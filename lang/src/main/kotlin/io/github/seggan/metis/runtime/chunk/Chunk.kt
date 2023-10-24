@@ -84,6 +84,8 @@ class Chunk(
 
             private val errorHandlerStack = ArrayDeque<ErrorHandler>()
             private val finallyStack = ArrayDeque<Insn.Label>()
+            private var importing: Set<Value>? = null
+            private var loaded: Value? = null
 
             override fun step(state: State): StepResult {
                 if (ip >= insns.size) return StepResult.FINISHED
@@ -165,6 +167,55 @@ class Chunk(
 
                         is Insn.Not -> state.not()
                         is Insn.Is -> state.`is`()
+
+                        is Insn.Import -> {
+                            val found = state.globals.lookUpHierarchy("package", "loaded", insn.name)
+                            if (found == null) {
+                                importing = state.globals.keys.toSet()
+                                var foundLoader = false
+                                for (loader in state.loaders) {
+                                    val result = loader.load(state, insn.name)
+                                    if (result != null) {
+                                        state.stack.push(result)
+                                        state.call(0, spans[ip - 1])
+                                        foundLoader = true
+                                        break
+                                    }
+                                }
+                                if (!foundLoader) {
+                                    throw MetisRuntimeException(
+                                        "ImportError",
+                                        "Could not find module '${insn.name}'",
+                                        buildTable { it["module"] = insn.name.metisValue() }
+                                    )
+                                }
+                            } else {
+                                loaded = found
+                            }
+                        }
+
+                        is Insn.PostImport -> {
+                            val module = if (loaded == null) {
+                                val saved = importing!!
+                                val extra = Value.Table()
+                                val it = state.globals.entries.iterator()
+                                while (it.hasNext()) {
+                                    val next = it.next()
+                                    if (next.key !in saved) {
+                                        extra[next.key] = next.value
+                                        it.remove()
+                                    }
+                                }
+                                extra
+                            } else {
+                                loaded!!
+                            }
+                            if (insn.global) {
+                                state.globals[insn.name] = module
+                            } else {
+                                state.stack.push(module)
+                            }
+                        }
 
                         is Insn.Label -> {}
                         is Insn.RawJump, is Insn.RawJumpIf -> error("Unbackpatched jump at $ip")

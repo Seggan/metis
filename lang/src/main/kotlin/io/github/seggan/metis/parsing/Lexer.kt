@@ -75,6 +75,7 @@ class Lexer(private val source: CodeSource) {
         keyword("except", Token.Type.EXCEPT)
         keyword("finally", Token.Type.FINALLY)
         keyword("raise", Token.Type.RAISE)
+        keyword("import", Token.Type.IMPORT)
         regex("\\s+", Token.Type.WHITESPACE)
         regex("[0-9]+(\\.[0-9]+)?(e[0-9]+(\\.[0-9]+)?)?", Token.Type.NUMBER)
         regex("[a-zA-Z_][a-zA-Z0-9_]*", Token.Type.IDENTIFIER)
@@ -253,6 +254,7 @@ data class Token(val type: Type, val text: String, val span: Span) {
         EXCEPT,
         FINALLY,
         RAISE,
+        IMPORT,
         EOF("end of file");
 
         override fun toString(): String {

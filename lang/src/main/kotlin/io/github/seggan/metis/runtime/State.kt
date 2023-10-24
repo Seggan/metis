@@ -20,13 +20,15 @@ import java.nio.file.FileSystems
 /**
  * Represents the state of a Metis virtual machine. This is the class that is used to run Metis code.
  */
-class State(parentGlobals: Value.Table? = null) {
+class State(parentState: State? = null) {
 
     /**
      * The global variables of the state.
      */
     val globals = Value.Table()
+
     private val nativeLibraries = mutableListOf<NativeLibrary>()
+    val loaders = mutableListOf<ModuleLoader>()
 
     /**
      * The stack of the state.
@@ -59,7 +61,7 @@ class State(parentGlobals: Value.Table? = null) {
     /**
      * The current working directory of the state.
      */
-    var cwd = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
+    var currentDir = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
 
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
@@ -104,14 +106,15 @@ class State(parentGlobals: Value.Table? = null) {
             "number",
             "range",
             "io",
-            "package",
             "coroutine"
         )
     }
 
     init {
-        if (parentGlobals != null) {
-            globals.putAll(parentGlobals)
+        if (parentState != null) {
+            globals.putAll(parentState.globals)
+            nativeLibraries.addAll(parentState.nativeLibraries)
+            loaders.addAll(parentState.loaders)
         } else {
             globals["true"] = Value.Boolean.TRUE
             globals["false"] = Value.Boolean.FALSE
@@ -138,10 +141,9 @@ class State(parentGlobals: Value.Table? = null) {
             globals["coroutine"] = Coroutine.metatable
 
             val pkg = Value.Table()
-            pkg["loaders"] = Value.List(mutableListOf(ResourceLoader, NativeLoader(nativeLibraries)))
+            pkg["path"] = Value.List(mutableListOf("./".metisValue(), "/usr/lib/metis/".metisValue()))
+            pkg["loaded"] = Value.Table()
             globals["package"] = pkg
-
-            globals["path"] = initPathLib()
 
             runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
             for (script in coreScripts) {
@@ -152,6 +154,11 @@ class State(parentGlobals: Value.Table? = null) {
 
             addNativeLibrary(OsLib)
             addNativeLibrary(RegexLib)
+            addNativeLibrary(PathLib)
+
+            loaders.add(ResourceLoader)
+            loaders.add(NativeLoader(nativeLibraries))
+            loaders.add(FileLoader)
         }
     }
 

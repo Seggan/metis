@@ -14,7 +14,7 @@ fun highlight(tokens: List<Token>): String = createHTML(prettyPrint = false).spa
             COMMENT -> "comment"
 
             IF, ELSE, ELIF, WHILE, FOR, IN, NOT_IN, IS, IS_NOT, RETURN, AND, OR, NOT, BREAK, CONTINUE,
-            FN, GLOBAL, LET, DO, END, ERROR, EXCEPT, FINALLY, RAISE
+            FN, GLOBAL, LET, DO, END, ERROR, EXCEPT, FINALLY, RAISE, IMPORT
             -> "keyword"
 
             PLUS, MINUS, STAR, SLASH, PERCENT, RANGE, INCLUSIVE_RANGE, ELVIS, QUESTION_MARK, EQUALS, DOUBLE_EQUALS,

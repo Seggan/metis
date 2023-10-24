@@ -73,4 +73,7 @@ sealed interface Insn {
 
     data object Not : Insn
     data object Is : Insn
+
+    data class Import(val name: String) : Insn
+    data class PostImport(val name: String, val global: Boolean) : Insn
 }
