@@ -399,18 +399,16 @@ class Compiler private constructor(
 
             is AstNode.Var -> buildInsns(target.span) {
                 val name = target.name
+                +compileExpression(assign.value)
+                +Insn.UpdateGlobal(name)
                 resolveLocal(name)?.let { local ->
-                    +compileExpression(assign.value)
                     +Insn.SetLocal(local.index)
                     return@buildInsns
                 }
                 resolveUpvalue(name)?.let { upvalue ->
-                    +compileExpression(assign.value)
                     +Insn.SetUpvalue(upvalues.indexOf(upvalue))
                     return@buildInsns
                 }
-                +compileExpression(assign.value)
-                +Insn.SetGlobal(name)
             }
         }
     }

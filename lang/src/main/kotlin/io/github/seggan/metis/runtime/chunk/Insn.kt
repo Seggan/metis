@@ -29,6 +29,7 @@ sealed interface Insn {
     data class CopyUnder(val index: Int) : Insn
     data class GetGlobal(val name: String) : Insn
     data class SetGlobal(val name: String) : Insn
+    data class UpdateGlobal(val name: String) : Insn
     data class GetLocal(val index: Int) : Insn
     data class SetLocal(val index: Int) : Insn
     data class GetUpvalue(val index: Int) : Insn {

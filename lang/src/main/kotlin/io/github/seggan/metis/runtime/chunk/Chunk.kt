@@ -118,6 +118,12 @@ class Chunk(
                         )
 
                         is Insn.SetGlobal -> state.globals[insn.name] = state.stack.pop()
+                        is Insn.UpdateGlobal -> {
+                            val name = insn.name.metisValue()
+                            if (name in state.globals) {
+                                state.globals[name] = state.stack.peek()
+                            }
+                        }
                         is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
                         is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.pop()
                         is Insn.GetUpvalue -> upvalues[insn.index].get(state)
