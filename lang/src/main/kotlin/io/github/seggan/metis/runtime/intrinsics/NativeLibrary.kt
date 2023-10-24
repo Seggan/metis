@@ -3,13 +3,13 @@ package io.github.seggan.metis.runtime.intrinsics
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.util.push
 import java.io.IOException
-import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
 import kotlin.io.path.*
+import kotlin.math.*
 
 /**
  * A native library that can be loaded into a [State] and imported with `require`
@@ -112,7 +112,7 @@ object OsLib : NativeLibrary("os") {
  */
 object PathLib : NativeLibrary("path") {
 
-    private fun pathFunction(fn: (Path) -> Value) = oneArgFunction { self ->
+    private inline fun pathFunction(crossinline fn: (Path) -> Value) = oneArgFunction { self ->
         try {
             fn(currentDir.resolve(fileSystem.getPath(self.stringValue())))
         } catch (e: InvalidPathException) {
@@ -148,7 +148,7 @@ object PathLib : NativeLibrary("path") {
         lib["open_write"] = pathFunction {
             try {
                 wrapOutStream(it.outputStream())
-            } catch (e: FileSystemAlreadyExistsException) {
+            } catch (e: FileAlreadyExistsException) {
                 throw MetisRuntimeException(
                     "IoError",
                     "File already exists: ${it.absolutePathString()}",
@@ -167,5 +167,52 @@ object PathLib : NativeLibrary("path") {
                 )
             }
         }
+    }
+}
+
+/**
+ * The `math` library
+ */
+object MathLib : NativeLibrary("math") {
+
+    private inline fun numberFunction(crossinline fn: (Double) -> Double): OneShotFunction {
+        return oneArgFunction { self -> fn(self.doubleValue()).metisValue() }
+    }
+
+    private inline fun numberFunction(crossinline fn: (Double, Double) -> Double): OneShotFunction {
+        return twoArgFunction { self, other -> fn(self.doubleValue(), other.doubleValue()).metisValue() }
+    }
+
+    override fun init(lib: MutableMap<String, Value>) {
+        lib["pi"] = Math.PI.metisValue()
+        lib["e"] = Math.E.metisValue()
+
+        lib["abs"] = numberFunction(::abs)
+        lib["ceil"] = numberFunction(::ceil)
+        lib["floor"] = numberFunction(::floor)
+        lib["round"] = numberFunction(::round)
+        lib["sqrt"] = numberFunction(::sqrt)
+        lib["cbrt"] = numberFunction(::cbrt)
+        lib["exp"] = numberFunction(::exp)
+        lib["expm1"] = numberFunction(::expm1)
+        lib["ln"] = numberFunction(::ln)
+        lib["log10"] = numberFunction(::log10)
+        lib["log2"] = numberFunction(::log2)
+        lib["pow"] = numberFunction(Double::pow)
+        lib["hypot"] = numberFunction(::hypot)
+        lib["sin"] = numberFunction(::sin)
+        lib["cos"] = numberFunction(::cos)
+        lib["tan"] = numberFunction(::tan)
+        lib["asin"] = numberFunction(::asin)
+        lib["acos"] = numberFunction(::acos)
+        lib["atan"] = numberFunction(::atan)
+        lib["atan2"] = numberFunction(::atan2)
+        lib["sinh"] = numberFunction(::sinh)
+        lib["cosh"] = numberFunction(::cosh)
+        lib["tanh"] = numberFunction(::tanh)
+        lib["asinh"] = numberFunction(::asinh)
+        lib["acosh"] = numberFunction(::acosh)
+        lib["atanh"] = numberFunction(::atanh)
+        lib["sign"] = numberFunction(::sign)
     }
 }
