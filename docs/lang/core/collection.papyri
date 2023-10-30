@@ -17,22 +17,22 @@ length, and all elements are equal.
 Implements `__iter__` for the collection. Returns an iterator over the collection that requires
 `__len__` and `__index__` to be implemented.
 
-@h3 { all(self, predicate: callable[any -> boolean]): boolean }
+@h3 { all(self, predicate: `callable[any -> boolean]`): boolean }
 Returns `true` if all elements in the collection return `true` when passed to `predicate`.
 
-@h3 { any(self, predicate: callable[any -> boolean]): boolean }
+@h3 { any(self, predicate: `callable[any -> boolean]`): boolean }
 Returns `true` if any element in the collection returns `true` when passed to `predicate`.
 `predicate` must accept one argument and return a boolean.
 
-@h3 { filter(self, predicate: callable[any -> boolean]): any }
+@h3 { filter(self, predicate: `callable[any -> boolean]`): any }
 Returns a new collection containing only the elements in the collection that return `true` when
 passed to `predicate`.
 
-@h3 { map(self, mapper: callable[any -> any]): any }
+@h3 { map(self, mapper: `callable[any -> any]`): any }
 Returns a new collection containing the results of calling `mapper` on each element in the
 collection. `mapper` must accept one argument and return a value.
 
-@h3 { reduce(self, reducer: callable[any, any -> any], initial: any): any }
+@h3 { reduce(self, reducer: `callable[any, any -> any]`, initial: any): any }
 Returns the result of calling `reducer` on each element in the collection, passing the result of
 the previous call as the first argument and the current element as the second argument. The first
 call to `reducer` will receive `initial` as the first argument and the first element as the second
