@@ -46,3 +46,7 @@ tr, th, td {
 table {
     border-collapse: collapse;
 }
+
+h1, h1 > a, h2, h2 > a, h3, h3 > a {
+    color: var(--grey-2);
+}
