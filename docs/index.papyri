@@ -42,7 +42,7 @@ This will create a JAR file in `app/build/libs` that can be run with `java -jar 
 
 @h2 Changelog
 
-@h3 v1.1.0
+@h3 { v1.1.0 }
 
 - `.` now behaves like `:` when used with a function that has a `self` argument
 - Removed `:` operator
@@ -50,7 +50,7 @@ This will create a JAR file in `app/build/libs` that can be run with `java -jar 
 - Moved the `path` module from the core library to the standard library
 - Added `import`
 
-@h3 v1.0.0
+@h3 { v1.0.0 }
 
 - Initial release
 
