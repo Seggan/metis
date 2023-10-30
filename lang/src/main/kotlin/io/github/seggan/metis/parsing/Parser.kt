@@ -145,7 +145,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parsePostfix(allowCalls: Boolean = true): AstNode.Expression {
         var expr = parsePrimary()
-        val allowed = arrayOf(OPEN_BRACKET, DOT, COLON) + if (allowCalls) arrayOf(OPEN_PAREN) else arrayOf()
+        val allowed = arrayOf(OPEN_BRACKET, DOT) + if (allowCalls) arrayOf(OPEN_PAREN) else arrayOf()
         while (true) {
             val op = tryConsume(*allowed) ?: break
             expr = when (op.type) {
@@ -163,22 +163,20 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
                 DOT -> {
                     val name = parseId()
-                    AstNode.Index(
-                        expr,
-                        AstNode.Literal(Value.String(name.text), name.span),
-                        op.span + previous.span
-                    )
-                }
-
-                COLON -> {
-                    val name = parseId().text
-                    consume(OPEN_PAREN)
-                    AstNode.ColonCall(
-                        expr,
-                        name,
-                        parseArgList(CLOSE_PAREN, ::parseExpression),
-                        op.span + previous.span
-                    )
+                    if (allowCalls && tryConsume(OPEN_PAREN) != null) {
+                        AstNode.CombinedCall(
+                            expr,
+                            name.text,
+                            parseArgList(CLOSE_PAREN, ::parseExpression),
+                            op.span + previous.span
+                        )
+                    } else {
+                        AstNode.Index(
+                            expr,
+                            AstNode.Literal(Value.String(name.text), name.span),
+                            op.span + previous.span
+                        )
+                    }
                 }
 
                 else -> throw AssertionError()
@@ -444,13 +442,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
                 this.index = index
             }
         }
-        var err = errors.maxBy { it.consumed }
-        if (err is UnexpectedTokenException) {
-            val allErrs = errors.filterIsInstance<UnexpectedTokenException>()
-            val expected = allErrs.flatMap { it.expected }.distinct()
-            err = UnexpectedTokenException(err.token, expected, err.consumed, err.backtrace.first())
-        }
-        throw err
+        throw errors.maxBy { it.consumed }
     }
 }
 

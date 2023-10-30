@@ -1,26 +1,26 @@
 fn table.__str__(self)
     let sb = string.builder()
-    sb:append("{ ")
-    for k in self:keys()
+    sb.append("{ ")
+    for k in self.keys()
         let v = self[k]
-        sb:append(k)
-            :append(" = ")
-            :append(v)
-            :append(", ")
+        sb.append(k)
+            .append(" = ")
+            .append(v)
+            .append(", ")
     end
-    sb:delete_at(len(sb) - 2)
-    return str(sb:append("}"))
+    sb.delete_at(len(sb) - 2)
+    return str(sb.append("}"))
 end
 
 fn table.merge(self, other)
-    for k in other:keys()
+    for k in other.keys()
         self[k] = other[k]
     end
 end
 
 fn table.clone(self)
     let t = table()
-    for k in self:keys()
+    for k in self.keys()
         t[k] = self[k]
     end
     return t
@@ -28,6 +28,6 @@ end
 
 fn table.__plus__(self, other)
     let t = table.clone(self)
-    t:merge(other)
+    t.merge(other)
     return t
 end

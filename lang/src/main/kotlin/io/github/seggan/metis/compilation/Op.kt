@@ -77,7 +77,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +Insn.CopyUnder(1)
         +Insn.Push("__eq__")
         +Insn.Index
-        +Insn.Call(2)
+        +Insn.Call(2, true)
         if (inverse) {
             +Insn.Not
         }

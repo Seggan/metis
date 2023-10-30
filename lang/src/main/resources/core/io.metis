@@ -2,10 +2,10 @@ let BUFSIZE = 2048
 fn io.in_stream.read_all(self)
     let result = []
     let buffer = bytes.allocate(BUFSIZE)
-    let read = self:read(buffer)
+    let read = self.read(buffer)
     while read is not null and read > 0
-        result:append(buffer:slice(0, read))
-        read = self:read(buffer)
+        result.append(buffer.slice(0, read))
+        read = self.read(buffer)
     end
     return bytes.concat(result)
 end
@@ -13,30 +13,30 @@ end
 fn io.in_stream.read_text(self)
     let result = ""
     do
-        result = self:read_all():decode()
+        result = self.read_all().decode()
     finally
-        self:close()
+        self.close()
     end
     return result
 end
 
 fn io.in_stream.read_line()
     let result = string.builder()
-    let c = io.stdin:read()
+    let c = io.stdin.read()
     while c is not null and c != 10
-        result:append(c:char())
-        c = io.stdin:read()
+        result.append(c.char())
+        c = io.stdin.read()
     end
     return str(result)
 end
 
 fn io.out_stream.write_line(self, line)
-    self:write(line)
-    self:write("\n")
+    self.write(line)
+    self.write("\n")
 end
 
 fn io.out_stream.write_text(self, text)
-    self:write(text:encode())
+    self.write(text.encode())
 end
 
 fn io.in_stream.use(self, f)
@@ -44,7 +44,7 @@ fn io.in_stream.use(self, f)
     do
         result = f(self)
     finally
-        self:close()
+        self.close()
     end
     return result
 end
@@ -54,7 +54,7 @@ fn io.out_stream.use(self, f)
     do
         result = f(self)
     finally
-        self:close()
+        self.close()
     end
     return result
 end

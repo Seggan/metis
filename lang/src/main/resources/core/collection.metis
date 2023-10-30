@@ -27,7 +27,7 @@ end
 fn collection.map(self, f)
     let res = list.new(len(self))
     for v in self
-        res:append(f(v))
+        res.append(f(v))
     end
     return res
 end
@@ -36,7 +36,7 @@ fn collection.filter(self, f)
     let res = []
     for v in self
         if f(v)
-            res:append(v)
+            res.append(v)
         end
     end
     return res

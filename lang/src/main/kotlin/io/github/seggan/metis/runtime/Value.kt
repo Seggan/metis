@@ -43,6 +43,21 @@ interface Value {
              */
             val metatable = initNumber()
 
+            /**
+             * The [Value.Number] representing `inf`.
+             */
+            val INF = Number(Double.POSITIVE_INFINITY)
+
+            /**
+             * The [Value.Number] representing `-inf`.
+             */
+            val NEG_INF = Number(Double.NEGATIVE_INFINITY)
+
+            /**
+             * The [Value.Number] representing `nan`.
+             */
+            val NAN = Number(Double.NaN)
+
             private const val CACHE_SIZE = 128
             private val cache = Array(CACHE_SIZE * 2) {
                 Number(it - CACHE_SIZE.toDouble())
@@ -57,6 +72,10 @@ interface Value {
             fun of(value: Double): Number {
                 if (value % 1 == 0.0 && value < CACHE_SIZE && value >= -CACHE_SIZE) {
                     return cache[(value + CACHE_SIZE).toInt()]
+                } else if (value.isNaN()) {
+                    return NAN
+                } else if (value.isInfinite()) {
+                    return if (value > 0) INF else NEG_INF
                 }
                 return Number(value)
             }
@@ -179,10 +198,18 @@ interface Value {
         }
 
         override fun toString(): kotlin.String {
-            return values.joinToString(
+            return entries.joinToString(
                 prefix = "{ ",
                 postfix = " }"
-            ) { if (it === this@Table) "{...}" else it.toString() }
+            ) {
+                if (it.key === this@Table) {
+                    "{...} = ${it.value}"
+                } else if (it.value === this@Table) {
+                    "${it.key} = {...}"
+                } else {
+                    "${it.key} = ${it.value}"
+                }
+            }
         }
 
         override fun equals(other: Any?) = other is Table && value == other.value

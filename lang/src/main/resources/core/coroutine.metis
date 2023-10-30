@@ -1,6 +1,6 @@
 fn coroutine.run(self)
     while true
-        if self:step() != "continue"
+        if self.step() != "continue"
             break
         end
     end
@@ -9,7 +9,7 @@ end
 fn coroutine.run_at_most(self, n)
     let x = 0
     while x < n
-        if self:step() != "continue"
+        if self.step() != "continue"
             break
         end
         x = x + 1

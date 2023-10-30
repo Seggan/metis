@@ -57,10 +57,11 @@ interface CallableValue : Value {
  * The argument information for a [CallableValue].
  *
  * @property required The number of arguments the function requires.
+ * @property requiresSelf Whether the function requires a `self` argument.
  * @property isVarargs Whether the function takes a variable number of arguments on top of the
  *  required ones. Currently not implemented.
  */
-data class Arity(val required: Int, val isVarargs: Boolean = false) {
+data class Arity(val required: Int, val requiresSelf: Boolean = false, val isVarargs: Boolean = false) {
     companion object {
         val ZERO = Arity(0)
         val ONE = Arity(1)
@@ -68,4 +69,6 @@ data class Arity(val required: Int, val isVarargs: Boolean = false) {
         val THREE = Arity(3)
         val VARARGS = Arity(0, true)
     }
+
+    fun requiresSelf() = Arity(required, true, isVarargs)
 }

@@ -1,6 +1,6 @@
-global fn str(x) = x:__str__()
-global fn len(x) = x:__len__()
-global fn iter(x) = x:__iter__()
+global fn str(x) = x.__str__()
+global fn len(x) = x.__len__()
+global fn iter(x) = x.__iter__()
 
 global fn with_metatable(x, mt)
     x.metatable = mt
@@ -10,15 +10,15 @@ end
 global fn print(x)
     let out = io.stdout
     let s = str(x)
-    out:write(s:encode("UTF-8"))
-    out:write('\n')
-    out:flush()
+    out.write(s.encode("UTF-8"))
+    out.write('\n')
+    out.flush()
 end
 
 global fn input(prompt)
     if prompt is not null
-        io.stdout:write(prompt:encode("UTF-8"))
-        io.stdout:flush()
+        io.stdout.write(prompt.encode("UTF-8"))
+        io.stdout.flush()
     end
-    return io.stdin:read_line()
+    return io.stdin.read_line()
 end

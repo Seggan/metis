@@ -53,7 +53,7 @@ class Compiler private constructor(
             backpatch(compiled, marker.first as Insn.Label)
         }
         val (insns, spans) = compiled.unzip()
-        return Chunk(name, insns, Arity(args.size), upvalues, spans)
+        return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), upvalues, spans)
     }
 
     private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
@@ -174,7 +174,7 @@ class Compiler private constructor(
                     +compileExpression(arg)
                 }
                 +compileExpression(expression.expr)
-                +Insn.Call(expression.args.size)
+                +Insn.Call(expression.args.size, false)
             }
 
             is AstNode.Index -> buildInsns(expression.span) {
@@ -183,12 +183,17 @@ class Compiler private constructor(
                 +Insn.Index
             }
 
-            is AstNode.ColonCall -> generateColonCall(
-                compileExpression(expression.expr),
-                expression.name,
-                expression.args.map(::compileExpression),
-                expression.span
-            )
+            is AstNode.CombinedCall -> buildInsns(expression.span) {
+                +compileExpression(expression.expr)
+                val args = expression.args.map(::compileExpression)
+                args.forEach { arg ->
+                    +arg
+                }
+                +Insn.CopyUnder(args.size)
+                +Insn.Push(expression.name)
+                +Insn.Index
+                +Insn.Call(args.size + 1, true)
+            }
 
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
             is AstNode.Var -> {
@@ -290,13 +295,13 @@ class Compiler private constructor(
         +Insn.CopyUnder(0)
         +Insn.Push("has_next")
         +Insn.Index
-        +Insn.Call(1)
+        +Insn.Call(1, true)
         +Insn.RawJumpIf(end, false)
         +Insn.CopyUnder(0)
         +Insn.CopyUnder(0)
         +Insn.Push("next")
         +Insn.Index
-        +Insn.Call(1)
+        +Insn.Call(1, true)
         localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
         +compileBlock(statement.body)
         +Insn.RawJump(start)
@@ -436,24 +441,6 @@ class Compiler private constructor(
             return resolved
         }
         return null
-    }
-
-    internal companion object {
-        fun generateColonCall(
-            expr: List<FullInsn>,
-            name: String,
-            args: List<List<FullInsn>>,
-            span: Span
-        ) = buildInsns(span) {
-            +expr
-            args.forEach { arg ->
-                +arg
-            }
-            +Insn.CopyUnder(args.size)
-            +Insn.Push(name)
-            +Insn.Index
-            +Insn.Call(args.size + 1)
-        }
     }
 }
 

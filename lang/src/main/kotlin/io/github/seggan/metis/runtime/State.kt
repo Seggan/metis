@@ -287,7 +287,7 @@ class State(parentState: State? = null) {
         } else {
             val getter = stack.getFromTop(1).metatable?.lookUp(indexString)
             if (getter is CallableValue) {
-                callValue(getter, 2)
+                callValue(getter, 2, true)
             } else {
                 val index = stack.pop()
                 val value = stack.pop()
@@ -321,7 +321,7 @@ class State(parentState: State? = null) {
         } else {
             val setter = stack.getFromTop(2).metatable?.lookUp(setString)
             if (setter is CallableValue) {
-                callValue(setter, 3)
+                callValue(setter, 3, true)
                 stack.pop()
             } else {
                 val index = stack.pop()
@@ -346,34 +346,41 @@ class State(parentState: State? = null) {
      * @param nargs The number of arguments to pass to the callable.
      * @param span The span of the call. May be null if unknown.
      */
-    fun call(nargs: Int, span: Span? = null) {
+    fun call(nargs: Int, selfProvided: Boolean = false, span: Span? = null) {
         val callable = stack.pop()
         if (callable is CallableValue) {
-            callValue(callable, nargs, span)
+            callValue(callable, nargs, selfProvided, span)
         } else {
-            throw MetisRuntimeException(
-                "TypeError",
-                "Cannot call non-callable: ${stringify(callable)}",
-                buildTable { table ->
-                    table["callable"] = callable
-                }
-            )
+            val possiblyCallable = callable.lookUp("__call__".metisValue())
+            if (possiblyCallable is CallableValue) {
+                callValue(possiblyCallable, nargs, selfProvided, span)
+            } else {
+                throw MetisRuntimeException(
+                    "TypeError",
+                    "Cannot call non-callable: ${stringify(callable)}",
+                    buildTable { table ->
+                        table["callable"] = callable
+                    }
+                )
+            }
         }
     }
 
-    private fun callValue(value: CallableValue, nargs: Int, span: Span? = null) {
+    private fun callValue(value: CallableValue, nargs: Int, selfProvided: Boolean, span: Span? = null) {
         val stackBottom = stack.size - nargs
-        val (reqArgs, isVarargs) = value.arity
+        val (reqArgs, requiresSelf) = value.arity
         var argc = nargs
+        if (selfProvided && !requiresSelf) {
+            // this is so cursed I love it
+            stack.removeAt(stack.size - 1 - --argc)
+        }
         while (argc < reqArgs) {
             stack.push(Value.Null)
             argc++
         }
-        if (!isVarargs) {
-            while (argc > reqArgs) {
-                stack.pop()
-                argc--
-            }
+        while (argc > reqArgs) {
+            stack.pop()
+            argc--
         }
         val executor = value.call(argc)
         if (value is OneShotFunction) {
@@ -454,6 +461,7 @@ class State(parentState: State? = null) {
      * @return The stringified value.
      */
     fun stringify(value: Value): String {
+        /*
         stack.push(value)
         stack.push(value)
         stack.push("__str__".metisValue())
@@ -464,6 +472,9 @@ class State(parentState: State? = null) {
             if (step() == StepResult.FINISHED) break
         }
         return stack.pop().stringValue()
+
+         */
+        return value.toString()
     }
 }
 

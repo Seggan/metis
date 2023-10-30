@@ -46,7 +46,7 @@ sealed interface Insn {
 
     data object Index : Insn
     data object Set : Insn
-    data class Call(val nargs: Int) : Insn
+    data class Call(val nargs: Int, val selfProvided: Boolean) : Insn
 
     /**
      * Used to mark a value as being used, so that it doesn't get popped. Used in the implementations of

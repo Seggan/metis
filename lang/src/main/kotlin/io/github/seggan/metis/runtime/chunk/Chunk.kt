@@ -155,7 +155,7 @@ class Chunk(
                         is Insn.PushErrorHandler -> errorHandlerStack.push(insn.handler)
                         is Insn.PushFinally -> finallyStack.push(insn.label)
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
-                        is Insn.Call -> state.call(insn.nargs, spans[ip - 1])
+                        is Insn.Call -> state.call(insn.nargs, insn.selfProvided, spans[ip - 1])
                         is Insn.ToBeUsed -> toBeUsed = state.stack.pop()
                         is Insn.Return -> {
                             ip = insns.size
@@ -183,7 +183,7 @@ class Chunk(
                                     val result = loader.load(state, insn.name)
                                     if (result != null) {
                                         state.stack.push(result)
-                                        state.call(0, spans[ip - 1])
+                                        state.call(0, false, spans[ip - 1])
                                         foundLoader = true
                                         break
                                     }

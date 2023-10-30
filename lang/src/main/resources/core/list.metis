@@ -1,31 +1,31 @@
 fn list.__str__(self)
     let sb = string.builder()
-    sb:append("[")
+    sb.append("[")
     for v in self
         if v is self
-            sb:append("[...]")
+            sb.append("[...]")
         else
-            sb:append(v)
+            sb.append(v)
         end
-        sb:append(", ")
+        sb.append(", ")
     end
-    sb:delete_last(2)
-    return str(sb:append("]"))
+    sb.delete_last(2)
+    return str(sb.append("]"))
 end
 
 fn list.join(self, sep)
     let sb = string.builder()
     for v in self
-        sb:append(v):append(sep)
+        sb.append(v).append(sep)
     end
-    sb:delete_last(len(sep))
+    sb.delete_last(len(sep))
     return str(sb)
 end
 
 fn list.reverse(self)
     let result = list.new(len(self))
     for i in range.inclusive(len(self) - 1, 0, -1)
-        result:append(self[i])
+        result.append(self[i])
     end
     return result
 end
@@ -33,7 +33,7 @@ end
 fn list.clone(self)
     let result = list.new(len(self))
     for v in self
-        result:append(v)
+        result.append(v)
     end
     return result
 end

@@ -19,20 +19,20 @@ inline fun <T> translateIoError(block: () -> T): T = try {
 }
 
 internal val outStreamMetatable = buildTable { table ->
-    table["write"] = twoArgFunction { self, value ->
+    table["write"] = twoArgFunction(true) { self, value ->
         val toBeWritten = value.convertTo<Value.Bytes>().value
         translateIoError { self.asObj<OutputStream>().write(toBeWritten) }
         toBeWritten.size.toDouble().metisValue()
     }
-    table["flush"] = oneArgFunction { self ->
+    table["flush"] = oneArgFunction(true) { self ->
         translateIoError { self.asObj<OutputStream>().flush() }
         Value.Null
     }
-    table["close"] = oneArgFunction { self ->
+    table["close"] = oneArgFunction(true) { self ->
         translateIoError { self.asObj<OutputStream>().close() }
         Value.Null
     }
-    table["__str__"] = oneArgFunction {
+    table["__str__"] = oneArgFunction(true) {
         "an output stream".metisValue()
     }
 }
@@ -43,7 +43,7 @@ internal val outStreamMetatable = buildTable { table ->
 fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamMetatable)
 
 internal val inStreamMetatable = buildTable { table ->
-    table["read"] = twoArgFunction { self, buffer ->
+    table["read"] = twoArgFunction(true) { self, buffer ->
         if (buffer == Value.Null) {
             // Read a single byte
             self.asObj<InputStream>().read().toDouble().metisValue()
@@ -58,11 +58,11 @@ internal val inStreamMetatable = buildTable { table ->
             }
         }
     }
-    table["close"] = oneArgFunction { self ->
+    table["close"] = oneArgFunction(true) { self ->
         self.asObj<InputStream>().close()
         Value.Null
     }
-    table["__str__"] = oneArgFunction {
+    table["__str__"] = oneArgFunction(true) {
         "an input stream".metisValue()
     }
 }
@@ -73,11 +73,11 @@ internal val inStreamMetatable = buildTable { table ->
 fun wrapInStream(stream: InputStream): Value = Value.Native(stream, inStreamMetatable)
 
 private val sbMetatable = buildTable { table ->
-    table["__append"] = twoArgFunction { self, value ->
+    table["__append"] = twoArgFunction(true) { self, value ->
         self.asObj<StringBuilder>().append(value.stringValue())
         self
     }
-    table["__index__"] = twoArgFunction { self, value ->
+    table["__index__"] = twoArgFunction(true) { self, value ->
         if (value is Value.Number) {
             self.asObj<StringBuilder>()[value.intValue()].toString().metisValue()
         } else {
@@ -91,7 +91,7 @@ private val sbMetatable = buildTable { table ->
             )
         }
     }
-    table["__set"] = threeArgFunction { self, index, value ->
+    table["__set"] = threeArgFunction(true) { self, index, value ->
         if (value is Value.Number) {
             self.asObj<StringBuilder>()[index.intValue()] = value.stringValue()[0]
         } else {
@@ -99,23 +99,23 @@ private val sbMetatable = buildTable { table ->
         }
         self
     }
-    table["delete"] = threeArgFunction { self, start, end ->
+    table["delete"] = threeArgFunction(true) { self, start, end ->
         self.asObj<StringBuilder>().delete(start.intValue(), end.intValue())
         self
     }
-    table["delete_at"] = twoArgFunction { self, index ->
+    table["delete_at"] = twoArgFunction(true) { self, index ->
         self.asObj<StringBuilder>().deleteCharAt(index.intValue())
         self
     }
-    table["clear"] = oneArgFunction { self ->
+    table["clear"] = oneArgFunction(true) { self ->
         self.asObj<StringBuilder>().clear()
         self
     }
-    table["__len__"] = oneArgFunction { self ->
+    table["__len__"] = oneArgFunction(true) { self ->
         Value.Number.of(self.asObj<StringBuilder>().length)
     }
-    table["__str__"] = oneArgFunction {
-        it.asObj<StringBuilder>().toString().metisValue()
+    table["__str__"] = oneArgFunction(true) { self ->
+        self.asObj<StringBuilder>().toString().metisValue()
     }
 }
 

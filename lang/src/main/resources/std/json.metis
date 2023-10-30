@@ -8,7 +8,7 @@ fn parser.parse_number(self)
     while self.pos < self.len
         let c = self.text[self.pos]
         if c in number_chars
-            sb:append(c)
+            sb.append(c)
             self.pos = self.pos + 1
         else
             break
@@ -29,32 +29,32 @@ fn parser.parse_string(self)
             self.pos = self.pos + 1
             let c = self.text[self.pos]
             if c == "\""
-                sb:append("\"")
+                sb.append("\"")
             elif c == "\\"
-                sb:append("\\")
+                sb.append("\\")
             elif c == "/"
-                sb:append("/")
+                sb.append("/")
             elif c == "b"
-                sb:append("\b")
+                sb.append("\b")
             elif c == "f"
-                sb:append("\f")
+                sb.append("\f")
             elif c == "n"
-                sb:append("\n")
+                sb.append("\n")
             elif c == "r"
-                sb:append("\r")
+                sb.append("\r")
             elif c == "t"
-                sb:append("\t")
+                sb.append("\t")
             elif c == "u"
                 self.pos = self.pos + 1
-                let hex = self.text:sub(self.pos, self.pos + 4)
+                let hex = self.text.sub(self.pos, self.pos + 4)
                 self.pos = self.pos + 4
-                sb:append(number.parse(hex, 16):char())
+                sb.append(number.parse(hex, 16).char())
             else
                 raise error ParseError("Invalid escape sequence: " + c + " (at position " + str(self.pos) + ")")
                     : { "sequence" = c }
             end
         else
-            sb:append(next)
+            sb.append(next)
         end
     end
     return str(sb)
@@ -64,13 +64,13 @@ fn parser.parse_array(self)
     let result = []
     self.pos = self.pos + 1
     while true
-        self:skip_whitespace()
+        self.skip_whitespace()
         if self.text[self.pos] == "]"
             self.pos = self.pos + 1
             break
         end
-        result:append(self:parse_value())
-        self:skip_whitespace()
+        result.append(self.parse_value())
+        self.skip_whitespace()
         if self.text[self.pos] == "]"
             self.pos = self.pos + 1
             break
@@ -87,21 +87,21 @@ fn parser.parse_object(self)
     let result = {}
     self.pos = self.pos + 1
     while true
-        self:skip_whitespace()
+        self.skip_whitespace()
         if self.text[self.pos] == "}"
             self.pos = self.pos + 1
             break
         end
-        let key = self:parse_string()
-        self:skip_whitespace()
+        let key = self.parse_string()
+        self.skip_whitespace()
         if self.text[self.pos] != ":"
             raise error ParseError("Expected ':' at " + str(self.pos)) : { "pos" = self.pos }
         end
         self.pos = self.pos + 1
-        self:skip_whitespace()
-        let value = self:parse_value()
+        self.skip_whitespace()
+        let value = self.parse_value()
         result[key] = value
-        self:skip_whitespace()
+        self.skip_whitespace()
         if self.text[self.pos] == "}"
             self.pos = self.pos + 1
             break
@@ -115,23 +115,23 @@ fn parser.parse_object(self)
 end
 
 fn parser.parse_value(self)
-    self:skip_whitespace()
+    self.skip_whitespace()
     let c = self.text[self.pos]
     if c == "{"
-        return self:parse_object()
+        return self.parse_object()
     elif c == "["
-        return self:parse_array()
+        return self.parse_array()
     elif c == "\""
-        return self:parse_string()
+        return self.parse_string()
     elif c in number_chars
-        return self:parse_number()
-    elif self.text:sub(self.pos, self.pos + 4) == "true"
+        return self.parse_number()
+    elif self.text.sub(self.pos, self.pos + 4) == "true"
         self.pos = self.pos + 4
         return true
-    elif self.text:sub(self.pos, self.pos + 5) == "false"
+    elif self.text.sub(self.pos, self.pos + 5) == "false"
         self.pos = self.pos + 5
         return false
-    elif self.text:sub(self.pos, self.pos + 4) == "null"
+    elif self.text.sub(self.pos, self.pos + 4) == "null"
         self.pos = self.pos + 4
         return null
     else
@@ -155,18 +155,18 @@ fn json.parse(text) = with_metatable({
     "text" = text,
     "pos" = 0,
     "len" = len(text)
-}, parser):parse_value()
+}, parser).parse_value()
 
 fn json.stringify(value)
     if type(value) == "string"
         return "\"" + value
-            :replace("\\", "\\\\")
-            :replace("\"", "\\\"")
-            :replace("\b", "\\b")
-            :replace("\f", "\\f")
-            :replace("\n", "\\n")
-            :replace("\r", "\\r")
-            :replace("\t", "\\t")
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\b", "\\b")
+            .replace("\f", "\\f")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
             + "\""
     elif type(value) == "number"
         return str(value)
@@ -174,34 +174,34 @@ fn json.stringify(value)
         return str(value)
     elif type(value) == "table"
         let sb = string.builder()
-        sb:append("{")
+        sb.append("{")
         let first = true
-        for k in value:keys()
+        for k in value.keys()
             let v = value[k]
             if first
                 first = false
             else
-                sb:append(",")
+                sb.append(",")
             end
-            sb:append(json.stringify(k))
-            sb:append(":")
-            sb:append(json.stringify(v))
+            sb.append(json.stringify(k))
+            sb.append(":")
+            sb.append(json.stringify(v))
         end
-        sb:append("}")
+        sb.append("}")
         return str(sb)
     elif type(value) == "list"
         let sb = string.builder()
-        sb:append("[")
+        sb.append("[")
         let first = true
         for v in value
             if first
                 first = false
             else
-                sb:append(",")
+                sb.append(",")
             end
-            sb:append(json.stringify(v))
+            sb.append(json.stringify(v))
         end
-        sb:append("]")
+        sb.append("]")
         return str(sb)
     elif type(value) == "null"
         return "null"

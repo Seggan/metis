@@ -31,8 +31,8 @@ abstract class NativeLibrary(val name: String) : OneShotFunction(Arity.ZERO) {
  */
 object RegexLib : NativeLibrary("regex") {
     override fun init(lib: MutableMap<String, Value>) {
-        lib["compile"] = oneArgFunction { self ->
-            val pattern = self.stringValue()
+        lib["compile"] = oneArgFunction { s ->
+            val pattern = s.stringValue()
             try {
                 Value.Native(Regex(pattern))
             } catch (e: PatternSyntaxException) {
@@ -43,12 +43,12 @@ object RegexLib : NativeLibrary("regex") {
                 )
             }
         }
-        lib["escape"] = oneArgFunction { self ->
-            val regex = self.stringValue()
+        lib["escape"] = oneArgFunction { s ->
+            val regex = s.stringValue()
             Value.String(Regex.escape(regex))
         }
 
-        lib["match"] = twoArgFunction { self, other ->
+        lib["match"] = twoArgFunction(true) { self, other ->
             val regex = self.asObj<Regex>()
             val input = other.stringValue()
             val match = regex.find(input)
@@ -62,13 +62,13 @@ object RegexLib : NativeLibrary("regex") {
                 Value.Null
             }
         }
-        lib["replace"] = threeArgFunction { self, other, replacement ->
+        lib["replace"] = threeArgFunction(true) { self, other, replacement ->
             val regex = self.asObj<Regex>()
             val input = other.stringValue()
             val repl = replacement.stringValue()
             regex.replace(input, repl).metisValue()
         }
-        lib["split"] = twoArgFunction { self, other ->
+        lib["split"] = twoArgFunction(true) { self, other ->
             val regex = self.asObj<Regex>()
             val input = other.stringValue()
             val list = Value.List()
@@ -85,16 +85,16 @@ object RegexLib : NativeLibrary("regex") {
  */
 object OsLib : NativeLibrary("os") {
     override fun init(lib: MutableMap<String, Value>) {
-        lib["get_env"] = oneArgFunction { self ->
-            System.getenv(self.stringValue())?.metisValue() ?: Value.Null
+        lib["get_env"] = oneArgFunction { value ->
+            System.getenv(value.stringValue())?.metisValue() ?: Value.Null
         }
-        lib["set_env"] = twoArgFunction { self, other ->
-            System.setProperty(self.stringValue(), other.stringValue())
+        lib["set_env"] = twoArgFunction { value, other ->
+            System.setProperty(value.stringValue(), other.stringValue())
             Value.Null
         }
         lib["get_cwd"] = zeroArgFunction { currentDir.absolutePathString().metisValue() }
-        lib["set_cwd"] = oneArgFunction { self ->
-            val path = fileSystem.getPath(self.stringValue())
+        lib["set_cwd"] = oneArgFunction { p ->
+            val path = fileSystem.getPath(p.stringValue())
             if (!path.isAbsolute) {
                 throw MetisRuntimeException(
                     "IoError",

@@ -49,7 +49,7 @@ sealed interface AstNode {
     data class Var(val name: String, override val span: Span) : Expression, AssignTarget
     data class Call(val expr: Expression, val args: List<Expression>, override val span: Span) : Expression
     data class Index(val target: Expression, val index: Expression, override val span: Span) : Expression, AssignTarget
-    data class ColonCall(
+    data class CombinedCall(
         val expr: Expression,
         val name: String,
         val args: List<Expression>,

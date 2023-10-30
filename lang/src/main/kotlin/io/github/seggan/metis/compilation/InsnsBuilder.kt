@@ -53,7 +53,7 @@ fun InsnsBuilder.generateMetaCall(name: String, nargs: Int) {
     +Insn.Index
     +Insn.Push(name)
     +Insn.Index
-    +Insn.Call(nargs + 1)
+    +Insn.Call(nargs + 1, true)
 }
 
 /**

@@ -94,46 +94,55 @@ inline fun zeroArgFunction(crossinline fn: State.() -> Value): OneShotFunction =
 /**
  * Creates a [OneShotFunction] with one argument.
  *
+ * @param requiresSelf Whether the function requires a `self` argument.
  * @param fn The function to execute.
  * @return The created function.
  * @see OneShotFunction
  */
-inline fun oneArgFunction(crossinline fn: State.(Value) -> Value): OneShotFunction =
-    object : OneShotFunction(Arity.ONE) {
-        override fun execute(state: State, nargs: Int) {
-            state.stack.push(state.fn(state.stack.pop()))
-        }
+inline fun oneArgFunction(
+    requiresSelf: Boolean = false,
+    crossinline fn: State.(Value) -> Value
+): OneShotFunction = object : OneShotFunction(Arity(1, requiresSelf)) {
+    override fun execute(state: State, nargs: Int) {
+        state.stack.push(state.fn(state.stack.pop()))
     }
+}
 
 /**
  * Creates a [OneShotFunction] with two arguments.
  *
+ * @param requiresSelf Whether the function requires a `self` argument.
  * @param fn The function to execute.
  * @return The created function.
  * @see OneShotFunction
  */
-inline fun twoArgFunction(crossinline fn: State.(Value, Value) -> Value): OneShotFunction =
-    object : OneShotFunction(Arity.TWO) {
-        override fun execute(state: State, nargs: Int) {
-            val b = state.stack.pop()
-            val a = state.stack.pop()
-            state.stack.push(state.fn(a, b))
-        }
+inline fun twoArgFunction(
+    requiresSelf: Boolean = false,
+    crossinline fn: State.(Value, Value) -> Value
+): OneShotFunction = object : OneShotFunction(Arity(2, requiresSelf)) {
+    override fun execute(state: State, nargs: Int) {
+        val b = state.stack.pop()
+        val a = state.stack.pop()
+        state.stack.push(state.fn(a, b))
     }
+}
 
 /**
  * Creates a [OneShotFunction] with three arguments.
  *
+ * @param requiresSelf Whether the function requires a `self` argument.
  * @param fn The function to execute.
  * @return The created function.
  * @see OneShotFunction
  */
-inline fun threeArgFunction(crossinline fn: State.(Value, Value, Value) -> Value): OneShotFunction =
-    object : OneShotFunction(Arity.THREE) {
-        override fun execute(state: State, nargs: Int) {
-            val c = state.stack.pop()
-            val b = state.stack.pop()
-            val a = state.stack.pop()
-            state.stack.push(state.fn(a, b, c))
-        }
+inline fun threeArgFunction(
+    requiresSelf: Boolean = false,
+    crossinline fn: State.(Value, Value, Value) -> Value
+): OneShotFunction = object : OneShotFunction(Arity(3, requiresSelf)) {
+    override fun execute(state: State, nargs: Int) {
+        val c = state.stack.pop()
+        val b = state.stack.pop()
+        val a = state.stack.pop()
+        state.stack.push(state.fn(a, b, c))
     }
+}

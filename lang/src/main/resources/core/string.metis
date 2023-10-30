@@ -1,21 +1,21 @@
 do
     let sb_meta = string.builder().metatable
-    fn sb_meta.append(self, value) = self:__append(str(value))
+    fn sb_meta.append(self, value) = self.__append(str(value))
     fn sb_meta.delete_last(self, n)
         let length = len(self)
-        self:delete(length - n, length)
+        self.delete(length - n, length)
         return self
     end
     // THIS GOES LAST
-    fn sb_meta.__set__(self, index, value) = self:__set(self, index, str(value))
+    fn sb_meta.__set__(self, index, value) = self.__set(self, index, str(value))
 end
 
-fn string.char_code(self) = self:encode("UTF-8")[0]
+fn string.char_code(self) = self.encode("UTF-8")[0]
 
 fn string.repeat(self, n)
     let sb = string.builder(len(self) * n)
     for _ in 0..<n
-        sb:append(self)
+        sb.append(self)
     end
     return str(sb)
 end
@@ -23,7 +23,7 @@ end
 fn string.reverse(self)
     let sb = string.builder(len(self))
     for i in range.inclusive(len(self) - 1, 0, -1)
-        sb:append(self[i])
+        sb.append(self[i])
     end
     return str(sb)
 end
