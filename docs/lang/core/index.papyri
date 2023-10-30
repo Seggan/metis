@@ -7,7 +7,76 @@
 The core library is all the code that Metis requires to function at runtime. All the modules in this
 library are loaded by default when Metis starts up.
 
-@h2 { print(value: any): null }
+@h2 { The Core Functions }
 
-Prints the value to the console.
+@h3 { globals(): table }
+Returns the global environment table.
 
+@h3 { input(prompt: string): string }
+Takes a string prompt, prints it to the console, and then waits for the user to enter a line of text.
+If the prompt is `null`, then no prompt is printed. Returns the line of text entered by the user.
+
+@h3 { iter(value: any): any }
+Returns an iterator for the given value. Requires the `__iter__` metamethod to be defined on the value.
+The iterator must have the `has_next(self): boolean` and the `next(self): any` methods defined.
+
+@h3 { len(value: any): number }
+Returns the length of the value. Requires the `__len__` metamethod to be defined on the value.
+
+@h3 { load_chunk(chunk: string): callable }
+Loads the given Metis code as a callable function. Returns the function.
+
+@h3 { print(value: any): null }
+Prints the value to the console, followed by a newline.
+
+@h3 { str(value: any): string }
+Converts the value to a string. Requires the `__str__` metamethod to be defined on the value.
+
+@h3 { type(value: any): string }
+Returns the type of the value as a string. Can be one of the following:
+[
+    `number`,
+    `string`,
+    `boolean`,
+    `table`,
+    `list`,
+    `bytes`,
+    `native`,
+    `null`,
+    `error`,
+    `coroutine`,
+    `callable`,
+    `unknown`
+]
+
+@h3 { with_metatable(value: any, metatable: table): any }
+Sets the metatable of the value to the given table, and returns the value.
+
+@h3 { yield(value: any): null }
+Yields the value to the parent.
+
+@h2 { The Core Modules }
+
+@h3 @href(`collection`) collection
+Provides functions for working with collections. Also the metatable for strings and lists.
+
+@h3 @href(`coroutine`) coroutine
+Provides functions for working with coroutines. Also the coroutine metatable.
+
+@h3 @href(`io`) io
+Provides functions for working with input and output streams.
+
+@h3 @href(`list`) list
+Provides functions for working with lists. Also the list metatable.
+
+@h3 @href(`number`) number
+Provides functions for working with numbers. Also the number metatable.
+
+@h3 @href(`range`) range
+Provides functions for working with ranges. Also the range metatable.
+
+@h3 @href(`string`) string
+Provides functions for working with strings. Also the string metatable.
+
+@h3 @href(`table`) table
+Provides functions for working with tables. Also the table metatable.

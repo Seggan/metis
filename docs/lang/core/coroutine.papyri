@@ -1,0 +1,38 @@
+@include `metis.lib`
+
+@page(`The coroutine module`)...
+
+@h1 { The `coroutine` module }
+
+The `coroutine` module provides a way to create and manage coroutines. A coroutine is a function
+that can be suspended and resumed. When a coroutine is resumed, it continues from the point
+where it was suspended. Coroutines are an implementation of cooperative multitasking.
+
+@h2 { Free functions }
+
+@h3 { create(function: callable, args: list): coroutine }
+Creates a new coroutine. The coroutine will execute the given function with the given arguments.
+If `args` is not given, the function will be called without arguments.
+
+@h2 { Member functions }
+
+@h3 { last_result(self): string }
+Returns the last thing returned by `step`.
+
+@h3 { last_yielded(self): any }
+Returns the last thing yielded by the coroutine, if any.
+
+@h3 { run(self): null }
+Performs `step` until the coroutine returns something other than `continue`.
+
+@h3 { run_at_most(self, n: number): null }
+Performs `step` at most `n` times or until the coroutine returns something other than `continue`.
+
+@h3 { step(self): string }
+Performs a single step of the coroutine. If the coroutine is suspended, it will be resumed.
+Returns the status of the coroutine. The status can be one of the following:
+[
+    finished,
+    continue,
+    yielded
+]
