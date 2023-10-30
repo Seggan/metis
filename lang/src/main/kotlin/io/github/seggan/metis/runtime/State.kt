@@ -125,9 +125,9 @@ class State(parentState: State? = null) {
             }
 
             val io = Value.Table()
-            io["stdout"] = wrapOutStream(stdout)
-            io["stderr"] = wrapOutStream(stderr)
-            io["stdin"] = wrapInStream(stdin)
+            io["stdout"] = zeroArgFunction { wrapOutStream(stdout) }
+            io["stderr"] = zeroArgFunction { wrapOutStream(stderr) }
+            io["stdin"] = zeroArgFunction { wrapInStream(stdin) }
 
             io["in_stream"] = inStreamMetatable
             io["out_stream"] = outStreamMetatable

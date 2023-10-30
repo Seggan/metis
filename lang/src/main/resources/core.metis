@@ -8,7 +8,7 @@ global fn with_metatable(x, mt)
 end
 
 global fn print(x)
-    let out = io.stdout
+    let out = io.stdout()
     let s = str(x)
     out.write(s.encode("UTF-8"))
     out.write('\n')
@@ -17,8 +17,8 @@ end
 
 global fn input(prompt)
     if prompt is not null
-        io.stdout.write(prompt.encode("UTF-8"))
-        io.stdout.flush()
+        io.stdout().write(prompt.encode("UTF-8"))
+        io.stdout().flush()
     end
-    return io.stdin.read_line()
+    return io.stdin().read_line()
 end

@@ -147,7 +147,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
     table["__index__"] = twoArgFunction(true) { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException(
             "KeyError",
-            "Key ${stringify(key)} not found on ${stringify(self)}",
+            "Key '${stringify(key)}' not found on ${stringify(self)}",
             buildTable { table ->
                 table["key"] = key
                 table["value"] = self

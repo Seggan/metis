@@ -20,12 +20,12 @@ fn io.in_stream.read_text(self)
     return result
 end
 
-fn io.in_stream.read_line()
+fn io.in_stream.read_line(self)
     let result = string.builder()
-    let c = io.stdin.read()
+    let c = self.read()
     while c is not null and c != 10
         result.append(c.char())
-        c = io.stdin.read()
+        c = self.read()
     end
     return str(result)
 end
