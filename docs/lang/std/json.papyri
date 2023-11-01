@@ -1,0 +1,15 @@
+@include `metis.lib`
+
+@page(`The json module`)...
+
+@h1 { The `json` module }
+
+The `json` module provides functions for encoding and decoding JSON data.
+
+@h2 { Free functions }
+
+@h3 { parse(s: string): any }
+Parse a JSON string and return the corresponding value.
+
+@h3 { stringify(value: any): string }
+Convert a value to a JSON string.
