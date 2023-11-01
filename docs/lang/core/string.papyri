@@ -1,0 +1,101 @@
+@include `metis.lib`
+
+@page(`The string module`)...
+
+@h1 { The `string` module }
+
+The `string` module provides functions for manipulating strings. It also serves to be the string metatable.
+Strings have `collection` as their metatable.
+
+@h2 { Free functions }
+
+@h3 { builder(start: number | string | null): native }
+Create a new string builder. If `start` is a string, the builder will start with that string. If `start` is a number,
+the builder will start with the specified capacity. If `start` is `null`, the builder will start with a capacity that
+is implementation-defined.
+
+@h2 { Member functions }
+
+@h3 { char_code(self): number }
+Get the character code of the first character in the string.
+
+@h3 { encode(self, encoding: string = "UTF-8"): bytes }
+Encode the string using the specified encoding. The default encoding is UTF-8.
+
+@h3 { equal_ignore_case(self, other: string): boolean }
+Compare two strings for equality, ignoring case.
+
+@h3 { repeat(self, count: number): string }
+Repeat the string `count` times.
+
+@h3 { replace(self, pattern: string, replacement: string): string }
+Replace all occurrences of `pattern` with `replacement`.
+
+@h3 { reverse(self): string }
+Reverse the string.
+
+@h3 { split(self, separator: string): list\[string\] }
+Split the string into an array of strings, using `separator` as the delimiter.
+
+@h3 { sub(self, start: number, end: number | null): string }
+Get a substring of the string. If `end` is `null`, the substring will end at the end of the string.
+
+@h2 Metamethods
+
+@h3 { __cmp__(self, other: string): number }
+Compare two strings.
+
+@h3 { __contains__(self, other: string): boolean }
+Check if the string contains another string.
+
+@h3 { __eq__(self, other: string): boolean }
+Check if two strings are equal.
+
+@h3 { __index__(self, index: number): string }
+Get the character at the specified index.
+
+@h3 { __iter__(self): table }
+Get an iterator for the string.
+
+@h3 { __len__(self): number }
+Get the length of the string.
+
+@h3 { __plus__(self, other: string): string }
+Concatenate two strings.
+
+@h1 { String builders }
+
+String builders are the Metis analog of Java's `StringBuilder` class. They are used to efficiently build strings,
+as opposed to concatenating strings together, which is inefficient.
+
+@h2 { Member functions }
+
+@h3 { append(self, value: string): self }
+Append a string to the builder.
+
+@h3 { clear(self): self }
+Clear the builder.
+
+@h3 { delete(self, start: number, end: number): self }
+Delete a range of characters from the builder from `start` to `end` (exclusive).
+
+@h3 { delete_at(self, index: number): self }
+Delete a character from the builder at the specified index.
+
+@h3 { delete_last(self, count: number): self }
+Delete the last `count` characters from the builder.
+
+@h2 Metamethods
+
+@h3 { __index__(self, index: number): string }
+Get the character at the specified index.
+
+@h3 { __len__(self): number }
+Get the length of the builder.
+
+@h3 { __set__(self, index: number, value: string): self }
+Set the character at the specified index.
+
+@h3 { __str__(self): string }
+Get the string that the builder has built.
+

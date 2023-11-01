@@ -142,7 +142,7 @@ class State(parentState: State? = null) {
 
             val pkg = Value.Table()
             pkg["path"] = Value.List(mutableListOf("./".metisValue(), "/usr/lib/metis/".metisValue()))
-            pkg["loaded"] = Value.Table()
+            pkg["loaded"] = Value.Table() // TODO actually add loaded modules
             globals["package"] = pkg
 
             runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })

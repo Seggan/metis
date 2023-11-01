@@ -1,0 +1,61 @@
+@include `metis.lib`
+
+@page(`The number module`)...
+
+@h1 { The `number` module }
+
+The `number` module provides a set of functions for working with numbers.
+It is the metatable for all numbers.
+
+@h2 Fields
+
+@h3 { inf: number }
+The infinity value as defined by IEEE 754.
+
+@h3 { neg_inf: number }
+The negative infinity value as defined by IEEE 754.
+
+@h3 { nan: number }
+The not-a-number value as defined by IEEE 754.
+
+@h2 { Free functions }
+
+@h3 { parse(s: string, radix: number = 10): number }
+Parse a string into a number with a given radix. The radix must be between 2 and 36.
+
+@h2 { Member functions }
+
+@h3 { char(self): string }
+Convert a number to its character representation.
+
+@h3 { string_with_radix(self, radix: number): string }
+Convert a number to a string with a given radix. The radix must be between 2 and 36.
+
+@h2 Metamethods
+
+@h3 { __cmp__(self, other: number): number }
+Compare a number to another number.
+
+@h3 { __div__(self, other: number): number }
+Divide a number by another number.
+
+@h3 { __eq__(self, other: number): boolean }
+Check if a number is equal to another number.
+
+@h3 { __inclrange__(self, other: number): number }
+Create a range from a number to another number (inclusive).
+
+@h3 { __minus__(self, other: number): number }
+Subtract a number from another number.
+
+@h3 { __mod__(self, other: number): number }
+Calculate the modulo of a number and another number.
+
+@h3 { __neg__(self): number }
+Negate a number.
+
+@h3 { __range__(self, other: number): number }
+Create a range from a number to another number (exclusive).
+
+@h3 { __times__(self, other: number): number }
+Multiply a number by another number.

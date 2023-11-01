@@ -38,5 +38,17 @@ fn list.clone(self)
     return result
 end
 
+fn list.__plus__(self, value)
+    let new = self.clone()
+    if type(value) == "list"
+        for v in value
+            new.append(v)
+        end
+    else
+        new.append(value)
+    end
+    return new
+end
+
 list.metatable = collection
 bytes.metatable = collection

@@ -49,6 +49,9 @@ internal fun initString() = buildTable { table ->
     table["replace"] = threeArgFunction(true) { self, value, toReplace ->
         self.stringValue().replace(value.stringValue(), toReplace.stringValue()).metisValue()
     }
+    table["split"] = twoArgFunction(true) { self, delimiter ->
+        self.stringValue().split(delimiter.stringValue()).map(String::metisValue).metisValue()
+    }
     table["sub"] = threeArgFunction(true) { self, start, end ->
         if (end == Value.Null) {
             self.stringValue().substring(start.intValue()).metisValue()
@@ -112,10 +115,14 @@ internal fun initNumber() = buildTable { table ->
     }
 
     table["parse"] = twoArgFunction { s, radix ->
-        if (radix == Value.Null) {
-            s.stringValue().toDouble().metisValue()
-        } else {
-            s.stringValue().toInt(radix.intValue()).metisValue()
+        try {
+            if (radix == Value.Null) {
+                s.stringValue().toDouble().metisValue()
+            } else {
+                s.stringValue().toInt(radix.intValue()).metisValue()
+            }
+        } catch (e: NumberFormatException) {
+            throw MetisRuntimeException("ValueError", "Invalid number: ${s.stringValue()}")
         }
     }
     table["nan"] = Value.Number.NAN

@@ -1,0 +1,53 @@
+@include `metis.lib`
+
+@page(`The list module`)...
+
+@h1 { The `list` module }
+
+The `list` module is a collection of functions that operate on lists. It
+is also the metatable for lists.
+
+@h2 { Free functions }
+
+@h3 { new(capacity: number): list }
+Creates a new list with the given capacity. If the capacity is not given,
+it defaults to an implementation-defined value.
+
+@h2 { Member functions }
+
+@h3 { append(self, value: any): null }
+Appends the given value to the list.
+
+@h3 { clone(self): list }
+Creates a new list with the same elements as the given list.
+
+@h3 { join(self, sep: string): string }
+Returns a string containing the elements of the list separated by the given
+separator.
+
+@h3 { reverse(self): list }
+Returns a new list with the elements of the given list in reverse order.
+
+@h3 { slice(self, start: number, end: number): list }
+Returns a new list containing the elements from `start` to `end` (exclusive).
+
+@h2 Metamethods
+
+@h3 { __contains__(self, value: any): boolean }
+Returns whether the given value is in the list.
+
+@h3 { __index__(self, key: number): any }
+Returns the element at the given index.
+
+@h3 { __iter__(self): any }
+Returns an iterator over the elements of the list.
+
+@h3 { __len__(self): number }
+Returns the number of elements in the list.
+
+@h3 { __plus__(self, other: list | any): list }
+Returns a new list containing the elements of the given list followed by the
+elements of the other list or the given value.
+
+@h3 { __set__(self, key: number, value: any): null }
+Sets the element at the given index to the given value.

@@ -1,0 +1,15 @@
+@include `metis.lib`
+
+@page(`The package module`)...
+
+@h1 { The `package` module }
+
+The `package` module provides the infrastructure for the package system.
+
+@h2 { Fields }
+
+@h3 { path: list\[string\] }
+The `path` field is a list of directories that are searched for packages by `import`.
+
+@h3 { loaded: list\[callable\] }
+The `loaded` field is a list of packages that have been loaded by `import`.

@@ -1,0 +1,42 @@
+@include `metis.lib`
+
+@page(`The table module`)...
+
+@h1 { The `table` module }
+
+The `table` module provides the metatable for the `table` type. It contains various
+functions for manipulating tables.
+
+@h2 { Member functions }
+
+@h3 { clone(self): table }
+Returns a shallow copy of the table `self`.
+
+@h3 { merge(self, other: table): null }
+Merges the table `other` into `self`. If a key exists in both tables, the value
+from `other` is used.
+
+@h3 { keys(self): list }
+Returns a list of all keys in the table.
+
+@h3 { values(self): list }
+Returns a list of all values in the table.
+
+@h2 Metamethods
+
+@h3 { __contains__(self, key: any): boolean }
+Returns `true` if the key `key` exists in the table `self`, `false` otherwise.
+
+@h3 { __index__(self, key: any): any }
+Returns the value of the key `key` in the table `self`. If the key does not exist,
+raises `KeyError`.
+
+@h3 { __len__(self): number }
+Returns the number of keys in the table `self`.
+
+@h3 { __plus__(self, other: table): table }
+Returns a new table containing the contents of `self` and `other`. If a key exists
+in both tables, the value from `other` is used.
+
+@h3 { __set__(self, key: any, value: any): null }
+Sets the value of the key `key` in the table `self` to `value`.

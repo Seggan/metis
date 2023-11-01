@@ -12,7 +12,7 @@ library are loaded by default when Metis starts up.
 @h3 { globals(): table }
 Returns the global environment table.
 
-@h3 { input(prompt: string): string }
+@h3 { input(prompt: string | null): string }
 Takes a string prompt, prints it to the console, and then waits for the user to enter a line of text.
 If the prompt is `null`, then no prompt is printed. Returns the line of text entered by the user.
 
@@ -57,6 +57,12 @@ Yields the value to the parent.
 
 @h2 { The Core Modules }
 
+@h3 @href(`boolean`) boolean
+Provides functions for working with booleans. Also the boolean metatable.
+
+@h3 @href(`bytes`) bytes
+Provides functions for working with bytes. Also the bytes metatable.
+
 @h3 @href(`collection`) collection
 Provides functions for working with collections. Also the metatable for strings and lists.
 
@@ -71,6 +77,9 @@ Provides functions for working with lists. Also the list metatable.
 
 @h3 @href(`number`) number
 Provides functions for working with numbers. Also the number metatable.
+
+@h3 @href(`package`) package
+Provides the infrastructure for loading modules.
 
 @h3 @href(`range`) range
 Provides functions for working with ranges. Also the range metatable.

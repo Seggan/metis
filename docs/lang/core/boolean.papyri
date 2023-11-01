@@ -1,0 +1,18 @@
+@include `metis.lib`
+
+@page(`The boolean module`)...
+
+@h1 { The `boolean` module }
+
+The `boolean` module provides functions for working with boolean values. It aso serves as the
+boolean metatable.
+
+@h2 { Free functions }
+
+@h3 { parse(value: string): boolean }
+Parse the given string into a boolean value. The string must be either `"true"` or `"false"`. If
+
+@h2 Metamethods
+
+@h3 { __eq__(other: any): boolean }
+Returns `true` if the boolean value is equal to the given value.

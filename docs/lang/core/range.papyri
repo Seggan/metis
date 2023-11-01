@@ -1,0 +1,39 @@
+@include `metis.lib`
+
+@page(`The range module`)...
+
+@h1 { The `range` module }
+
+The `range` module provides a range type and functions for working with
+ranges. Ranges are used to represent a sequence of numbers that can be
+iterated over. Ranges have `collection` as their metatable.
+
+@h2 { Free functions }
+
+@h3 { exclusive(start: number, end: number): range }
+Returns a range from `start` to `end` (exclusive).
+
+@h3 { inclusive(start: number, end: number): range }
+Returns a range from `start` to `end` (inclusive).
+
+@h2 { Member fields }
+
+@h3 { start: number }
+The start of the range.
+
+@h3 { end: number }
+The end of the range (exclusive).
+
+@h3 { step: number }
+The step of the range.
+
+@h2 Metamethods
+
+@h3 { __index__(self, key: number): number }
+Returns the value at the given index in the range.
+
+@h3 { __iter__(self): table }
+Returns an iterator for the range.
+
+@h3 { __len__(self): number }
+Returns the length of the range.

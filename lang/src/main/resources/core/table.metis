@@ -12,6 +12,18 @@ fn table.__str__(self)
     return str(sb.append("}"))
 end
 
+fn table.__eq__(self, other)
+    if len(self) != len(other)
+        return false
+    end
+    for k in self.keys()
+        if k not in other or self[k] != other[k]
+            return false
+        end
+    end
+    return true
+end
+
 fn table.merge(self, other)
     for k in other.keys()
         self[k] = other[k]

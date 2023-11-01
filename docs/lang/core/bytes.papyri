@@ -1,0 +1,46 @@
+@include `metis.lib`
+
+@page(`The bytes module`)...
+
+@h1 { The `bytes` module }
+
+The `bytes` module provides functions for working with byte arrays (bytes objects). It also functions
+as the common metatable for bytes objects.
+
+@h2 { Free functions }
+
+@h3 { allocate(size: number): bytes }
+Allocate a new bytes object with the given size.
+
+@h3 { concat(objs: list\[bytes\]): bytes }
+Concatenate a list of bytes objects into a single bytes object.
+
+@h2 { Member functions }
+
+@h3 { decode(encoding: string = "UTF-8"): string }
+Decode the bytes object into a string using the given encoding. If no encoding is given, UTF-8 is
+used.
+
+@h3 { slice(start: number, length: number): bytes }
+Create a new bytes object from a slice of the current bytes object. The slice starts at the given
+index and has the given length.
+
+@h2 Metamethods
+
+@h3 { __contains__(self, needle: number): boolean }
+Check if the given byte is contained in the bytes object.
+
+@h3 { __eq__(self, other: bytes): boolean }
+Check if the bytes object is equal to the given bytes object.
+
+@h3 { __index__(self, index: number): number }
+Get the byte at the given index.
+
+@h3 { __iter__(self): any }
+Get an iterator for the bytes object.
+
+@h3 { __len__(self): number }
+Get the length of the bytes object.
+
+@h3 { __set__(self, index: number, value: number) }
+Set the byte at the given index to the given value.

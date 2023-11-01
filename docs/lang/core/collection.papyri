@@ -9,14 +9,6 @@ The `collection` module is the common super-metatable for all collection types, 
 
 @h2 { Member functions }
 
-@h3 { __eq__(self, other: any): boolean }
-Implements `==` for the collection. Returns `true` if the collections are of the same type, same
-length, and all elements are equal.
-
-@h3 { __iter__(self): table }
-Implements `__iter__` for the collection. Returns an iterator over the collection that requires
-`__len__` and `__index__` to be implemented.
-
 @h3 { all(self, predicate: callable\[any -> boolean\]): boolean }
 Returns `true` if all elements in the collection return `true` when passed to `predicate`.
 
