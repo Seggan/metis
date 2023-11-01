@@ -127,7 +127,10 @@ object PathLib : NativeLibrary("path") {
         lib["normalize"] = pathFunction { it.normalize().toString().metisValue() }
         lib["absolute"] = pathFunction { it.toAbsolutePath().toString().metisValue() }
         lib["resolve"] = twoArgFunction { self, other ->
-            fileSystem.getPath(self.stringValue()).resolve(other.stringValue()).toString().metisValue()
+            currentDir.resolve(fileSystem.getPath(self.stringValue()))
+                .resolve(other.stringValue())
+                .toString()
+                .metisValue()
         }
         lib["parent"] = pathFunction { it.parent.toString().metisValue() }
         lib["base_name"] = pathFunction { it.fileName.toString().metisValue() }
@@ -166,6 +169,31 @@ object PathLib : NativeLibrary("path") {
                     Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
                 )
             }
+        }
+
+        lib["read_all"] = pathFunction {
+            try {
+                it.readBytes().metisValue()
+            } catch (e: NoSuchFileException) {
+                throw MetisRuntimeException(
+                    "IoError",
+                    "File not found: ${it.absolutePathString()}",
+                    Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
+                )
+            }
+        }
+        lib["write_all"] = twoArgFunction { self, other ->
+            val path = currentDir.resolve(fileSystem.getPath(self.stringValue()))
+            try {
+                path.writeBytes(other.convertTo<Value.Bytes>().value)
+            } catch (e: FileAlreadyExistsException) {
+                throw MetisRuntimeException(
+                    "IoError",
+                    "File already exists: ${path.absolutePathString()}",
+                    Value.Table(mutableMapOf("path".metisValue() to path.absolutePathString().metisValue()))
+                )
+            }
+            Value.Null
         }
     }
 }

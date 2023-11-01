@@ -21,6 +21,9 @@ class Compiler private constructor(
     private val enclosingCompiler: Compiler?
 ) {
 
+    /**
+     * Creates a new compiler
+     */
     constructor() : this(emptyList(), null)
 
     private val localStack = ArrayDeque<Local>()
