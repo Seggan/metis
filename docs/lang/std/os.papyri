@@ -16,7 +16,7 @@ Gets the value of an environment variable by providing its name as a string. Ret
 string if the variable is found, or `null` if the variable is not set.
 
 @h3 { set_cwd(path: string): void }
-Sets the current working directory to the specified absolute path. Raises `IOError if the provided path
+Sets the current working directory to the specified absolute path. Raises `IOError` if the provided path
 is not absolute.
 
 @h3 { set_env(name: string, value: string): void }
