@@ -18,7 +18,7 @@ Escapes the given string so that it can be used as a literal in a regular expres
 
 @h2 { Member functions }
 
-@h3 { match(self, string: string): list\[string\] | null }
+@h3 { match(self, string: string): list\[string\] \| null }
 Returns the list of groups in the matched string if the regular expression matches the given string.
 Returns `null` if the regular expression does not match the given string.
 

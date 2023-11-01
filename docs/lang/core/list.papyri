@@ -45,7 +45,7 @@ Returns an iterator over the elements of the list.
 @h3 { __len__(self): number }
 Returns the number of elements in the list.
 
-@h3 { __plus__(self, other: list | any): list }
+@h3 { __plus__(self, other: list \| any): list }
 Returns a new list containing the elements of the given list followed by the
 elements of the other list or the given value.
 

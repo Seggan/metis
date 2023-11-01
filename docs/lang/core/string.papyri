@@ -9,7 +9,7 @@ Strings have `collection` as their metatable.
 
 @h2 { Free functions }
 
-@h3 { builder(start: number | string | null): native }
+@h3 { builder(start: number \| string \| null): native }
 Create a new string builder. If `start` is a string, the builder will start with that string. If `start` is a number,
 the builder will start with the specified capacity. If `start` is `null`, the builder will start with a capacity that
 is implementation-defined.
@@ -37,7 +37,7 @@ Reverse the string.
 @h3 { split(self, separator: string): list\[string\] }
 Split the string into an array of strings, using `separator` as the delimiter.
 
-@h3 { sub(self, start: number, end: number | null): string }
+@h3 { sub(self, start: number, end: number \| null): string }
 Get a substring of the string. If `end` is `null`, the substring will end at the end of the string.
 
 @h2 Metamethods

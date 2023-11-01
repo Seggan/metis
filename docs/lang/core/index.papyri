@@ -12,7 +12,7 @@ library are loaded by default when Metis starts up.
 @h3 { globals(): table }
 Returns the global environment table.
 
-@h3 { input(prompt: string | null): string }
+@h3 { input(prompt: string \| null): string }
 Takes a string prompt, prints it to the console, and then waits for the user to enter a line of text.
 If the prompt is `null`, then no prompt is printed. Returns the line of text entered by the user.
 
