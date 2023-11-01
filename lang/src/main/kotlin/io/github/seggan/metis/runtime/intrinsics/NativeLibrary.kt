@@ -170,31 +170,6 @@ object PathLib : NativeLibrary("path") {
                 )
             }
         }
-
-        lib["read_all"] = pathFunction {
-            try {
-                it.readBytes().metisValue()
-            } catch (e: NoSuchFileException) {
-                throw MetisRuntimeException(
-                    "IoError",
-                    "File not found: ${it.absolutePathString()}",
-                    Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
-                )
-            }
-        }
-        lib["write_all"] = twoArgFunction { self, other ->
-            val path = currentDir.resolve(fileSystem.getPath(self.stringValue()))
-            try {
-                path.writeBytes(other.convertTo<Value.Bytes>().value)
-            } catch (e: FileAlreadyExistsException) {
-                throw MetisRuntimeException(
-                    "IoError",
-                    "File already exists: ${path.absolutePathString()}",
-                    Value.Table(mutableMapOf("path".metisValue() to path.absolutePathString().metisValue()))
-                )
-            }
-            Value.Null
-        }
     }
 }
 

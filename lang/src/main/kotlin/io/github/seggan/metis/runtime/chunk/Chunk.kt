@@ -202,6 +202,7 @@ class Chunk(
 
                         is Insn.PostImport -> {
                             val module = if (loaded == null) {
+                                state.stack.pop()
                                 val saved = importing!!
                                 val extra = Value.Table()
                                 val it = state.globals.entries.iterator()

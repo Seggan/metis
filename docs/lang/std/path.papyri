@@ -53,14 +53,8 @@ Opens the file at the given path for writing and returns an output stream.
 @h3 { parent(path: string): string }
 Returns the parent directory of the given path.
 
-@h3 { read_all(path: string): bytes }
-Reads the entire file at the given path and returns the contents as a byte array.
-
 @h3 { resolve(base: string, other: string): string }
 Resolves the given path `other` against the base path `base` and returns the resolved path as a string.
 
 @h3 { root(path: string): string }
 Returns the root of the given path.
-
-@h3 { write_all(path: string, data: bytes) }
-Writes the given byte array to the file at the given path.
