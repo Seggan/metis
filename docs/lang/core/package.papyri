@@ -11,5 +11,5 @@ The `package` module provides the infrastructure for the package system.
 @h3 { path: list\[string\] }
 The `path` field is a list of directories that are searched for packages by `import`.
 
-@h3 { loaded: list\[callable\] }
-The `loaded` field is a list of packages that have been loaded by `import`.
+@h3 { loaded: table\[string, callable\] }
+The `loaded` field is a table of packages that have been loaded by `import`.

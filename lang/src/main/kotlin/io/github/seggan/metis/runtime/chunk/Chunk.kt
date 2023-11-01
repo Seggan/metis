@@ -212,6 +212,9 @@ class Chunk(
                                         it.remove()
                                     }
                                 }
+                                val loaded =
+                                    state.globals.lookUpHierarchy("package", "loaded")!!.convertTo<Value.Table>()
+                                loaded[insn.name] = extra
                                 extra
                             } else {
                                 loaded!!
