@@ -1,0 +1,25 @@
+@include `metis.lib`
+
+@page(`The Standard Library`)...
+
+@h1 { The Standard Library }
+
+The standard library is a collection of modules that are included with Metis but are not loaded
+by default, unlike the core library. They are loaded by using the `import` keyword.
+
+@h2 { Standard Modules }
+
+@h3 @href(`json`) json
+This module provides functions for encoding and decoding JSON.
+
+@h3 @href(`math`) math
+This module provides various functions for performing mathematical operations.
+
+@h3 @href(`os`) os
+This module provides functions for interacting with the operating system.
+
+@h3 @href(`path`) path
+This module provides functions for manipulating paths, and reading and writing files.
+
+@h3 @href(`regex`) regex
+This module provides functions for working with regular expressions.

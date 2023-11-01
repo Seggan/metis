@@ -1,0 +1,30 @@
+@include `metis.lib`
+
+@page(`The regex module`)...
+
+@h1 { The `regex` module }
+
+The `regex` module provides a regular expression engine for Metis. It has the same semantics as
+Java's regular expression engine.
+
+@h2 { Free functions }
+
+@h3 { compile(regex: string): native }
+Compiles the given regular expression and returns a native object that represents the compiled
+regular expression. Raises `RegexError` if the regular expression is invalid.
+
+@h3 { escape(string: string): string }
+Escapes the given string so that it can be used as a literal in a regular expression.
+
+@h2 { Member functions }
+
+@h3 { match(self, string: string): list\[string\] | null }
+Returns the list of groups in the matched string if the regular expression matches the given string.
+Returns `null` if the regular expression does not match the given string.
+
+@h3 { replace(self, string: string, replacement: string): string }
+Returns a copy of the given string with the first match of the regular expression replaced with the
+given replacement string.
+
+@h3 { split(self, string: string): list\[string\] }
+Splits the given string at the matches of the regular expression and returns the list of substrings.

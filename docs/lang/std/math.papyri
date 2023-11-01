@@ -1,0 +1,98 @@
+@include `metis.lib`
+
+@page(`The math module`)...
+
+@h1 { The `math` module }
+
+The `math` module provides various mathematical functions and constants for mathematical operations.
+
+@h2 { Constants }
+
+@h3 { e: number }
+The mathematical constant 'e' (Euler's number), approximately equal to 2.71828.
+
+@h3 { pi: number }
+The mathematical constant 'π' (pi), approximately equal to 3.14159.
+
+@h2 { Free functions }
+
+@h3 { abs(x: number): number }
+Returns the absolute value of the given number 'x'.
+
+@h3 { acos(x: number): number }
+Returns the arccosine (inverse cosine) of the given number 'x' in radians.
+
+@h3 { acosh(x: number): number }
+Returns the hyperbolic arccosine of the given number 'x'.
+
+@h3 { asin(x: number): number }
+Returns the arcsine (inverse sine) of the given number 'x' in radians.
+
+@h3 { asinh(x: number): number }
+Returns the hyperbolic arcsine of the given number 'x'.
+
+@h3 { atan(x: number): number }
+Returns the arctangent (inverse tangent) of the given number 'x' in radians.
+
+@h3 { atan2(y: number, x: number): number }
+Returns the arctangent of the quotient of 'y' and 'x', with the result in radians.
+
+@h3 { atanh(x: number): number }
+Returns the hyperbolic arctangent of the given number 'x'.
+
+@h3 { cbrt(x: number): number }
+Returns the cube root of the given number 'x'.
+
+@h3 { ceil(x: number): number }
+Rounds 'x' up to the nearest integer and returns the result as a float.
+
+@h3 { cos(x: number): number }
+Returns the cosine of the given number 'x' in radians.
+
+@h3 { cosh(x: number): number }
+Returns the hyperbolic cosine of the given number 'x'.
+
+@h3 { exp(x: number): number }
+Returns 'e' raised to the power of 'x'.
+
+@h3 { expm1(x: number): number }
+Returns 'e' raised to the power of 'x' minus 1.
+
+@h3 { floor(x: number): number }
+Rounds 'x' down to the nearest integer and returns the result.
+
+@h3 { hypot(x: number, y: number): number }
+Returns the square root of the sum of the squares of 'x' and 'y'.
+
+@h3 { ln(x: number): number }
+Returns the natural logarithm of 'x'.
+
+@h3 { log10(x: number): number }
+Returns the base-10 logarithm of 'x'.
+
+@h3 { log2(x: number): number }
+Returns the base-2 logarithm of 'x'.
+
+@h3 { pow(base: number, exponent: number): number }
+Returns 'base' raised to the power of 'exponent'.
+
+@h3 { round(x: number): number }
+Rounds 'x' to the nearest integer and returns the result as a float.
+
+@h3 { sign(x: number): number }
+Returns the sign of 'x' as -1 for negative numbers, 1 for positive numbers, and 0 for zero.
+
+@h3 { sin(x: number): number }
+Returns the sine of the given number 'x' in radians.
+
+@h3 { sinh(x: number): number }
+Returns the hyperbolic sine of the given number 'x'.
+
+@h3 { sqrt(x: number): number }
+Returns the square root of the given number 'x'.
+
+@h3 { tan(x: number): number }
+Returns the tangent of the given number 'x' in radians.
+
+@h3 { tanh(x: number): number }
+Returns the hyperbolic tangent of the given number 'x'.

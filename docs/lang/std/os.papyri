@@ -1,0 +1,23 @@
+@include `metis.lib`
+
+@page(`The os module`)...
+
+@h1 { The `os` module }
+
+The `os` module provides functions for interacting with the operating system.
+
+@h2 { Free functions }
+
+@h3 { get_cwd(): string }
+Returns the current working directory as a string.
+
+@h3 { get_env(name: string): string | null }
+Gets the value of an environment variable by providing its name as a string. Returns the value as a
+string if the variable is found, or `null` if the variable is not set.
+
+@h3 { set_cwd(path: string): void }
+Sets the current working directory to the specified absolute path. Raises `IOError if the provided path
+is not absolute.
+
+@h3 { set_env(name: string, value: string): void }
+Sets an environment variable with the provided name and value as strings.

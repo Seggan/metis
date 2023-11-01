@@ -4,6 +4,7 @@ nav_root_links=[
     ["$base_url/lang", `The Language`],
     ["$base_url/lang/examples.html", `Examples`],
     ["$base_url/lang/core", `The Core Library`],
+    ["$base_url/lang/std", `The Standard Library`],
     ["$base_url/javadocs", `API Javadocs`]
 ])...
 
