@@ -55,6 +55,17 @@ Sets the metatable of the value to the given table, and returns the value.
 @h3 { yield(value: any): null }
 Yields the value to the parent.
 
+@h2 { The Core Fields }
+
+@h3 { false: boolean }
+The boolean value `false`.
+
+@h3 { null: null }
+The null value `null`.
+
+@h3 { true: boolean }
+The boolean value `true`.
+
 @h2 { The Core Modules }
 
 @h3 @href(`boolean`) boolean

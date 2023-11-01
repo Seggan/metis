@@ -1,0 +1,72 @@
+@include `metis.lib`
+
+@page(`The io module`)...
+
+@h1 { The `io` module }
+
+The `io` module provides a set of functions for manipulating input and output streams.
+
+@h2 { Free functions }
+
+@h3 { stderr(): native }
+Returns a reference to the standard error stream.
+
+@h3 { stdin(): native }
+Returns a reference to the standard input stream.
+
+@h3 { stdout(): native }
+Returns a reference to the standard output stream.
+
+@h1 { Submodule `in_stream` }
+
+This submodule provides a set of functions for manipulating input streams. It is also the
+metatable for input streams.
+
+@h2 { Member functions }
+
+@h3 { close(self): null }
+Closes the stream.
+
+@h3 { read(self, buffer: bytes | null): number }
+Reads a sequence of bytes from the stream into the buffer. Returns the number of bytes read.
+If buffer is not provided or is `null`, the function reads and returns a single byte. Returns
+`null` if the end of the stream is reached.
+
+@h3 { read_all(self): bytes }
+Reads all bytes from the stream and returns them.
+
+@h3 { read_line(self): string }
+Reads a line from the stream and returns it.
+
+@h3 { read_text(self): string }
+Reads all text from the stream and returns it.
+
+@h3 { use(self, f: callable\[native -> any\]): any }
+Calls the function `f` with the stream as its argument and returns the result. The stream is
+closed after the function returns, even if it throws an error.
+
+@h1 { Submodule `out_stream` }
+
+This submodule provides a set of functions for manipulating output streams. It is also the
+metatable for output streams.
+
+@h2 { Member functions }
+
+@h3 { close(self): null }
+Closes the stream.
+
+@h3 { flush(self): null }
+Flushes the stream.
+
+@h3 { write(self, buffer: bytes): number }
+Writes a sequence of bytes from the buffer to the stream. Returns the number of bytes written.
+
+@h3 { write_line(self, line: string): null }
+Writes a line to the stream.
+
+@h3 { write_text(self, text: string): null }
+Writes text to the stream.
+
+@h3 { use(self, f: callable\[native -> any\]): any }
+Calls the function `f` with the stream as its argument and returns the result. The stream is
+closed after the function returns, even if it throws an error.
