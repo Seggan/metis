@@ -19,6 +19,10 @@ from `other` is used.
 @h3 { keys(self): list }
 Returns a list of all keys in the table.
 
+@h3 { remove(self, key: any): null }
+Removes the key `key` from the table `self` and returns the value mapped to it. If the key does not exist, raises
+`KeyError`.
+
 @h3 { values(self): list }
 Returns a list of all values in the table.
 

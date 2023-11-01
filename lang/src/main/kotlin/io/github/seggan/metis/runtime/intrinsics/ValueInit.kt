@@ -46,6 +46,13 @@ internal fun initString() = buildTable { table ->
             else Charset.forName(encoding.stringValue())
         Value.Bytes(self.stringValue().toByteArray(actualEncoding))
     }
+    table["remove"] = threeArgFunction { self, start, end ->
+        if (end == Value.Null) {
+            self.stringValue().removeRange(start.intValue(), self.stringValue().length).metisValue()
+        } else {
+            self.stringValue().removeRange(start.intValue(), end.intValue()).metisValue()
+        }
+    }
     table["replace"] = threeArgFunction(true) { self, value, toReplace ->
         self.stringValue().replace(value.stringValue(), toReplace.stringValue()).metisValue()
     }
@@ -177,6 +184,9 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
     table["values"] = oneArgFunction(true) { self ->
         self.convertTo<Value.Table>().values.metisValue()
     }
+    table["remove"] = twoArgFunction(true) { self, key ->
+        self.convertTo<Value.Table>().remove(key).orNull()
+    }
 
     table.metatable = table
 }
@@ -212,6 +222,13 @@ internal fun initList() = buildTable { table ->
     table["append"] = twoArgFunction(true) { self, value ->
         self.convertTo<Value.List>().add(value)
         Value.Null
+    }
+    table["remove"] = twoArgFunction(true) { self, value ->
+        self.convertTo<Value.List>().remove(value)
+        Value.Null
+    }
+    table["remove_at"] = twoArgFunction(true) { self, index ->
+        self.convertTo<Value.List>().removeAt(index.intValue())
     }
     table["slice"] = threeArgFunction(true) { self, start, end ->
         if (end == Value.Null) {

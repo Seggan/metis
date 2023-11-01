@@ -25,6 +25,12 @@ Creates a new list with the same elements as the given list.
 Returns a string containing the elements of the list separated by the given
 separator.
 
+@h3 { remove(self, value: any): null }
+Removes the first occurrence of the given value from the list.
+
+@h3 { remove_at(self, index: number): any }
+Removes the element at the given index from the list and returns it.
+
 @h3 { reverse(self): list }
 Returns a new list with the elements of the given list in reverse order.
 

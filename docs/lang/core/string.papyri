@@ -25,6 +25,10 @@ Encode the string using the specified encoding. The default encoding is UTF-8.
 @h3 { equal_ignore_case(self, other: string): boolean }
 Compare two strings for equality, ignoring case.
 
+@h3 { remove(self, start: number, end: number \| null): string }
+Remove a range of characters from the string from `start` to `end` (exclusive). If `end` is `null`, the substring will
+end at the end of the string.
+
 @h3 { repeat(self, count: number): string }
 Repeat the string `count` times.
 
