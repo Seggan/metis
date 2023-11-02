@@ -146,3 +146,24 @@ inline fun threeArgFunction(
         state.stack.push(state.fn(a, b, c))
     }
 }
+
+/**
+ * Creates a [OneShotFunction] with four arguments.
+ *
+ * @param requiresSelf Whether the function requires a `self` argument.
+ * @param fn The function to execute.
+ * @return The created function.
+ * @see OneShotFunction
+ */
+inline fun fourArgFunction(
+    requiresSelf: Boolean = false,
+    crossinline fn: State.(Value, Value, Value, Value) -> Value
+): OneShotFunction = object : OneShotFunction(Arity(4, requiresSelf)) {
+    override fun execute(state: State, nargs: Int) {
+        val d = state.stack.pop()
+        val c = state.stack.pop()
+        val b = state.stack.pop()
+        val a = state.stack.pop()
+        state.stack.push(state.fn(a, b, c, d))
+    }
+}

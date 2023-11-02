@@ -30,9 +30,18 @@ fn io.in_stream.read_line(self)
     return str(result)
 end
 
+fn io.in_stream.copy_to(self, out)
+    let buffer = bytes.allocate(BUFSIZE)
+    let read = self.read(buffer)
+    while read is not null and read > 0
+        out.write(buffer, 0, read)
+        read = self.read(buffer)
+    end
+end
+
 fn io.out_stream.write_line(self, line)
-    self.write(line)
-    self.write("\n")
+    self.write(line.encode())
+    self.write('\n')
 end
 
 fn io.out_stream.write_text(self, text)

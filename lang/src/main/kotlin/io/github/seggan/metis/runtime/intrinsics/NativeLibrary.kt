@@ -2,9 +2,6 @@ package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.util.push
-import java.io.IOException
-import java.nio.file.InvalidPathException
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
@@ -18,9 +15,8 @@ import kotlin.math.*
  */
 abstract class NativeLibrary(val name: String) : OneShotFunction(Arity.ZERO) {
     final override fun execute(state: State, nargs: Int) {
-        val table = buildTable(::init)
-        state.globals[name] = table
-        state.stack.push(table)
+        state.globals.putAll(buildTable(::init))
+        state.stack.push(Value.Null)
     }
 
     abstract fun init(lib: MutableMap<String, Value>)
@@ -108,32 +104,31 @@ object OsLib : NativeLibrary("os") {
 }
 
 /**
- * The `path` library
+ * The `path` library's native functions
  */
-object PathLib : NativeLibrary("path") {
+object PathLib : NativeLibrary("__path") {
 
     private inline fun pathFunction(crossinline fn: (Path) -> Value) = oneArgFunction { self ->
-        try {
-            fn(currentDir.resolve(fileSystem.getPath(self.stringValue())))
-        } catch (e: InvalidPathException) {
-            Value.Null
-        } catch (e: IOException) {
-            throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error", cause = e)
-        }
+        translateIoError { fn(toPath(self)) }
     }
 
+    private fun State.toPath(value: Value) = currentDir.resolve(fileSystem.getPath(value.stringValue()))
+
+    @OptIn(ExperimentalPathApi::class)
     override fun init(lib: MutableMap<String, Value>) {
         lib["separator"] = Value.String(System.getProperty("file.separator"))
         lib["normalize"] = pathFunction { it.normalize().toString().metisValue() }
         lib["absolute"] = pathFunction { it.toAbsolutePath().toString().metisValue() }
         lib["resolve"] = twoArgFunction { self, other ->
-            currentDir.resolve(fileSystem.getPath(self.stringValue()))
-                .resolve(other.stringValue())
-                .toString()
-                .metisValue()
+            translateIoError {
+                toPath(self)
+                    .resolve(other.stringValue())
+                    .toString()
+                    .metisValue()
+            }
         }
         lib["parent"] = pathFunction { it.parent.toString().metisValue() }
-        lib["base_name"] = pathFunction { it.fileName.toString().metisValue() }
+        lib["file_name"] = pathFunction { it.fileName.toString().metisValue() }
         lib["root"] = pathFunction { it.root.toString().metisValue() }
         lib["is_absolute"] = pathFunction { it.isAbsolute.metisValue() }
         lib["list"] = pathFunction { path ->
@@ -148,28 +143,18 @@ object PathLib : NativeLibrary("path") {
         lib["is_dir"] = pathFunction { it.isDirectory().metisValue() }
         lib["is_symlink"] = pathFunction { it.isSymbolicLink().metisValue() }
         lib["is_hidden"] = pathFunction { it.isHidden().metisValue() }
-        lib["open_write"] = pathFunction {
-            try {
-                wrapOutStream(it.outputStream())
-            } catch (e: FileAlreadyExistsException) {
-                throw MetisRuntimeException(
-                    "IoError",
-                    "File already exists: ${it.absolutePathString()}",
-                    Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
-                )
+        lib["move"] = twoArgFunction { src, dest ->
+            translateIoError {
+                toPath(src).moveTo(toPath(dest))
             }
+            Value.Null
         }
-        lib["open_read"] = pathFunction {
-            try {
-                wrapInStream(it.inputStream())
-            } catch (e: NoSuchFileException) {
-                throw MetisRuntimeException(
-                    "IoError",
-                    "File not found: ${it.absolutePathString()}",
-                    Value.Table(mutableMapOf("path".metisValue() to it.absolutePathString().metisValue()))
-                )
-            }
-        }
+        lib["delete"] = pathFunction { it.deleteIfExists().metisValue() }
+        lib["create_dir"] = pathFunction { it.createDirectory().absolutePathString().metisValue() }
+        lib["create_dirs"] = pathFunction { it.createDirectories().absolutePathString().metisValue() }
+        lib["delete_recursive"] = pathFunction { it.deleteRecursively(); Value.Null }
+        lib["open_write"] = pathFunction { wrapOutStream(it.outputStream()) }
+        lib["open_read"] = pathFunction { wrapInStream(it.inputStream()) }
     }
 }
 

@@ -1,0 +1,54 @@
+import __path
+
+globals().merge(__path)
+
+global fn read_all(p)
+    let result = null
+    let stream = __path.open_read(p)
+    do
+        result = stream.read_all()
+    finally
+        stream.close()
+    end
+    return result
+end
+
+global fn read_text(p)
+    let result = null
+    let stream = __path.open_read(p)
+    do
+        result = stream.read_text()
+    finally
+        stream.close()
+    end
+    return result
+end
+
+global fn write_all(p, data)
+    let stream = __path.open_write(p)
+    do
+        stream.write(data)
+    finally
+        stream.close()
+    end
+end
+
+global fn write_text(p, data)
+    let stream = __path.open_write(p)
+    do
+        stream.write_text(data)
+    finally
+        stream.close()
+    end
+end
+
+global fn copy(src, dest)
+    let source = __path.open_read(src)
+    let destination = __path.open_write(dest)
+    do
+        source.copy_to(destination)
+    finally
+        source.close()
+        destination.close()
+    end
+end

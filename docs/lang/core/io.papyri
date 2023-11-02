@@ -58,8 +58,13 @@ Closes the stream.
 @h3 { flush(self): null }
 Flushes the stream.
 
-@h3 { write(self, buffer: bytes): number }
+@h3 { write(self, buffer: bytes, off: number \| null, len: number \| null): number }
 Writes a sequence of bytes from the buffer to the stream. Returns the number of bytes written.
+If `off` is provided, the function starts writing from the byte at that offset. If `len` is
+provided, the function writes at most that many bytes. If `off` and `len` are both provided,
+the function writes at most `len` bytes starting from the byte at offset `off`. If `off` is
+not provided, the function starts writing from the first byte in the buffer. If `len` is not
+provided, the function writes to the end of the buffer.
 
 @h3 { write_line(self, line: string): null }
 Writes a line to the stream.

@@ -3,25 +3,46 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.InvalidPathException
 
 /**
  * Translates an [IOException] into a [MetisRuntimeException].
  *
  * @param block The block to execute.
  */
-inline fun <T> translateIoError(block: () -> T): T = try {
-    block()
-} catch (e: IOException) {
-    throw MetisRuntimeException("IoError", e.message ?: "Unknown IO error", cause = e)
+inline fun <T> translateIoError(block: () -> T): T {
+    val message = try {
+        null to block()
+    } catch (e: InvalidPathException) {
+        "Invalid path: ${e.message}" to null
+    } catch (e: FileNotFoundException) {
+        "File not found: ${e.message}" to null
+    } catch (e: NoSuchFileException) {
+        "File not found: ${e.message}" to null
+    } catch (e: FileAlreadyExistsException) {
+        "File already exists: ${e.message}" to null
+    } catch (e: SecurityException) {
+        "Permission denied: ${e.message}" to null
+    } catch (e: IOException) {
+        e.message to null
+    }
+    if (message.first != null) {
+        throw MetisRuntimeException("IoError", message.first!!)
+    } else {
+        return message.second!!
+    }
 }
 
 internal val outStreamMetatable = buildTable { table ->
-    table["write"] = twoArgFunction(true) { self, value ->
-        val toBeWritten = value.convertTo<Value.Bytes>().value
-        translateIoError { self.asObj<OutputStream>().write(toBeWritten) }
+    table["write"] = fourArgFunction(true) { self, buffer, off, len ->
+        val toBeWritten = buffer.convertTo<Value.Bytes>().value
+        val offset = if (off == Value.Null) 0 else off.intValue()
+        val length = if (len == Value.Null) toBeWritten.size else len.intValue()
+        translateIoError { self.asObj<OutputStream>().write(toBeWritten, offset, length) }
         toBeWritten.size.toDouble().metisValue()
     }
     table["flush"] = oneArgFunction(true) { self ->
