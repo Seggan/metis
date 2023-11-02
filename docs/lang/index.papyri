@@ -95,6 +95,19 @@ end
 add(1, 2) // 1, 2, 0
 ```
 
+If the first argument is named `self`, then that function is considered a @i {self function}. When getting
+a self function from a table, the table is passed as the first argument:
+
+@metis ```
+let x = { "a" = 1, "b" = 2 }
+
+fn x.get_a(self)
+    return self.a
+end
+
+print(x.get_a()) // 1
+```
+
 @h2 { Anonymous Functions }
 
 The syntax above is actually syntax sugar for assigning an anonymous function to a variable. Anonymous
@@ -304,10 +317,9 @@ Coroutines can be run with `coroutine.run`:
 
 Metis has a set of operators that may or may not be overloaded. They are listed in order of decreasing precedence:
 
-`[]`, `()`, `.`, and `:`; these are used to index tables and call callables. There is no way to overload
-calling, but as `.` and `:` are various forms of syntax sugar for `[]`, they can be overloaded using
-the metamethod `__index__`. `a:b(c)` is syntax sugar for `a.b(a, c)`, and `a.b` is syntax sugar for
-`a["b"]`.
+`[]`, `()`, and `.`; these are used to index tables and call callables. There is no way to overload
+calling, but as `.` is syntax sugar for `[]`, they can be overloaded using
+the metamethod `__index__`.
 
 `not` and unary `-`; these are used to negate booleans and numbers. Only `-` can be overloaded using
 `__neg__`.
