@@ -68,6 +68,33 @@ add_to_x(5)
 print(x) // 10
 ```
 
+If a function is called with missing arguments, the missing arguments are set to `null`:
+
+@metis ```
+fn add(a, b, c)
+    print(a)
+    print(b)
+    print(c)
+end
+
+add(1, 2) // 1, 2, null
+```
+
+This can be used to provide default values with the help of the `?:` operator:
+
+@metis ```
+fn add(a, b, c)
+    a = a ?: 0
+    b = b ?: 0
+    c = c ?: 0
+    print(a)
+    print(b)
+    print(c)
+end
+
+add(1, 2) // 1, 2, 0
+```
+
 @h2 { Anonymous Functions }
 
 The syntax above is actually syntax sugar for assigning an anonymous function to a variable. Anonymous
@@ -428,6 +455,37 @@ end
 // Prints 1, 2, and 4
 ```
 
+@h1 Modules
+
+Metis has a module system similar to Python. Modules have the same name as the file they are declared in.
+All globals in the module are part of its @i exports. Modules are loaded
+with the `import` statement:
+
+@metis `import module_name`
+
+This will load the module as a table and assign it to a variable with the same name as the module. The
+module table will have the same members as the modules exports, or globals in the module. For example, if
+the module is called `foo`, it will be assigned to a variable called `foo`.
+
+Another thing you can do is @i {global imports} with `global import`:
+
+@metis `global import module_name`
+
+This will load the module and assign it to a global variable with the same name as the module. This
+can be used for implementing transient modules as such:
+
+@metis ```
+// foo.metis
+global import bar
+
+// bar.metis
+let global x = 1
+
+// main.metis
+import foo
+print(foo.bar.x) // 1
+```
+
 @h1 { Standard Library }
 
 The standard library is split into two main parts: the core library and the standard library. The core
@@ -437,3 +495,7 @@ For example, the `print` function is in the core library. The core library is do
 The standard library is not always loaded, and contains all the other modules that are not necessary for
 the language to function. For example, the `math` module is in the standard library. The standard library
 is documented @href(`std`) here.
+
+There is not much more to Metis, so I will end this here. If you have any questions, feel free to ask
+me in @href(`https://chat.stackexchange.com/rooms/146046/the-garbage-collector`) { The Garbage Collector }
+(ping `@Seggan`).
