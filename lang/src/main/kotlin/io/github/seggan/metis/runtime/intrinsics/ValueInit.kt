@@ -24,11 +24,7 @@ internal fun initString() = buildTable { table ->
         )
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        if (!self.stringValue().contains(key.stringValue())) {
-            Value.Boolean.of(self.lookUp(key) != null)
-        } else {
-            Value.Boolean.TRUE
-        }
+        self.stringValue().contains(key.stringValue()).metisValue()
     }
     table["__eq__"] = twoArgFunction(true) { self, other ->
         if (other !is Value.String) {
@@ -114,9 +110,6 @@ internal fun initNumber() = buildTable { table ->
     table["__neg__"] = oneArgFunction(true) { self ->
         (-self.doubleValue()).metisValue()
     }
-    table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(self.lookUp(key) != null)
-    }
     table["string_with_radix"] = twoArgFunction(true) { self, radix ->
         self.intValue().toString(radix.intValue()).metisValue()
     }
@@ -148,9 +141,6 @@ internal fun initBoolean() = buildTable { table ->
             Value.Boolean.of(self.convertTo<Value.Boolean>().value == other.convertTo<Value.Boolean>().value)
         }
     }
-    table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(self.lookUp(key) != null)
-    }
 
     table["parse"] = oneArgFunction { s ->
         s.stringValue().toBoolean().metisValue()
@@ -176,7 +166,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
         self.convertTo<Value.Table>().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(self.lookUp(key) != null)
+        Value.Boolean.of(key in self.convertTo<Value.Table>())
     }
     table["keys"] = oneArgFunction(true) { self ->
         self.convertTo<Value.Table>().keys.metisValue()
@@ -213,11 +203,7 @@ internal fun initList() = buildTable { table ->
         self.convertTo<Value.List>().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        if (key !in self.convertTo<Value.List>()) {
-            Value.Boolean.of(self.lookUp(key) != null)
-        } else {
-            Value.Boolean.TRUE
-        }
+        Value.Boolean.of(key in self.convertTo<Value.List>())
     }
     table["append"] = twoArgFunction(true) { self, value ->
         self.convertTo<Value.List>().add(value)
@@ -269,11 +255,7 @@ internal fun initBytes() = buildTable { table ->
         self.convertTo<Value.Bytes>().value.size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        if (key.intValue().toByte() !in self.convertTo<Value.Bytes>().value) {
-            Value.Boolean.of(self.lookUp(key) != null)
-        } else {
-            Value.Boolean.TRUE
-        }
+        Value.Boolean.of(key.intValue().toByte() in self.convertTo<Value.Bytes>().value)
     }
     table["decode"] = twoArgFunction(true) { self, encoding ->
         val actualEncoding =
