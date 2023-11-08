@@ -1,2 +1,2 @@
 rootProject.name = "metis"
-include("lang", "app")
+include("metis-lang", "metis-app")
