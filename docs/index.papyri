@@ -42,6 +42,11 @@ This will create a JAR file in `app/build/libs` that can be run with `java -jar 
 
 @h2 Changelog
 
+@h3 { v1.2.2 }
+[
+    { Nothing new, just configured Gradle to publish }
+]
+
 @h3 { v1.2.1 }
 [
     { Fixed `in` giving wrong result }
