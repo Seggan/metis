@@ -12,6 +12,12 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     POW("__pow__"),
     RANGE("__range__"),
     INCLUSIVE_RANGE("__inclrange__"),
+    BAND("__band__"),
+    BOR("__bor__"),
+    BXOR("__bxor__"),
+    SHL("__shl__"),
+    SHR("__shr__"),
+    SHRU("__shru__"),
     IN({ left, right ->
         +right
         +left
@@ -84,7 +90,8 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     })
 }
 
-enum class UnOp {
+enum class UnOp(val metamethod: String? = null) {
     NOT,
-    NEG,
+    NEG("__neg__"),
+    BNOT("__bnot__"),
 }

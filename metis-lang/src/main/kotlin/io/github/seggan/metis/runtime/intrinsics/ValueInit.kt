@@ -3,6 +3,10 @@ package io.github.seggan.metis.runtime.intrinsics
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.chunk.Chunk
 import java.nio.charset.Charset
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
+import kotlin.experimental.xor
 import kotlin.math.pow
 
 internal fun initString() = buildTable { table ->
@@ -16,7 +20,7 @@ internal fun initString() = buildTable { table ->
     table["__index__"] = twoArgFunction(true) { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException(
             "IndexError",
-            "Index not found: ${stringify(key)}",
+            "Character not found: ${stringify(key)}",
             buildTable { table ->
                 table["index"] = key
                 table["value"] = self
@@ -110,6 +114,27 @@ internal fun initNumber() = buildTable { table ->
     table["__neg__"] = oneArgFunction(true) { self ->
         (-self.doubleValue()).metisValue()
     }
+    table["__band__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of(self.intValue() and other.intValue())
+    }
+    table["__bor__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of(self.intValue() or other.intValue())
+    }
+    table["__bxor__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of(self.intValue() xor other.intValue())
+    }
+    table["__shl__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of(self.intValue() shl other.intValue())
+    }
+    table["__shr__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of(self.intValue() shr other.intValue())
+    }
+    table["__shru__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of(self.intValue() ushr other.intValue())
+    }
+    table["__bnot__"] = oneArgFunction(true) { self ->
+        Value.Number.of(self.intValue().inv())
+    }
     table["stringWithRadix"] = twoArgFunction(true) { self, radix ->
         self.intValue().toString(radix.intValue()).metisValue()
     }
@@ -163,19 +188,19 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
         Value.Null
     }
     table["__len__"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.Table>().size.metisValue()
+        self.tableValue().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(key in self.convertTo<Value.Table>())
+        Value.Boolean.of(key in self.tableValue())
     }
     table["keys"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.Table>().keys.metisValue()
+        self.tableValue().keys.metisValue()
     }
     table["values"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.Table>().values.metisValue()
+        self.tableValue().values.metisValue()
     }
     table["remove"] = twoArgFunction(true) { self, key ->
-        self.convertTo<Value.Table>().remove(key).orNull()
+        self.tableValue().remove(key).orNull()
     }
 
     table.metatable = table
@@ -183,12 +208,12 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
 
 internal fun initList() = buildTable { table ->
     table["__str__"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.List>().toString().metisValue()
+        self.listValue().toString().metisValue()
     }
     table["__index__"] = twoArgFunction(true) { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException(
             "IndexError",
-            "Index not found: ${stringify(key)}",
+            "Index out of bounds: ${stringify(key)}",
             buildTable { table ->
                 table["index"] = key
                 table["value"] = self
@@ -200,27 +225,27 @@ internal fun initList() = buildTable { table ->
         Value.Null
     }
     table["__len__"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.List>().size.metisValue()
+        self.listValue().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(key in self.convertTo<Value.List>())
+        Value.Boolean.of(key in self.listValue())
     }
     table["append"] = twoArgFunction(true) { self, value ->
-        self.convertTo<Value.List>().add(value)
+        self.listValue().add(value)
         Value.Null
     }
     table["remove"] = twoArgFunction(true) { self, value ->
-        self.convertTo<Value.List>().remove(value)
+        self.listValue().remove(value)
         Value.Null
     }
     table["removeAt"] = twoArgFunction(true) { self, index ->
-        self.convertTo<Value.List>().removeAt(index.intValue())
+        self.listValue().removeAt(index.intValue())
     }
     table["slice"] = threeArgFunction(true) { self, start, end ->
         if (end == Value.Null) {
-            self.convertTo<Value.List>().subList(start.intValue(), self.convertTo<Value.List>().size).metisValue()
+            self.listValue().subList(start.intValue(), self.listValue().size).metisValue()
         } else {
-            self.convertTo<Value.List>().subList(start.intValue(), end.intValue()).metisValue()
+            self.listValue().subList(start.intValue(), end.intValue()).metisValue()
         }
     }
 
@@ -235,7 +260,7 @@ internal fun initList() = buildTable { table ->
 
 internal fun initBytes() = buildTable { table ->
     table["__str__"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.Bytes>().value.toString(Charsets.UTF_8).metisValue()
+        self.bytesValue().toString(Charsets.UTF_8).metisValue()
     }
     table["__index__"] = twoArgFunction(true) { self, key ->
         self.lookUp(key) ?: throw MetisRuntimeException(
@@ -252,20 +277,69 @@ internal fun initBytes() = buildTable { table ->
         Value.Null
     }
     table["__len__"] = oneArgFunction(true) { self ->
-        self.convertTo<Value.Bytes>().value.size.metisValue()
+        self.bytesValue().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(key.intValue().toByte() in self.convertTo<Value.Bytes>().value)
+        Value.Boolean.of(key.intValue().toByte() in self.bytesValue())
+    }
+    table["__band__"] = twoArgFunction(true) { self, other ->
+        val selfBytes = self.bytesValue()
+        val otherBytes = other.bytesValue()
+        if (selfBytes.size < otherBytes.size) {
+            throw MetisRuntimeException(
+                "ValueError",
+                "Cannot perform bitwise and; self is smaller than other",
+                buildTable { table ->
+                    table["self"] = self
+                    table["other"] = other
+                }
+            )
+        }
+        ByteArray(selfBytes.size) { i -> selfBytes[i] and otherBytes[i] }.metisValue()
+    }
+    table["__bor__"] = twoArgFunction(true) { self, other ->
+        val selfBytes = self.bytesValue()
+        val otherBytes = other.bytesValue()
+        if (selfBytes.size < otherBytes.size) {
+            throw MetisRuntimeException(
+                "ValueError",
+                "Cannot perform bitwise or; self is smaller than other",
+                buildTable { table ->
+                    table["self"] = self
+                    table["other"] = other
+                }
+            )
+        }
+        ByteArray(selfBytes.size) { i -> selfBytes[i] or otherBytes[i] }.metisValue()
+    }
+    table["__bxor__"] = twoArgFunction(true) { self, other ->
+        val selfBytes = self.bytesValue()
+        val otherBytes = other.bytesValue()
+        if (selfBytes.size < otherBytes.size) {
+            throw MetisRuntimeException(
+                "ValueError",
+                "Cannot perform bitwise xor; self is smaller than other",
+                buildTable { table ->
+                    table["self"] = self
+                    table["other"] = other
+                }
+            )
+        }
+        ByteArray(selfBytes.size) { i -> selfBytes[i] xor otherBytes[i] }.metisValue()
+    }
+    table["__bnot__"] = oneArgFunction(true) { self ->
+        val selfBytes = self.bytesValue()
+        ByteArray(selfBytes.size) { i -> selfBytes[i].inv() }.metisValue()
     }
     table["decode"] = twoArgFunction(true) { self, encoding ->
         val actualEncoding =
             if (encoding == Value.Null) Charsets.UTF_8
             else Charset.forName(encoding.stringValue())
-        self.convertTo<Value.Bytes>().value.toString(actualEncoding).metisValue()
+        self.bytesValue().toString(actualEncoding).metisValue()
     }
     table["slice"] = threeArgFunction(true) { self, start, len ->
         val newBytes = ByteArray(len.intValue())
-        self.convertTo<Value.Bytes>().value.copyInto(
+        self.bytesValue().copyInto(
             newBytes,
             0,
             start.intValue(),
@@ -278,7 +352,7 @@ internal fun initBytes() = buildTable { table ->
         Value.Bytes(ByteArray(size.intValue()))
     }
     table["concat"] = oneArgFunction { list ->
-        val bytes = list.convertTo<Value.List>().map { it.convertTo<Value.Bytes>().value }
+        val bytes = list.listValue().map { it.bytesValue() }
         val size = bytes.sumOf { it.size }
         val newBytes = ByteArray(size)
         var offset = 0
@@ -326,5 +400,14 @@ internal fun initError() = buildTable { table ->
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
         Value.Boolean.of(self.lookUp(key) != null)
+    }
+}
+
+private fun checkIndex(index: Int, size: Int) {
+    if (index < 0 || index >= size) {
+        throw MetisRuntimeException("IndexError", "Index out of bounds: $index", buildTable { table ->
+            table["index"] = index.metisValue()
+            table["size"] = size.metisValue()
+        })
     }
 }

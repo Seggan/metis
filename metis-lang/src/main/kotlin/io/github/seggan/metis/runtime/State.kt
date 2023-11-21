@@ -262,8 +262,7 @@ class State(parentState: State? = null) {
      * @param source The source to load.
      */
     fun runCode(source: CodeSource) {
-        val lexer = Lexer(source)
-        val parser = Parser(lexer.lex(), source)
+        val parser = Parser(Lexer.lex(source), source)
         val compiler = Compiler()
         loadChunk(compiler.compileCode(source.name, parser.parse()))
         call(0)

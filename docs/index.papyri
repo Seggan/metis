@@ -38,9 +38,14 @@ Gradle installed. To build Metis, run the following command in the root director
 
 @shell `./gradlew shadowJar`
 
-This will create a JAR file in `app/build/libs` that can be run with `java -jar metis.jar`.
+This will create a JAR file in `metis-app/build/libs` that can be run with `java -jar metis.jar`.
 
 @h2 Changelog
+
+@h2 { 0.1.0 }
+[
+    {Initial release}
+]
 
 @h2 Credits
 

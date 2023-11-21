@@ -214,7 +214,7 @@ class Chunk(
                                     }
                                 }
                                 val loaded =
-                                    state.globals.lookUpHierarchy("package", "loaded")!!.convertTo<Value.Table>()
+                                    state.globals.lookUpHierarchy("package", "loaded")!!.tableValue()
                                 loaded[insn.name] = extra
                                 extra
                             } else {
@@ -270,8 +270,7 @@ class Chunk(
          * @return The loaded chunk.
          */
         fun load(source: CodeSource): Chunk {
-            val lexer = Lexer(source)
-            val parser = Parser(lexer.lex(), source)
+            val parser = Parser(Lexer.lex(source), source)
             val compiler = Compiler()
             return compiler.compileCode(source.name, parser.parse())
         }

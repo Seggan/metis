@@ -33,7 +33,7 @@ private object Main : CliktCommand(name = "metis") {
             if (it) {
                 CodeSource.constant("<stdin>", generateSequence(::readlnOrNull).joinToString("\n"))
             } else {
-                CodeSource("INVALID") { throw AssertionError("This should never be called") }
+                CodeSource("INVALID") { throw AssertionError() }
             }
         },
     ).single().required()
@@ -48,7 +48,7 @@ private object Main : CliktCommand(name = "metis") {
     override fun run() {
         try {
             if (syntaxHighlight) {
-                println(highlight(Lexer(source.mapText(HtmlEscape::unescapeHtml)).lex()))
+                println(highlight(Lexer.lex(source.mapText(HtmlEscape::unescapeHtml))))
             } else {
                 val chunk = Chunk.load(source)
                 if (printChunk) {

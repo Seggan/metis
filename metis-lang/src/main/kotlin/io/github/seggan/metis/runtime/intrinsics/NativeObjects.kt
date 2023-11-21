@@ -39,7 +39,7 @@ inline fun <T> translateIoError(block: () -> T): T {
 
 internal val outStreamMetatable = buildTable { table ->
     table["write"] = fourArgFunction(true) { self, buffer, off, len ->
-        val toBeWritten = buffer.convertTo<Value.Bytes>().value
+        val toBeWritten = buffer.bytesValue()
         val offset = if (off == Value.Null) 0 else off.intValue()
         val length = if (len == Value.Null) toBeWritten.size else len.intValue()
         translateIoError { self.asObj<OutputStream>().write(toBeWritten, offset, length) }
@@ -70,7 +70,7 @@ internal val inStreamMetatable = buildTable { table ->
             self.asObj<InputStream>().read().toDouble().metisValue()
         } else {
             // Read into a buffer
-            val toBeRead = buffer.convertTo<Value.Bytes>().value
+            val toBeRead = buffer.bytesValue()
             val read = self.asObj<InputStream>().read(toBeRead)
             if (read == -1) {
                 Value.Null

@@ -128,7 +128,7 @@ interface Value {
             val metatable by lazy(::initString)
         }
 
-        override fun toString() = value
+        override fun toString() = "\"$value\""
     }
 
     /**
@@ -185,9 +185,6 @@ interface Value {
             this.value[key] = value
             return true
         }
-
-        operator fun get(key: kotlin.String) = value[String(key)]
-        operator fun set(key: kotlin.String, value: Value) = this.setOrError(String(key), value)
 
         companion object {
 
@@ -393,6 +390,42 @@ fun Value.doubleValue() = this.convertTo<Value.Number>().value
  * @throws MetisRuntimeException If the value cannot be converted.
  */
 fun Value.stringValue() = this.convertTo<Value.String>().value
+
+/**
+ * Converts this value to a [kotlin.Boolean], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
+fun Value.booleanValue() = this.convertTo<Value.Boolean>().value
+
+/**
+ * Converts this value to a [Value.Table], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
+fun Value.tableValue() = this.convertTo<Value.Table>().value
+
+/**
+ * Converts this value to a [Value.List], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
+fun Value.listValue() = this.convertTo<Value.List>().value
+
+/**
+ * Converts this value to a [Value.Bytes], or throws an error if it cannot be converted.
+ *
+ * @throws MetisRuntimeException If the value cannot be converted.
+ */
+fun Value.bytesValue() = this.convertTo<Value.Bytes>().value
+
+operator fun MutableMap<Value, Value>.set(key: String, value: Value) {
+    this[Value.String(key)] = value
+}
+
+operator fun MutableMap<Value, Value>.get(key: String): Value? {
+    return this[Value.String(key)]
+}
 
 /**
  * Look up a successive sequence of strings in this value.

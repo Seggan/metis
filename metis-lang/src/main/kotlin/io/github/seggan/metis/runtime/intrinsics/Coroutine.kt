@@ -13,7 +13,7 @@ import kotlin.collections.set
  * @param chunk The chunk to run.
  * @param args The arguments to pass to the chunk.
  */
-class Coroutine(state: State, chunk: Chunk.Instance, args: Value.List) : Value {
+class Coroutine(state: State, chunk: Chunk.Instance, args: List<Value>) : Value {
 
     private val innerState = State(state)
 
@@ -74,7 +74,7 @@ class Coroutine(state: State, chunk: Chunk.Instance, args: Value.List) : Value {
                 Coroutine(
                     this,
                     fn.convertTo<Chunk.Instance>(),
-                    if (args == Value.Null) Value.List() else args.convertTo<Value.List>()
+                    if (args == Value.Null) Value.List() else args.listValue()
                 )
             }
         }

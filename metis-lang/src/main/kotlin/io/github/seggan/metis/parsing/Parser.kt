@@ -128,17 +128,36 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parseElvis() = parseBinOp(::parseRange, mapOf(ELVIS to BinOp.ELVIS))
     private fun parseRange() =
-        parseBinOp(::parseAddition, mapOf(RANGE to BinOp.RANGE, INCLUSIVE_RANGE to BinOp.INCLUSIVE_RANGE))
+        parseBinOp(::parseBitOr, mapOf(RANGE to BinOp.RANGE, INCLUSIVE_RANGE to BinOp.INCLUSIVE_RANGE))
+
+    private fun parseBitOr() = parseBinOp(::parseBitXor, mapOf(BOR to BinOp.BOR))
+    private fun parseBitXor() = parseBinOp(::parseBitAnd, mapOf(BXOR to BinOp.BXOR))
+    private fun parseBitAnd() = parseBinOp(::parseShift, mapOf(BAND to BinOp.BAND))
+    private fun parseShift() = parseBinOp(
+        ::parseAddition,
+        mapOf(
+            SHL to BinOp.SHL,
+            SHR to BinOp.SHR,
+            SHRU to BinOp.SHRU
+        )
+    )
 
     private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
     private fun parseMultiplication() =
         parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV, PERCENT to BinOp.MOD))
 
     private fun parseUnary(): AstNode.Expression {
-        val op = tryConsume(NOT, MINUS)
+        val op = tryConsume(NOT, MINUS, BNOT)
         if (op != null) {
             val expr = parseUnary()
-            return AstNode.UnaryOp(if (op.type == NOT) UnOp.NOT else UnOp.NEG, expr, op.span + expr.span)
+            return AstNode.UnaryOp(
+                when (op.type) {
+                    NOT -> UnOp.NOT
+                    MINUS -> UnOp.NEG
+                    BNOT -> UnOp.BNOT
+                    else -> throw AssertionError()
+                }, expr, op.span + expr.span
+            )
         }
         return parsePostfix()
     }

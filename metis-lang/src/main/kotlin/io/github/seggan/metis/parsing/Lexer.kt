@@ -4,10 +4,8 @@ import org.intellij.lang.annotations.Language
 
 /**
  * The Metis lexer. Converts source code into a list of [Token]s.
- *
- * @property source The [CodeSource] to lex.
  */
-class Lexer(private val source: CodeSource) {
+object Lexer {
 
     private val matchers = mutableListOf<TokenMatcher>()
 
@@ -47,6 +45,13 @@ class Lexer(private val source: CodeSource) {
         text("*", Token.Type.STAR)
         text("/", Token.Type.SLASH)
         text("%", Token.Type.PERCENT)
+        text("&", Token.Type.BAND)
+        text("|", Token.Type.BOR)
+        text("^", Token.Type.BXOR)
+        text("<<", Token.Type.SHL)
+        text(">>", Token.Type.SHR)
+        text(">>>", Token.Type.SHRU)
+        text("~", Token.Type.BNOT)
         text("..<", Token.Type.RANGE)
         text("..=", Token.Type.INCLUSIVE_RANGE)
         text("?:", Token.Type.ELVIS)
@@ -88,9 +93,10 @@ class Lexer(private val source: CodeSource) {
     /**
      * Lexes the source code.
      *
+     * @param source The [CodeSource] to lex.
      * @return The list of [Token]s.
      */
-    fun lex(): List<Token> {
+    fun lex(source: CodeSource): List<Token> {
         val tokens = mutableListOf<Token>()
         val code = StringBuilder(source.text)
         while (code.isNotEmpty()) {
@@ -226,6 +232,13 @@ data class Token(val type: Type, val text: String, val span: Span) {
         STAR("'*'"),
         SLASH("'/'"),
         PERCENT("'%'"),
+        BAND("'&'"),
+        BOR("'|'"),
+        BXOR("'^'"),
+        SHL("'<<'"),
+        SHR("'>>'"),
+        SHRU("'>>>'"),
+        BNOT("'~'"),
         RANGE("'..<'"),
         INCLUSIVE_RANGE("'..='"),
         ELVIS("'?:'"),

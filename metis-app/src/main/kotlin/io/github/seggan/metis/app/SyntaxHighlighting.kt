@@ -18,7 +18,8 @@ fun highlight(tokens: List<Token>): String = createHTML(prettyPrint = false).spa
             -> "keyword"
 
             PLUS, MINUS, STAR, SLASH, PERCENT, RANGE, INCLUSIVE_RANGE, ELVIS, QUESTION_MARK, EQUALS, DOUBLE_EQUALS,
-            NOT_EQUALS, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL
+            NOT_EQUALS, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, BAND, BOR, BXOR, SHL,
+            SHR, SHRU, BNOT
             -> "operator"
 
             DOT, COLON, COMMA, SEMICOLON -> "punctuation"

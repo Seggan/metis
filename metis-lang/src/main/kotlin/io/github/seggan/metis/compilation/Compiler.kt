@@ -231,16 +231,11 @@ class Compiler private constructor(
     }
 
     private fun compileUnOp(op: AstNode.UnaryOp) = buildInsns(op.span) {
-        when (op.op) {
-            UnOp.NOT -> {
-                +compileExpression(op.expr)
-                +Insn.Not
-            }
-
-            UnOp.NEG -> {
-                +compileExpression(op.expr)
-                generateMetaCall("__neg__", 0)
-            }
+        +compileExpression(op.expr)
+        if (op.op == UnOp.NOT) {
+            +Insn.Not
+        } else {
+            generateMetaCall(op.op.metamethod!!, 0)
         }
     }
 
