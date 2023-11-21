@@ -12,7 +12,7 @@ It is the metatable for all numbers.
 @h3 { inf: number }
 The infinity value as defined by IEEE 754.
 
-@h3 { neg_inf: number }
+@h3 { negInf: number }
 The negative infinity value as defined by IEEE 754.
 
 @h3 { nan: number }
@@ -28,7 +28,7 @@ Parse a string into a number with a given radix. The radix must be between 2 and
 @h3 { char(self): string }
 Convert a number to its character representation.
 
-@h3 { string_with_radix(self, radix: number): string }
+@h3 { stringWithRadix(self, radix: number): string }
 Convert a number to a string with a given radix. The radix must be between 2 and 36.
 
 @h2 Metamethods

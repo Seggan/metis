@@ -296,7 +296,7 @@ class Compiler private constructor(
         +start
         +Insn.CopyUnder(0)
         +Insn.CopyUnder(0)
-        +Insn.Push("has_next")
+        +Insn.Push("hasNext")
         +Insn.Index
         +Insn.Call(1, true)
         +Insn.RawJumpIf(end, false)

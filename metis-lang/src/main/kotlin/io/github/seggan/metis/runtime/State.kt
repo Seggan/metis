@@ -129,8 +129,8 @@ class State(parentState: State? = null) {
             io["stderr"] = zeroArgFunction { wrapOutStream(stderr) }
             io["stdin"] = zeroArgFunction { wrapInStream(stdin) }
 
-            io["in_stream"] = inStreamMetatable
-            io["out_stream"] = outStreamMetatable
+            io["inStream"] = inStreamMetatable
+            io["outStream"] = outStreamMetatable
             globals["io"] = io
 
             globals["string"] = Value.String.metatable

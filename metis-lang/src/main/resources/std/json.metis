@@ -1,11 +1,11 @@
 let parser = {}
 
-let number_chars = "0123456789.eE+-"
-fn parser.parse_number(self)
+let numberChars = "0123456789.eE+-"
+fn parser.parseNumber(self)
     let sb = string.builder()
     while self.pos < self.len
         let c = self.text[self.pos]
-        if c in number_chars
+        if c in numberChars
             sb.append(c)
             self.pos = self.pos + 1
         else
@@ -15,7 +15,7 @@ fn parser.parse_number(self)
     return number.parse(str(sb))
 end
 
-fn parser.parse_string(self)
+fn parser.parseString(self)
     let sb = string.builder()
     self.pos = self.pos + 1
     while true
@@ -58,17 +58,17 @@ fn parser.parse_string(self)
     return str(sb)
 end
 
-fn parser.parse_array(self)
+fn parser.parseArray(self)
     let result = []
     self.pos = self.pos + 1
     while true
-        self.skip_whitespace()
+        self.skipWhitespace()
         if self.text[self.pos] == "]"
             self.pos = self.pos + 1
             break
         end
-        result.append(self.parse_value())
-        self.skip_whitespace()
+        result.append(self.parseValue())
+        self.skipWhitespace()
         if self.text[self.pos] == "]"
             self.pos = self.pos + 1
             break
@@ -81,25 +81,25 @@ fn parser.parse_array(self)
     return result
 end
 
-fn parser.parse_object(self)
+fn parser.parseObject(self)
     let result = {}
     self.pos = self.pos + 1
     while true
-        self.skip_whitespace()
+        self.skipWhitespace()
         if self.text[self.pos] == "}"
             self.pos = self.pos + 1
             break
         end
-        let key = self.parse_string()
-        self.skip_whitespace()
+        let key = self.parseString()
+        self.skipWhitespace()
         if self.text[self.pos] != ":"
             raise error ParseError("Expected ':' at " + str(self.pos)) : { "pos" = self.pos }
         end
         self.pos = self.pos + 1
-        self.skip_whitespace()
-        let value = self.parse_value()
+        self.skipWhitespace()
+        let value = self.parseValue()
         result[key] = value
-        self.skip_whitespace()
+        self.skipWhitespace()
         if self.text[self.pos] == "}"
             self.pos = self.pos + 1
             break
@@ -112,17 +112,17 @@ fn parser.parse_object(self)
     return result
 end
 
-fn parser.parse_value(self)
-    self.skip_whitespace()
+fn parser.parseValue(self)
+    self.skipWhitespace()
     let c = self.text[self.pos]
     if c == "{"
-        return self.parse_object()
+        return self.parseObject()
     elif c == "["
-        return self.parse_array()
+        return self.parseArray()
     elif c == "\""
-        return self.parse_string()
-    elif c in number_chars
-        return self.parse_number()
+        return self.parseString()
+    elif c in numberChars
+        return self.parseNumber()
     elif self.text.sub(self.pos, self.pos + 4) == "true"
         self.pos = self.pos + 4
         return true
@@ -138,7 +138,7 @@ fn parser.parse_value(self)
     end
 end
 
-fn parser.skip_whitespace(self)
+fn parser.skipWhitespace(self)
     while self.pos < self.len
         let c = self.text[self.pos]
         if c == " " or c == "\t" or c == "\n" or c == "\r"
@@ -149,11 +149,11 @@ fn parser.skip_whitespace(self)
     end
 end
 
-global fn parse(text) = with_metatable({
+global fn parse(text) = withMetatable({
     "text" = text,
     "pos" = 0,
     "len" = len(text)
-}, parser).parse_value()
+}, parser).parseValue()
 
 global fn stringify(value)
     if type(value) == "string"

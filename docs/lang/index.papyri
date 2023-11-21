@@ -48,11 +48,11 @@ Functions can also have @i upvalues, which are variables that are from an enclos
 @metis ```
 let x = 5
 
-fn print_x()
+fn printX()
     print(x)
 end
 
-print_x() // 5
+printX() // 5
 ```
 
 Upvalues can also be mutated:
@@ -60,11 +60,11 @@ Upvalues can also be mutated:
 @metis ```
 let x = 5
 
-fn add_to_x(y)
+fn addToX(y)
     x = x + y
 end
 
-add_to_x(5)
+addToX(5)
 print(x) // 10
 ```
 
@@ -101,11 +101,11 @@ a self function from a table, the table is passed as the first argument:
 @metis ```
 let x = { "a" = 1, "b" = 2 }
 
-fn x.get_a(self)
+fn x.getA(self)
     return self.a
 end
 
-print(x.get_a()) // 1
+print(x.getA()) // 1
 ```
 
 @h2 { Anonymous Functions }
@@ -415,9 +415,9 @@ end
 ```
 
 All iterables implement the `__iter__` metamethod, which returns an iterator. The iterator implements
-the `next` and `has_next` metamethods (note the absence of underscores). `next` returns the next value,
-and `has_next` returns `true` if there are more values, and `false` otherwise. The `for` loop calls
-`next` (and assigns it to the loop variable) until `has_next` returns `false`.
+the `next` and `hasNext` metamethods (note the absence of underscores). `next` returns the next value,
+and `hasNext` returns `true` if there are more values, and `false` otherwise. The `for` loop calls
+`next` (and assigns it to the loop variable) until `hasNext` returns `false`.
 
 @h2 { Try Statements }
 
@@ -473,7 +473,7 @@ Metis has a module system similar to Python. Modules have the same name as the f
 All globals in the module are part of its @i exports. Modules are loaded
 with the `import` statement:
 
-@metis `import module_name`
+@metis `import moduleName`
 
 This will load the module as a table and assign it to a variable with the same name as the module. The
 module table will have the same members as the modules exports, or globals in the module. For example, if
@@ -481,7 +481,7 @@ the module is called `foo`, it will be assigned to a variable called `foo`.
 
 Another thing you can do is @i {global imports} with `global import`:
 
-@metis `global import module_name`
+@metis `global import moduleName`
 
 This will load the module and assign it to a global variable with the same name as the module. This
 can be used for implementing transient modules as such:

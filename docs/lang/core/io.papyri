@@ -17,7 +17,7 @@ Returns a reference to the standard input stream.
 @h3 { stdout(): native }
 Returns a reference to the standard output stream.
 
-@h1 { Submodule `in_stream` }
+@h1 { Submodule `inStream` }
 
 This submodule provides a set of functions for manipulating input streams. It is also the
 metatable for input streams.
@@ -32,20 +32,20 @@ Reads a sequence of bytes from the stream into the buffer. Returns the number of
 If buffer is not provided or is `null`, the function reads and returns a single byte. Returns
 `null` if the end of the stream is reached.
 
-@h3 { read_all(self): bytes }
+@h3 { readAll(self): bytes }
 Reads all bytes from the stream and returns them.
 
-@h3 { read_line(self): string }
+@h3 { readLine(self): string }
 Reads a line from the stream and returns it.
 
-@h3 { read_text(self): string }
+@h3 { readText(self): string }
 Reads all text from the stream and returns it.
 
 @h3 { use(self, f: callable\[native -> any\]): any }
 Calls the function `f` with the stream as its argument and returns the result. The stream is
 closed after the function returns, even if it throws an error.
 
-@h1 { Submodule `out_stream` }
+@h1 { Submodule `outStream` }
 
 This submodule provides a set of functions for manipulating output streams. It is also the
 metatable for output streams.
@@ -66,10 +66,10 @@ the function writes at most `len` bytes starting from the byte at offset `off`. 
 not provided, the function starts writing from the first byte in the buffer. If `len` is not
 provided, the function writes to the end of the buffer.
 
-@h3 { write_line(self, line: string): null }
+@h3 { writeLine(self, line: string): null }
 Writes a line to the stream.
 
-@h3 { write_text(self, text: string): null }
+@h3 { writeText(self, text: string): null }
 Writes text to the stream.
 
 @h3 { use(self, f: callable\[native -> any\]): any }

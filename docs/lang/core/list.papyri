@@ -28,7 +28,7 @@ separator.
 @h3 { remove(self, value: any): null }
 Removes the first occurrence of the given value from the list.
 
-@h3 { remove_at(self, index: number): any }
+@h3 { removeAt(self, index: number): any }
 Removes the element at the given index from the list and returns it.
 
 @h3 { reverse(self): list }

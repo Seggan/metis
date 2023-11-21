@@ -124,7 +124,7 @@ private val sbMetatable = buildTable { table ->
         self.asObj<StringBuilder>().delete(start.intValue(), end.intValue())
         self
     }
-    table["delete_at"] = twoArgFunction(true) { self, index ->
+    table["deleteAt"] = twoArgFunction(true) { self, index ->
         self.asObj<StringBuilder>().deleteCharAt(index.intValue())
         self
     }

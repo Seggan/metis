@@ -6,7 +6,7 @@ fn coroutine.run(self)
     end
 end
 
-fn coroutine.run_at_most(self, n)
+fn coroutine.runAtMost(self, n)
     let x = 0
     while x < n
         if self.step() != "continue"

@@ -1,16 +1,16 @@
 do
-    let sb_meta = string.builder().metatable
-    fn sb_meta.append(self, value) = self.__append(str(value))
-    fn sb_meta.delete_last(self, n)
+    let sbMeta = string.builder().metatable
+    fn sbMeta.append(self, value) = self.__append(str(value))
+    fn sbMeta.deleteLast(self, n)
         let length = len(self)
         self.delete(length - n, length)
         return self
     end
     // THIS GOES LAST
-    fn sb_meta.__set__(self, index, value) = self.__set(self, index, str(value))
+    fn sbMeta.__set__(self, index, value) = self.__set(self, index, str(value))
 end
 
-fn string.char_code(self) = self.encode("UTF-8")[0]
+fn string.charCode(self) = self.encode("UTF-8")[0]
 
 fn string.repeat(self, n)
     let sb = string.builder(len(self) * n)

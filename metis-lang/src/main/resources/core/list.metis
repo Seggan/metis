@@ -9,7 +9,7 @@ fn list.__str__(self)
         end
         sb.append(", ")
     end
-    sb.delete_last(2)
+    sb.deleteLast(2)
     return str(sb.append("]"))
 end
 
@@ -18,7 +18,7 @@ fn list.join(self, sep)
     for v in self
         sb.append(v).append(sep)
     end
-    sb.delete_last(len(sep))
+    sb.deleteLast(len(sep))
     return str(sb)
 end
 

@@ -1,5 +1,5 @@
 let BUFSIZE = 2048
-fn io.in_stream.read_all(self)
+fn io.inStream.readAll(self)
     let result = []
     let buffer = bytes.allocate(BUFSIZE)
     let read = self.read(buffer)
@@ -10,17 +10,17 @@ fn io.in_stream.read_all(self)
     return bytes.concat(result)
 end
 
-fn io.in_stream.read_text(self)
+fn io.inStream.readText(self)
     let result = ""
     do
-        result = self.read_all().decode()
+        result = self.readAll().decode()
     finally
         self.close()
     end
     return result
 end
 
-fn io.in_stream.read_line(self)
+fn io.inStream.readLine(self)
     let result = string.builder()
     let c = self.read()
     while c is not null and c != 10
@@ -30,7 +30,7 @@ fn io.in_stream.read_line(self)
     return str(result)
 end
 
-fn io.in_stream.copy_to(self, out)
+fn io.inStream.copyTo(self, out)
     let buffer = bytes.allocate(BUFSIZE)
     let read = self.read(buffer)
     while read is not null and read > 0
@@ -39,16 +39,16 @@ fn io.in_stream.copy_to(self, out)
     end
 end
 
-fn io.out_stream.write_line(self, line)
+fn io.outStream.writeLine(self, line)
     self.write(line.encode())
     self.write('\n')
 end
 
-fn io.out_stream.write_text(self, text)
+fn io.outStream.writeText(self, text)
     self.write(text.encode())
 end
 
-fn io.in_stream.use(self, f)
+fn io.inStream.use(self, f)
     let result = null
     do
         result = f(self)
@@ -58,7 +58,7 @@ fn io.in_stream.use(self, f)
     return result
 end
 
-fn io.out_stream.use(self, f)
+fn io.outStream.use(self, f)
     let result = null
     do
         result = f(self)

@@ -18,12 +18,12 @@ If the prompt is `null`, then no prompt is printed. Returns the line of text ent
 
 @h3 { iter(value: any): any }
 Returns an iterator for the given value. Requires the `__iter__` metamethod to be defined on the value.
-The iterator must have the `has_next(self): boolean` and the `next(self): any` methods defined.
+The iterator must have the `hasNext(self): boolean` and the `next(self): any` methods defined.
 
 @h3 { len(value: any): number }
 Returns the length of the value. Requires the `__len__` metamethod to be defined on the value.
 
-@h3 { load_chunk(chunk: string): callable }
+@h3 { loadChunk(chunk: string): callable }
 Loads the given Metis code as a callable function. Returns the function.
 
 @h3 { print(value: any): null }
@@ -49,7 +49,7 @@ Returns the type of the value as a string. Can be one of the following:
     `unknown`
 ]
 
-@h3 { with_metatable(value: any, metatable: table): any }
+@h3 { withMetatable(value: any, metatable: table): any }
 Sets the metatable of the value to the given table, and returns the value.
 
 @h3 { yield(value: any): null }

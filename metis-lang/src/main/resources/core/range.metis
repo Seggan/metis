@@ -15,7 +15,7 @@ end
 
 fn range.__len__(self) = (self.stop - self.start) / self.step
 
-fn range.exclusive(start, stop, step) = with_metatable({
+fn range.exclusive(start, stop, step) = withMetatable({
     "start" = start,
     "stop" = stop,
     "step" = step

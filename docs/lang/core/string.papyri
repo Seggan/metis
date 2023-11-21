@@ -16,13 +16,13 @@ is implementation-defined.
 
 @h2 { Member functions }
 
-@h3 { char_code(self): number }
+@h3 { charCode(self): number }
 Get the character code of the first character in the string.
 
 @h3 { encode(self, encoding: string = "UTF-8"): bytes }
 Encode the string using the specified encoding. The default encoding is UTF-8.
 
-@h3 { equal_ignore_case(self, other: string): boolean }
+@h3 { equalIgnoreCase(self, other: string): boolean }
 Compare two strings for equality, ignoring case.
 
 @h3 { remove(self, start: number, end: number \| null): string }
@@ -83,10 +83,10 @@ Clear the builder.
 @h3 { delete(self, start: number, end: number): self }
 Delete a range of characters from the builder from `start` to `end` (exclusive).
 
-@h3 { delete_at(self, index: number): self }
+@h3 { deleteAt(self, index: number): self }
 Delete a character from the builder at the specified index.
 
-@h3 { delete_last(self, count: number): self }
+@h3 { deleteLast(self, count: number): self }
 Delete the last `count` characters from the builder.
 
 @h2 Metamethods

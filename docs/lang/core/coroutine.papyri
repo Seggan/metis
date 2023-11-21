@@ -16,16 +16,16 @@ If `args` is not given, the function will be called without arguments.
 
 @h2 { Member functions }
 
-@h3 { last_result(self): string }
+@h3 { lastResult(self): string }
 Returns the last thing returned by `step`.
 
-@h3 { last_yielded(self): any }
+@h3 { lastYielded(self): any }
 Returns the last thing yielded by the coroutine, if any.
 
 @h3 { run(self): null }
 Performs `step` until the coroutine returns something other than `continue`.
 
-@h3 { run_at_most(self, n: number): null }
+@h3 { runAtMost(self, n: number): null }
 Performs `step` at most `n` times or until the coroutine returns something other than `continue`.
 
 @h3 { step(self): string }

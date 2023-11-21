@@ -42,38 +42,6 @@ This will create a JAR file in `app/build/libs` that can be run with `java -jar 
 
 @h2 Changelog
 
-@h3 { v1.2.2 }
-[
-    { Nothing new, just configured Gradle to publish }
-]
-
-@h3 { v1.2.1 }
-[
-    { Fixed `in` giving wrong result }
-]
-
-@h3 { v1.2.0 }
-[
-    { Added a ton of functions to `path` },
-    { Added some functions to tables and lists },
-    { Fixed `import` not caching to `package.loaded` },
-    { Finally documented everything }
-]
-
-@h3 { v1.1.0 }
-[
-    { `.` now behaves like `:` when used with a function that has a `self` argument },
-    { Removed `:` operator },
-    { Added the `math` module },
-    { Moved the `path` module from the core library to the standard library },
-    { Added `import` }
-]
-
-@h3 { v1.0.0 }
-[
-    { Initial release }
-]
-
 @h2 Credits
 
 Metis is made by @href(`https://github.com/Seggan`) Seggan.

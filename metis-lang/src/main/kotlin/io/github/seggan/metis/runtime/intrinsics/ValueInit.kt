@@ -62,7 +62,7 @@ internal fun initString() = buildTable { table ->
             self.stringValue().substring(start.intValue(), end.intValue()).metisValue()
         }
     }
-    table["equal_ignore_case"] = twoArgFunction(true) { self, other ->
+    table["equalIgnoreCase"] = twoArgFunction(true) { self, other ->
         self.stringValue().equals(other.stringValue(), ignoreCase = true).metisValue()
     }
 
@@ -110,7 +110,7 @@ internal fun initNumber() = buildTable { table ->
     table["__neg__"] = oneArgFunction(true) { self ->
         (-self.doubleValue()).metisValue()
     }
-    table["string_with_radix"] = twoArgFunction(true) { self, radix ->
+    table["stringWithRadix"] = twoArgFunction(true) { self, radix ->
         self.intValue().toString(radix.intValue()).metisValue()
     }
 
@@ -127,7 +127,7 @@ internal fun initNumber() = buildTable { table ->
     }
     table["nan"] = Value.Number.NAN
     table["inf"] = Value.Number.INF
-    table["neg_inf"] = Value.Number.NEG_INF
+    table["negInf"] = Value.Number.NEG_INF
 }
 
 internal fun initBoolean() = buildTable { table ->
@@ -213,7 +213,7 @@ internal fun initList() = buildTable { table ->
         self.convertTo<Value.List>().remove(value)
         Value.Null
     }
-    table["remove_at"] = twoArgFunction(true) { self, index ->
+    table["removeAt"] = twoArgFunction(true) { self, index ->
         self.convertTo<Value.List>().removeAt(index.intValue())
     }
     table["slice"] = threeArgFunction(true) { self, start, end ->

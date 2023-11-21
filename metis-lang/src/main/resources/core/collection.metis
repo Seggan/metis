@@ -8,9 +8,9 @@ fn iterator.next(self)
     return res
 end
 
-fn iterator.has_next(self) = self.index < len(self.coll)
+fn iterator.hasNext(self) = self.index < len(self.coll)
 
-fn collection.__iter__(self) = with_metatable({ "coll" = self, "index" = 0 }, iterator)
+fn collection.__iter__(self) = withMetatable({ "coll" = self, "index" = 0 }, iterator)
 
 fn collection.__eq__(self, other)
     if type(self) != type(other) or len(self) != len(other)

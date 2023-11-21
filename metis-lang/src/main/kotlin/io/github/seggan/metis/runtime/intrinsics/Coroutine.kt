@@ -63,10 +63,10 @@ class Coroutine(state: State, chunk: Chunk.Instance, args: Value.List) : Value {
                     result.name.lowercase().metisValue()
                 }
             }
-            table["last_result"] = oneArgFunction { self ->
+            table["lastResult"] = oneArgFunction { self ->
                 self.convertTo<Coroutine>().lastResult.name.lowercase().metisValue()
             }
-            table["last_yielded"] = oneArgFunction { self ->
+            table["lastYielded"] = oneArgFunction { self ->
                 self.convertTo<Coroutine>().lastYielded
             }
 

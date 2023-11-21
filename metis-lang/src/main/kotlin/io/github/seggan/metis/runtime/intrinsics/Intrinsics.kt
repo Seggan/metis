@@ -26,7 +26,7 @@ object Intrinsics {
     }
 
     internal fun registerDefault() {
-        _intrinsics["load_chunk"] = twoArgFunction { name, chunk ->
+        _intrinsics["loadChunk"] = twoArgFunction { name, chunk ->
             val source = CodeSource.constant(name.stringValue(), chunk.stringValue())
             Chunk.load(source).Instance(this)
         }

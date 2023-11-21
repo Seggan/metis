@@ -81,15 +81,15 @@ object RegexLib : NativeLibrary("regex") {
  */
 object OsLib : NativeLibrary("os") {
     override fun init(lib: MutableMap<String, Value>) {
-        lib["get_env"] = oneArgFunction { value ->
+        lib["getEnv"] = oneArgFunction { value ->
             System.getenv(value.stringValue())?.metisValue() ?: Value.Null
         }
-        lib["set_env"] = twoArgFunction { value, other ->
+        lib["setEnv"] = twoArgFunction { value, other ->
             System.setProperty(value.stringValue(), other.stringValue())
             Value.Null
         }
-        lib["get_cwd"] = zeroArgFunction { currentDir.absolutePathString().metisValue() }
-        lib["set_cwd"] = oneArgFunction { p ->
+        lib["getCwd"] = zeroArgFunction { currentDir.absolutePathString().metisValue() }
+        lib["setCwd"] = oneArgFunction { p ->
             val path = fileSystem.getPath(p.stringValue())
             if (!path.isAbsolute) {
                 throw MetisRuntimeException(
@@ -128,9 +128,9 @@ object PathLib : NativeLibrary("__path") {
             }
         }
         lib["parent"] = pathFunction { it.parent.toString().metisValue() }
-        lib["file_name"] = pathFunction { it.fileName.toString().metisValue() }
+        lib["fileName"] = pathFunction { it.fileName.toString().metisValue() }
         lib["root"] = pathFunction { it.root.toString().metisValue() }
-        lib["is_absolute"] = pathFunction { it.isAbsolute.metisValue() }
+        lib["isAbsolute"] = pathFunction { it.isAbsolute.metisValue() }
         lib["list"] = pathFunction { path ->
             val list = Value.List()
             path.toFile().listFiles()?.forEach {
@@ -139,10 +139,10 @@ object PathLib : NativeLibrary("__path") {
             list
         }
         lib["exists"] = pathFunction { it.exists().metisValue() }
-        lib["is_file"] = pathFunction { it.isRegularFile().metisValue() }
-        lib["is_dir"] = pathFunction { it.isDirectory().metisValue() }
-        lib["is_symlink"] = pathFunction { it.isSymbolicLink().metisValue() }
-        lib["is_hidden"] = pathFunction { it.isHidden().metisValue() }
+        lib["isFile"] = pathFunction { it.isRegularFile().metisValue() }
+        lib["isDir"] = pathFunction { it.isDirectory().metisValue() }
+        lib["isSymlink"] = pathFunction { it.isSymbolicLink().metisValue() }
+        lib["isHidden"] = pathFunction { it.isHidden().metisValue() }
         lib["move"] = twoArgFunction { src, dest ->
             translateIoError {
                 toPath(src).moveTo(toPath(dest))
@@ -150,11 +150,11 @@ object PathLib : NativeLibrary("__path") {
             Value.Null
         }
         lib["delete"] = pathFunction { it.deleteIfExists().metisValue() }
-        lib["create_dir"] = pathFunction { it.createDirectory().absolutePathString().metisValue() }
-        lib["create_dirs"] = pathFunction { it.createDirectories().absolutePathString().metisValue() }
-        lib["delete_recursive"] = pathFunction { it.deleteRecursively(); Value.Null }
-        lib["open_write"] = pathFunction { wrapOutStream(it.outputStream()) }
-        lib["open_read"] = pathFunction { wrapInStream(it.inputStream()) }
+        lib["createDir"] = pathFunction { it.createDirectory().absolutePathString().metisValue() }
+        lib["createDirs"] = pathFunction { it.createDirectories().absolutePathString().metisValue() }
+        lib["deleteRecursive"] = pathFunction { it.deleteRecursively(); Value.Null }
+        lib["openWrite"] = pathFunction { wrapOutStream(it.outputStream()) }
+        lib["openRead"] = pathFunction { wrapInStream(it.inputStream()) }
     }
 }
 

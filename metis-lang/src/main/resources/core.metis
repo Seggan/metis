@@ -2,7 +2,7 @@ global fn str(x) = x.__str__()
 global fn len(x) = x.__len__()
 global fn iter(x) = x.__iter__()
 
-global fn with_metatable(x, mt)
+global fn withMetatable(x, mt)
     x.metatable = mt
     return x
 end
@@ -20,5 +20,5 @@ global fn input(prompt)
         io.stdout().write(prompt.encode("UTF-8"))
         io.stdout().flush()
     end
-    return io.stdin().read_line()
+    return io.stdin().readLine()
 end

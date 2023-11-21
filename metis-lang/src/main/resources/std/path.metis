@@ -2,30 +2,30 @@ import __path
 
 globals().merge(__path)
 
-global fn read_all(p)
+global fn readAll(p)
     let result = null
-    let stream = __path.open_read(p)
+    let stream = __path.openRead(p)
     do
-        result = stream.read_all()
+        result = stream.readAll()
     finally
         stream.close()
     end
     return result
 end
 
-global fn read_text(p)
+global fn readText(p)
     let result = null
-    let stream = __path.open_read(p)
+    let stream = __path.openRead(p)
     do
-        result = stream.read_text()
+        result = stream.readText()
     finally
         stream.close()
     end
     return result
 end
 
-global fn write_all(p, data)
-    let stream = __path.open_write(p)
+global fn writeAll(p, data)
+    let stream = __path.openWrite(p)
     do
         stream.write(data)
     finally
@@ -33,20 +33,20 @@ global fn write_all(p, data)
     end
 end
 
-global fn write_text(p, data)
-    let stream = __path.open_write(p)
+global fn writeText(p, data)
+    let stream = __path.openWrite(p)
     do
-        stream.write_text(data)
+        stream.writeText(data)
     finally
         stream.close()
     end
 end
 
 global fn copy(src, dest)
-    let source = __path.open_read(src)
-    let destination = __path.open_write(dest)
+    let source = __path.openRead(src)
+    let destination = __path.openWrite(dest)
     do
-        source.copy_to(destination)
+        source.copyTo(destination)
     finally
         source.close()
         destination.close()

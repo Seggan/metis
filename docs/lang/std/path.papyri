@@ -17,41 +17,41 @@ The path separator for the current platform. This is either `/` or `\`.
 @h3 { absolute(path: string): string }
 Returns the absolute path of the given path.
 
-@h3 { file_name(path: string): string }
+@h3 { fileName(path: string): string }
 Returns the filename of the given path.
 
 @h3 { copy(from: string, to: string): null }
 Copies the file at the given path `from` to the given path `to`.
 
-@h3 { create_dir(path: string): string }
+@h3 { createDir(path: string): string }
 Creates a directory at the given path and returns the path of the created directory.
 
-@h3 { create_dirs(path: string): string }
+@h3 { createDirs(path: string): string }
 Creates a directory at the given path and all parent directories that do not exist yet. Returns
 the path of the created directory.
 
 @h3 { delete(path: string): null }
 Deletes the file or directory at the given path. Directories must be empty.
 
-@h3 { delete_recursive(path: string): null }
+@h3 { deleteRecursive(path: string): null }
 Deletes the file or directory at the given path recursively.
 
 @h3 { exists(path: string): boolean }
 Returns a boolean value indicating whether the file or directory at the given path exists.
 
-@h3 { is_absolute(path: string): boolean }
+@h3 { isAbsolute(path: string): boolean }
 Returns a boolean value indicating whether the given path is absolute.
 
-@h3 { is_dir(path: string): boolean }
+@h3 { isDir(path: string): boolean }
 Returns a boolean value indicating whether the given path points to a directory.
 
-@h3 { is_file(path: string): boolean }
+@h3 { isFile(path: string): boolean }
 Returns a boolean value indicating whether the given path points to a file.
 
-@h3 { is_hidden(path: string): boolean }
+@h3 { isHidden(path: string): boolean }
 Returns a boolean value indicating whether the given path is hidden.
 
-@h3 { is_symlink(path: string): boolean }
+@h3 { isSymlink(path: string): boolean }
 Returns a boolean value indicating whether the given path is a symbolic link.
 
 @h3 { list(path: string): list\[string\] }
@@ -63,19 +63,19 @@ Moves the file at the given path `from` to the given path `to`.
 @h3 { normalize(path: string): string }
 Normalizes the given path and returns the normalized path as a string.
 
-@h3 { open_read(path: string): native }
+@h3 { openRead(path: string): native }
 Opens the file at the given path for reading and returns an input stream.
 
-@h3 { open_write(path: string): native }
+@h3 { openWrite(path: string): native }
 Opens the file at the given path for writing and returns an output stream.
 
 @h3 { parent(path: string): string }
 Returns the parent directory of the given path.
 
-@h3 { read_all(path: string): bytes }
+@h3 { readAll(path: string): bytes }
 Reads the entire file at the given path and returns the contents as a byte array.
 
-@h3 { read_text(path: string): string }
+@h3 { readText(path: string): string }
 Reads the entire file at the given path and returns the contents as a string.
 
 @h3 { resolve(base: string, other: string): string }
@@ -84,8 +84,8 @@ Resolves the given path `other` against the base path `base` and returns the res
 @h3 { root(path: string): string }
 Returns the root of the given path.
 
-@h3 { write_all(path: string, data: bytes) }
+@h3 { writeAll(path: string, data: bytes) }
 Writes the given byte array to the file at the given path.
 
-@h3 { write_text(path: string, data: string) }
+@h3 { writeText(path: string, data: string) }
 Writes the given string to the file at the given path.

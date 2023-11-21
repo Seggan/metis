@@ -8,7 +8,7 @@ fn table.__str__(self)
             .append(v)
             .append(", ")
     end
-    sb.delete_at(len(sb) - 2)
+    sb.deleteAt(len(sb) - 2)
     return str(sb.append("}"))
 end
 
