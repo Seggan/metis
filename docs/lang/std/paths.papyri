@@ -1,10 +1,10 @@
 @include `metis.lib`
 
-@page(`The path module`)...
+@page(`The paths module`)...
 
-@h1 { The `path` module }
+@h1 { The `paths` module }
 
-The `path` module provides utilities for working with file and directory paths. It also provides
+The `paths` module provides utilities for working with file and directory paths. It also provides
 functions for reading and writing files.
 
 @h2 { Fields }

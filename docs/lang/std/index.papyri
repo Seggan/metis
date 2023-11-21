@@ -18,7 +18,7 @@ This module provides various functions for performing mathematical operations.
 @h3 @href(`os`) os
 This module provides functions for interacting with the operating system.
 
-@h3 @href(`path`) path
+@h3 @href(`paths`) paths
 This module provides functions for manipulating paths, and reading and writing files.
 
 @h3 @href(`random`) random
