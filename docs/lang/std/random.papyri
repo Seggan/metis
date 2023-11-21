@@ -1,0 +1,28 @@
+@include `metis.lib`
+
+@page(`The random module`)...
+
+@h1 { The `random` library }
+
+The `random` library provides functions for generating random numbers.
+
+@h2 { Fields }
+
+@h3 { default: native }
+
+@h2 { Free Functions }
+
+@h3 { new(seed: number | null): Random }
+Returns a new `Random` object. If the seed is `null`, a seed based on the current system time is used.
+Otherwise, the provided seed is used.
+
+@h2 { Member functions }
+
+@h3 { next(self): number }
+Generates a random double value in the range `[0, 1.0)`.
+
+@h3 { nextInt(self, bound: number): number }
+Generates a random integer value between 0 (inclusive) and the specified bound (exclusive).
+
+@h3 { nextRange(self, min: number, max: number): number }
+Generates a random integer value between the specified `min` (inclusive) and `max` (exclusive).

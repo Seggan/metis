@@ -21,5 +21,8 @@ This module provides functions for interacting with the operating system.
 @h3 @href(`path`) path
 This module provides functions for manipulating paths, and reading and writing files.
 
+@h3 @href(`random`) random
+This module provides functions for generating random numbers.
+
 @h3 @href(`regex`) regex
 This module provides functions for working with regular expressions.

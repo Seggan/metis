@@ -7,6 +7,7 @@ import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
 import kotlin.io.path.*
 import kotlin.math.*
+import kotlin.random.Random
 
 /**
  * A native library that can be loaded into a [State] and imported with `require`
@@ -104,7 +105,7 @@ object OsLib : NativeLibrary("os") {
 }
 
 /**
- * The `path` library's native functions
+ * The `paths` library's native functions
  */
 object PathLib : NativeLibrary("__path") {
 
@@ -202,5 +203,31 @@ object MathLib : NativeLibrary("math") {
         lib["acosh"] = numberFunction(::acosh)
         lib["atanh"] = numberFunction(::atanh)
         lib["sign"] = numberFunction(::sign)
+    }
+}
+
+/**
+ * The `random` library
+ */
+object RandomLib : NativeLibrary("random") {
+    override fun init(lib: MutableMap<String, Value>) {
+        lib["default"] = Value.Native(Random.Default)
+        lib["new"] = oneArgFunction { seed ->
+            if (seed == Value.Null) {
+                Value.Native(Random(System.nanoTime()))
+            } else {
+                Value.Native(Random(seed.doubleValue().toLong()))
+            }
+        }
+
+        lib["next"] = oneArgFunction(true) { self ->
+            self.asObj<Random>().nextDouble().metisValue()
+        }
+        lib["nextInt"] = twoArgFunction(true) { self, bound ->
+            self.asObj<Random>().nextInt(bound.intValue()).metisValue()
+        }
+        lib["nextRange"] = threeArgFunction(true) { self, min, max ->
+            self.asObj<Random>().nextInt(min.intValue(), max.intValue()).metisValue()
+        }
     }
 }
