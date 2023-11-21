@@ -156,6 +156,7 @@ class State(parentState: State? = null) {
             addNativeLibrary(RegexLib)
             addNativeLibrary(PathLib)
             addNativeLibrary(MathLib)
+            addNativeLibrary(RandomLib)
 
             loaders.add(ResourceLoader)
             loaders.add(NativeLoader(nativeLibraries))
