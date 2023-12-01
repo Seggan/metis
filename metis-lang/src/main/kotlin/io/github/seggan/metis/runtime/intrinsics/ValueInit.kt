@@ -70,6 +70,35 @@ internal fun initString() = buildTable { table ->
         self.stringValue().equals(other.stringValue(), ignoreCase = true).metisValue()
     }
 
+    table["lowercase"] = oneArgFunction(true) { self ->
+        self.stringValue().lowercase().metisValue()
+    }
+    table["uppercase"] = oneArgFunction(true) { self ->
+        self.stringValue().uppercase().metisValue()
+    }
+
+    table["isDigit"] = oneArgFunction(true) { self ->
+        self.stringValue().all(Char::isDigit).metisValue()
+    }
+    table["isLetter"] = oneArgFunction(true) { self ->
+        self.stringValue().all(Char::isLetter).metisValue()
+    }
+    table["isLetterOrDigit"] = oneArgFunction(true) { self ->
+        self.stringValue().all(Char::isLetterOrDigit).metisValue()
+    }
+    table["isLowercase"] = oneArgFunction(true) { self ->
+        self.stringValue().all(Char::isLowerCase).metisValue()
+    }
+    table["isUppercase"] = oneArgFunction(true) { self ->
+        self.stringValue().all(Char::isUpperCase).metisValue()
+    }
+    table["isWhitespace"] = oneArgFunction(true) { self ->
+        self.stringValue().all(Char::isWhitespace).metisValue()
+    }
+    table["isBlank"] = oneArgFunction(true) { self ->
+        self.stringValue().isBlank().metisValue()
+    }
+
     table["builder"] = oneArgFunction { init ->
         when (init) {
             Value.Null -> wrapStringBuilder(StringBuilder())

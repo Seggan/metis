@@ -20,6 +20,17 @@ Returns `true` if any element in the collection returns `true` when passed to `p
 Returns a new collection containing only the elements in the collection that return `true` when
 passed to `predicate`.
 
+@h3 { first(self, f: callable\[any -> boolean\] \| null = null): any }
+Returns the first element in the collection that returns `true` when passed to `f`. If `f` is
+`null`, returns the first element in the collection.
+
+@h3 { isEmpty(self): boolean }
+Returns `true` if the collection is empty.
+
+@h3 { last(self, f: callable\[any -> boolean\] \| null = null): any }
+Returns the last element in the collection that returns `true` when passed to `f`. If `f` is
+`null`, returns the last element in the collection.
+
 @h3 { map(self, mapper: callable\[any -> any\]): any }
 Returns a new collection containing the results of calling `mapper` on each element in the
 collection. `mapper` must accept one argument and return a value.

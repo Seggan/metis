@@ -42,6 +42,15 @@ This will create a JAR file in `metis-app/build/libs` that can be run with `java
 
 @h2 Changelog
 
+@h2 { 0.2.0 }
+[
+    {Fixed a bug where reporting errors would break because the lexer kept a global position, instead of a local one},
+    {Added `collection.first`, `collection.last`, and `collection.isEmpty`},
+    {Added many methods to `string`},
+    {Improved metamethod performance by up to 20% for some programs},
+    {The API now allows you to provide your own function to wrap streams}
+]
+
 @h2 { 0.1.1 }
 [
     {Actually added `random` to the standard library}

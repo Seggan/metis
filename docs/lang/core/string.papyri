@@ -25,6 +25,30 @@ Encode the string using the specified encoding. The default encoding is UTF-8.
 @h3 { equalIgnoreCase(self, other: string): boolean }
 Compare two strings for equality, ignoring case.
 
+@h3 { isBlank(self): boolean }
+Check if the string is blank. A string is blank if it is empty or if it only contains whitespace.
+
+@h3 { isDigit(self): boolean }
+Check if the string is solely made up of digits.
+
+@h3 { isLetter(self): boolean }
+Check if the string is solely made up of letters.
+
+@h3 { isLetterOrDigit(self): boolean }
+Check if the string is solely made up of letters or digits.
+
+@h3 { isLowercase(self): boolean }
+Check if the string is solely made up of lowercase letters.
+
+@h3 { isUppercase(self): boolean }
+Check if the string is solely made up of uppercase letters.
+
+@h3 { isWhitespace(self): boolean }
+Check if the string is solely made up of whitespace.
+
+@h3 { lowercase(self): string }
+Convert the string to lowercase.
+
 @h3 { remove(self, start: number, end: number \| null): string }
 Remove a range of characters from the string from `start` to `end` (exclusive). If `end` is `null`, the substring will
 end at the end of the string.
@@ -43,6 +67,9 @@ Split the string into an array of strings, using `separator` as the delimiter.
 
 @h3 { sub(self, start: number, end: number \| null): string }
 Get a substring of the string. If `end` is `null`, the substring will end at the end of the string.
+
+@h3 { uppercase(self): string }
+Convert the string to uppercase.
 
 @h2 Metamethods
 
