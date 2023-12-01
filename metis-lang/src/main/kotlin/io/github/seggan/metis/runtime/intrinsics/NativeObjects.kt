@@ -58,10 +58,9 @@ internal val outStreamMetatable = buildTable { table ->
     }
 }
 
-/**
- * Wraps an [OutputStream] in a [Value].
- */
-fun wrapOutStream(stream: OutputStream): Value = Value.Native(stream, outStreamMetatable)
+fun interface OutputStreamWrapper {
+    fun wrap(stream: OutputStream): Value
+}
 
 internal val inStreamMetatable = buildTable { table ->
     table["read"] = twoArgFunction(true) { self, buffer ->
@@ -88,10 +87,9 @@ internal val inStreamMetatable = buildTable { table ->
     }
 }
 
-/**
- * Wraps an [InputStream] in a [Value].
- */
-fun wrapInStream(stream: InputStream): Value = Value.Native(stream, inStreamMetatable)
+fun interface InputStreamWrapper {
+    fun wrap(stream: InputStream): Value
+}
 
 private val sbMetatable = buildTable { table ->
     table["__append"] = twoArgFunction(true) { self, value ->

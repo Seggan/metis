@@ -63,6 +63,16 @@ class State(parentState: State? = null) {
      */
     var currentDir = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
 
+    /**
+     * The function used to wrap [InputStream]s into Metis objects.
+     */
+    var inStreamWrapper: InputStreamWrapper = InputStreamWrapper { Value.Native(it, inStreamMetatable) }
+
+    /**
+     * The function used to wrap [OutputStream]s into Metis objects.
+     */
+    var outStreamWrapper: OutputStreamWrapper = OutputStreamWrapper { Value.Native(it, outStreamMetatable) }
+
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
     private var throwingException: MetisRuntimeException? = null
@@ -125,9 +135,9 @@ class State(parentState: State? = null) {
             }
 
             val io = Value.Table()
-            io["stdout"] = zeroArgFunction { wrapOutStream(stdout) }
-            io["stderr"] = zeroArgFunction { wrapOutStream(stderr) }
-            io["stdin"] = zeroArgFunction { wrapInStream(stdin) }
+            io["stdout"] = zeroArgFunction { outStreamWrapper.wrap(stdout) }
+            io["stderr"] = zeroArgFunction { outStreamWrapper.wrap(stderr) }
+            io["stdin"] = zeroArgFunction { inStreamWrapper.wrap(stdin) }
 
             io["inStream"] = inStreamMetatable
             io["outStream"] = outStreamMetatable
@@ -148,7 +158,7 @@ class State(parentState: State? = null) {
             runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
             for (script in coreScripts) {
                 runCode(CodeSource(script) {
-                    State::class.java.classLoader.getResource("./core/$it.metis")!!.readText()
+                    State::class.java.getResource("/core/$it.metis")!!.readText()
                 })
             }
 

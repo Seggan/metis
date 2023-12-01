@@ -21,7 +21,7 @@ data class Span(val start: Int, val end: Int, val source: CodeSource) {
         val lines = source.text.split("\n")
         var pos = start
         var line = 0
-        while (pos > lines[line].length) {
+        while (line < lines.size && pos > lines[line].length) {
             pos -= lines[line].length + 1
             line++
         }

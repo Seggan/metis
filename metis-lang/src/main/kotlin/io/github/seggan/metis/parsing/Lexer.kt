@@ -88,8 +88,6 @@ object Lexer {
         matchers.add(TokenMatcher.StringyLiteral('\'', Token.Type.BYTES))
     }
 
-    private var pos = 0
-
     /**
      * Lexes the source code.
      *
@@ -99,6 +97,7 @@ object Lexer {
     fun lex(source: CodeSource): List<Token> {
         val tokens = mutableListOf<Token>()
         val code = StringBuilder(source.text)
+        var pos = 0
         while (code.isNotEmpty()) {
             val matched = mutableListOf<Pair<TokenMatcher.Match, Token>>()
             for (matcher in matchers) {

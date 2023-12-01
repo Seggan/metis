@@ -109,7 +109,7 @@ object OsLib : NativeLibrary("os") {
  */
 object PathLib : NativeLibrary("__path") {
 
-    private inline fun pathFunction(crossinline fn: (Path) -> Value) = oneArgFunction { self ->
+    private inline fun pathFunction(crossinline fn: State.(Path) -> Value) = oneArgFunction { self ->
         translateIoError { fn(toPath(self)) }
     }
 
@@ -154,8 +154,8 @@ object PathLib : NativeLibrary("__path") {
         lib["createDir"] = pathFunction { it.createDirectory().absolutePathString().metisValue() }
         lib["createDirs"] = pathFunction { it.createDirectories().absolutePathString().metisValue() }
         lib["deleteRecursive"] = pathFunction { it.deleteRecursively(); Value.Null }
-        lib["openWrite"] = pathFunction { wrapOutStream(it.outputStream()) }
-        lib["openRead"] = pathFunction { wrapInStream(it.inputStream()) }
+        lib["openWrite"] = pathFunction { outStreamWrapper.wrap(it.outputStream()) }
+        lib["openRead"] = pathFunction { inStreamWrapper.wrap(it.inputStream()) }
     }
 }
 
