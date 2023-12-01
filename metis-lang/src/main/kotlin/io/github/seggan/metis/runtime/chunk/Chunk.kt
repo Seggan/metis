@@ -156,6 +156,7 @@ class Chunk(
                         is Insn.PushFinally -> finallyStack.push(insn.label)
                         is Insn.CopyUnder -> state.stack.push(state.stack.getFromTop(insn.index))
                         is Insn.Call -> state.call(insn.nargs, insn.selfProvided, spans[ip - 1])
+                        is Insn.MetaCall -> state.metaCall(insn.nargs, insn.metamethod, spans[ip - 1])
                         is Insn.ToBeUsed -> toBeUsed = state.stack.pop()
                         is Insn.Return -> {
                             ip = insns.size

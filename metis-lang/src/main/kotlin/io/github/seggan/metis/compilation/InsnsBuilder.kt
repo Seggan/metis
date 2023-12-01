@@ -42,21 +42,6 @@ class InsnsBuilder(val span: Span) {
 }
 
 /**
- * Generates a call to a metamethod.
- *
- * @param name The name of the metamethod.
- * @param nargs The number of arguments to the metamethod.
- */
-fun InsnsBuilder.generateMetaCall(name: String, nargs: Int) {
-    +Insn.CopyUnder(nargs)
-    +Insn.Push("metatable")
-    +Insn.Index
-    +Insn.Push(name)
-    +Insn.Index
-    +Insn.Call(nargs + 1, true)
-}
-
-/**
  * Utility function for building instructions.
  *
  * @param span The [Span] of the instructions being built.

@@ -21,7 +21,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     IN({ left, right ->
         +right
         +left
-        generateMetaCall("__contains__", 1)
+        +Insn.MetaCall(1, "__contains__")
     }),
     NOT_IN(IN),
     IS({ left, right ->
@@ -56,7 +56,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +left
         +Insn.Push(Value.Null)
         +Insn.CopyUnder(1)
-        generateMetaCall("__eq__", 1)
+        +Insn.MetaCall(1, "__eq__")
         val end = Insn.Label()
         +Insn.RawJumpIf(end, condition = false)
         +Insn.Pop
@@ -67,7 +67,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     constructor(metamethod: String) : this({ left, right ->
         +left
         +right
-        generateMetaCall(metamethod, 1)
+        +Insn.MetaCall(1, metamethod)
     })
 
     constructor(op: BinOp) : this({ left, right ->
@@ -78,7 +78,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     constructor(number: Int, inverse: Boolean = false) : this({ left, right ->
         +left
         +right
-        generateMetaCall("__cmp__", 1)
+        +Insn.MetaCall(1, "__cmp__")
         +Insn.Push(number)
         +Insn.CopyUnder(1)
         +Insn.Push("__eq__")

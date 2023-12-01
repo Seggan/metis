@@ -376,6 +376,29 @@ class State(parentState: State? = null) {
         }
     }
 
+    /**
+     * Performs a metamethod call on the value [nargs] below the top of the stack.
+     *
+     * @param nargs The number of arguments to pass to the metamethod.
+     * @param metamethod The name of the metamethod to call.
+     * @param span The span of the call. May be null if unknown.
+     */
+    fun metaCall(nargs: Int, metamethod: String, span: Span? = null) {
+        val value = stack.getFromTop(nargs)
+        val meta = value.metatable?.lookUp(metamethod.metisValue())
+        if (meta is CallableValue) {
+            callValue(meta, nargs + 1, true, span)
+        } else {
+            throw MetisRuntimeException(
+                "TypeError",
+                "Cannot call metamethod $metamethod on value of type ${typeToName(value::class)}",
+                buildTable { table ->
+                    table["value"] = value
+                }
+            )
+        }
+    }
+
     private fun callValue(value: CallableValue, nargs: Int, selfProvided: Boolean, span: Span? = null) {
         val stackBottom = stack.size - nargs
         val (reqArgs, requiresSelf) = value.arity

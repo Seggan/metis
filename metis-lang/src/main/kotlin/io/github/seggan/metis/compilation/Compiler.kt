@@ -235,7 +235,7 @@ class Compiler private constructor(
         if (op.op == UnOp.NOT) {
             +Insn.Not
         } else {
-            generateMetaCall(op.op.metamethod!!, 0)
+            +Insn.MetaCall(0, op.op.metamethod!!)
         }
     }
 
@@ -259,7 +259,7 @@ class Compiler private constructor(
 
     private fun compileErrorLiteral(error: AstNode.ErrorLiteral) = buildInsns(error.span) {
         +compileExpression(error.message)
-        generateMetaCall("__str__", 0)
+        +Insn.MetaCall(0, "__str__")
         if (error.companionData != null) {
             +compileExpression(error.companionData)
         } else {
@@ -283,7 +283,7 @@ class Compiler private constructor(
 
     private fun compileFor(statement: AstNode.For) = buildInsns(statement.span) {
         +compileExpression(statement.iterable)
-        generateMetaCall("__iter__", 0)
+        +Insn.MetaCall(0, "__iter__")
         localStack.addFirst(Local("", scope, localStack.size))
         val start = Insn.Label()
         val end = Insn.Label()
