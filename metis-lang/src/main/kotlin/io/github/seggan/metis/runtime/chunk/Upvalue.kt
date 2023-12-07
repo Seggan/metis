@@ -4,18 +4,19 @@ import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
+import java.util.*
 
 /**
  * An upvalue. Used in the implementation of closures.
  *
  * @property name The name of the upvalue.
  * @property index The index of the upvalue's local variable.
- * @property callDepth The call depth of the upvalue's function.
+ * @property function The [UUID] of the function that owns the upvalue.
  */
 data class Upvalue(
     val name: String,
     val index: Int,
-    val callDepth: Int
+    val function: UUID
 ) {
 
     /**
@@ -30,7 +31,8 @@ data class Upvalue(
                 return upvalue
             }
         }
-        val instance = Instance(null)
+        val bottom = state.callStack.first { it.id == function }.stackBottom
+        val instance = Instance(null, bottom)
         state.openUpvalues.addFirst(instance)
         return instance
     }
@@ -40,13 +42,12 @@ data class Upvalue(
      *
      * @see Upvalue.newInstance
      */
-    inner class Instance internal constructor(internal var value: Value?) {
+    inner class Instance internal constructor(internal var value: Value?, private val stackBottom: Int) {
 
-        val template: Upvalue
-            get() = this@Upvalue
+        val template: Upvalue = this@Upvalue
 
         fun get(state: State) {
-            state.stack.push(value ?: state.stack[state.callStack[callDepth].stackBottom + index])
+            state.stack.push(value ?: state.stack[stackBottom + index])
         }
 
         fun set(state: State) {
@@ -54,7 +55,7 @@ data class Upvalue(
             if (value != null) {
                 value = toSet
             } else {
-                state.stack[state.callStack[callDepth].stackBottom + index] = toSet
+                state.stack[stackBottom + index] = toSet
             }
         }
 

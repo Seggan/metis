@@ -11,11 +11,20 @@ import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.runtime.intrinsics.*
-import io.github.seggan.metis.util.*
+import io.github.seggan.metis.util.Stack
+import io.github.seggan.metis.util.getFromTop
+import io.github.seggan.metis.util.peek
+import io.github.seggan.metis.util.pop
+import io.github.seggan.metis.util.push
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
+import java.util.*
+import kotlin.collections.ArrayDeque
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 /**
  * Represents the state of a Metis virtual machine. This is the class that is used to run Metis code.
@@ -220,7 +229,7 @@ class State(parentState: State? = null) {
                         break
                     }
                 }
-                val (executor, bottom, span) = callStack.peek()
+                val (executor, bottom, id, span) = callStack.peek()
                 if (span != null) {
                     err.addStackFrame(span)
                 }
@@ -239,7 +248,7 @@ class State(parentState: State? = null) {
                     }
                     for (i in stack.lastIndex downTo bottom) {
                         val upvalue = openUpvalues.firstOrNull {
-                            it.template.callDepth == callStack.size && it.template.index == i
+                            it.template.function == id && it.template.index == i
                         }
                         if (upvalue != null) {
                             upvalue.close(this)
@@ -428,7 +437,14 @@ class State(parentState: State? = null) {
                     }
                 )
             }
-            callStack.push(CallFrame(executor, stackBottom, span))
+            callStack.push(
+                CallFrame(
+                    executor,
+                    stackBottom,
+                    (value as? Chunk.Instance)?.id,
+                    span
+                )
+            )
         }
     }
 
@@ -511,7 +527,12 @@ class State(parentState: State? = null) {
     }
 }
 
-internal data class CallFrame(val executing: CallableValue.Executor, val stackBottom: Int, val span: Span?)
+internal data class CallFrame(
+    val executing: CallableValue.Executor,
+    val stackBottom: Int,
+    val id: UUID?,
+    val span: Span?
+)
 
 private val metatableString = Value.String("metatable")
 private val indexString = Value.String("__index__")

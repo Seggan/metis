@@ -271,9 +271,29 @@ internal fun initList() = buildTable { table ->
         self.listValue().removeAt(index.intValue())
     }
     table["slice"] = threeArgFunction(true) { self, start, end ->
+        if (start.intValue() < 0) {
+            throw MetisRuntimeException(
+                "ValueError",
+                "Start index cannot be negative",
+                buildTable { table ->
+                    table["start"] = start
+                    table["end"] = end
+                }
+            )
+        }
         if (end == Value.Null) {
             self.listValue().subList(start.intValue(), self.listValue().size).metisValue()
         } else {
+            if (end.intValue() > self.listValue().size) {
+                throw MetisRuntimeException(
+                    "ValueError",
+                    "End index cannot be greater than list size",
+                    buildTable { table ->
+                        table["start"] = start
+                        table["end"] = end
+                    }
+                )
+            }
             self.listValue().subList(start.intValue(), end.intValue()).metisValue()
         }
     }

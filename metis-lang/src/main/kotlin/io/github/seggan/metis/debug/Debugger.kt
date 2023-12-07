@@ -112,4 +112,4 @@ class Debugger(private val state: State, private val sourceName: String) {
     }
 }
 
-private val locationRegex = """(?<name>[a-zA-Z0-9_.]+:)?(?<line>[0-9]+)""".toRegex()
+private val locationRegex = """(?:(?<name>[a-zA-Z0-9_.]+):)?(?<line>[0-9]+)""".toRegex()

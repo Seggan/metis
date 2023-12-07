@@ -9,6 +9,9 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.*
 import io.github.seggan.metis.runtime.intrinsics.initChunk
 import io.github.seggan.metis.util.*
+import java.util.*
+import kotlin.collections.ArrayDeque
+import kotlin.collections.set
 
 /**
  * A chunk is a compiled piece of code.
@@ -16,14 +19,14 @@ import io.github.seggan.metis.util.*
  * @property name The name of the chunk.
  * @property insns The instructions of the chunk.
  * @property arity The arity of the chunk.
- * @property upvalues The upvalues of the chunk.
  * @property spans The spans of the chunk. Must be the same size as [insns].
  */
 class Chunk(
     val name: String,
     val insns: List<Insn>,
     val arity: Arity,
-    val upvalues: List<Upvalue>,
+    private val upvalues: List<Upvalue>,
+    private val id: UUID,
     val spans: List<Span>
 ) {
 
@@ -59,6 +62,8 @@ class Chunk(
         override var metatable: Value.Table? = Companion.metatable
 
         override val arity = this@Chunk.arity
+
+        val id = this@Chunk.id
 
         /**
          * The upvalue instances of the chunk instance.

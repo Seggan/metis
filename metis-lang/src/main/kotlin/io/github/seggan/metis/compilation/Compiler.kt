@@ -12,6 +12,8 @@ import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
+import java.util.*
+import kotlin.collections.ArrayDeque
 
 /**
  * A compiler for Metis code. You may not call [compileCode] more than once.
@@ -32,7 +34,7 @@ class Compiler private constructor(
     private val loopStack = ArrayDeque<LoopInfo>()
     private val errorScopeStack = ArrayDeque<Int>()
 
-    private val depth: Int = enclosingCompiler?.depth ?: 0
+    private val id = UUID.randomUUID()
 
     private var scope = 0
 
@@ -56,7 +58,7 @@ class Compiler private constructor(
             backpatch(compiled, marker.first as Insn.Label)
         }
         val (insns, spans) = compiled.unzip()
-        return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), upvalues, spans)
+        return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), upvalues, id, spans)
     }
 
     private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
@@ -427,7 +429,7 @@ class Compiler private constructor(
         val local = enclosingCompiler.resolveLocal(name)
         if (local != null) {
             if (local.capturing == null) {
-                local.capturing = Upvalue(name, local.index, enclosingCompiler.depth)
+                local.capturing = Upvalue(name, local.index, enclosingCompiler.id)
             }
             val upvalue = local.capturing!!
             upvalues.add(upvalue)

@@ -42,6 +42,11 @@ This will create a JAR file in `metis-app/build/libs` that can be run with `java
 
 @h2 Changelog
 
+@h2 { 0.3.0 }
+[
+    {Fixed upvalues having the wrong value when the function is passed as an argument},
+]
+
 @h2 { 0.2.0 }
 [
     {Fixed a bug where reporting errors would break because the lexer kept a global position, instead of a local one},
