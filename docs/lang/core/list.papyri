@@ -18,12 +18,25 @@ it defaults to an implementation-defined value.
 @h3 { append(self, value: any): null }
 Appends the given value to the list.
 
+@h3 { clear(self): null }
+Removes all elements from the list.
+
 @h3 { clone(self): list }
 Creates a new list with the same elements as the given list.
+
+@h3 { extend(self, other: iterable): null }
+Appends the elements of the given iterable to the list.
+
+@h3 { flatten(self): list }
+Returns a new list containing the elements of the given list and all
+sub-iterables.
 
 @h3 { join(self, sep: string): string }
 Returns a string containing the elements of the list separated by the given
 separator.
+
+@h3 { pop(self): any }
+Removes and returns the last element of the list.
 
 @h3 { remove(self, value: any): null }
 Removes the first occurrence of the given value from the list.
@@ -36,6 +49,18 @@ Returns a new list with the elements of the given list in reverse order.
 
 @h3 { slice(self, start: number, end: number): list }
 Returns a new list containing the elements from `start` to `end` (exclusive).
+
+@h3 { sort(self, cmp: callable\[any, any -> int\] = cmp): null }
+Sorts the list in-place using the given comparison function. If no comparison
+function is given, the default comparison function is used. The comparison
+function should return a negative number if the first argument is less than
+the second, a positive number if the first argument is greater than the
+second, and zero if the arguments are equal.
+
+@h3 { sorted(self, cmp: callable\[any, any -> int\] = cmp): list }
+Returns a new list containing the elements of the given list sorted using the
+given comparison function. The comparison function is the same as for
+`sort`.
 
 @h2 Metamethods
 

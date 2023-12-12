@@ -45,6 +45,7 @@ This will create a JAR file in `metis-app/build/libs` that can be run with `java
 @h2 { 0.3.0 }
 [
     {Fixed upvalues having the wrong value when the function is passed as an argument},
+    {Added functions to `list` and `string`}
 ]
 
 @h2 { 0.2.0 }

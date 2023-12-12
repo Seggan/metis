@@ -65,6 +65,15 @@ Reverse the string.
 @h3 { split(self, separator: string): list\[string\] }
 Split the string into an array of strings, using `separator` as the delimiter.
 
+@h3 { strip(self): string }
+Strip whitespace from the beginning and end of the string.
+
+@h3 { stripLeft(self): string }
+Strip whitespace from the beginning of the string.
+
+@h3 { stripRight(self): string }
+Strip whitespace from the end of the string.
+
 @h3 { sub(self, start: number, end: number \| null): string }
 Get a substring of the string. If `end` is `null`, the substring will end at the end of the string.
 

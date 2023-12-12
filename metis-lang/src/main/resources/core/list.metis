@@ -9,8 +9,28 @@ fn list.__str__(self)
         end
         sb.append(", ")
     end
-    sb.deleteLast(2)
+    if len(self) > 1
+        sb.deleteLast(2)
+    end
     return str(sb.append("]"))
+end
+
+fn list.extend(self, other)
+    for v in other
+        self.append(v)
+    end
+end
+
+fn list.flatten(self)
+    let result = list.new()
+    for v in self
+        if type(v) == "list"
+            result.extend(v.flatten())
+        else
+            result.append(v)
+        end
+    end
+    return result
 end
 
 fn list.join(self, sep)
@@ -22,11 +42,47 @@ fn list.join(self, sep)
     return str(sb)
 end
 
+fn list.pop(self) = self.removeAt(len(self) - 1)
+
 fn list.reverse(self)
     let result = list.new(len(self))
     for i in range.inclusive(len(self) - 1, 0, -1)
         result.append(self[i])
     end
+    return result
+end
+
+fn list.sort(self, compare)
+    compare = compare ?: cmp
+    let pivot = self[len(self) / 2]
+    let less = list.new()
+    let equal = list.new()
+    let greater = list.new()
+    for v in self
+        let cmp = compare(v, pivot)
+        if cmp < 0
+            less.append(v)
+        elif cmp > 0
+            greater.append(v)
+        else
+            equal.append(v)
+        end
+    end
+    if len(less) > 1
+        less.sort(compare)
+    end
+    if len(greater) > 1
+        greater.sort(compare)
+    end
+    self.clear()
+    self.extend(less)
+    self.extend(equal)
+    self.extend(greater)
+end
+
+fn list.sorted(self, compare)
+    let result = self.clone()
+    result.sort(compare)
     return result
 end
 

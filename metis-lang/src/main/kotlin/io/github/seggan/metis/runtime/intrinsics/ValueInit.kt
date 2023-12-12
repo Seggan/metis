@@ -1,7 +1,6 @@
 package io.github.seggan.metis.runtime.intrinsics
 
 import io.github.seggan.metis.runtime.*
-import io.github.seggan.metis.runtime.chunk.Chunk
 import java.nio.charset.Charset
 import kotlin.experimental.and
 import kotlin.experimental.inv
@@ -263,6 +262,10 @@ internal fun initList() = buildTable { table ->
         self.listValue().add(value)
         Value.Null
     }
+    table["clear"] = oneArgFunction(true) { self ->
+        self.listValue().clear()
+        Value.Null
+    }
     table["remove"] = twoArgFunction(true) { self, value ->
         self.listValue().remove(value)
         Value.Null
@@ -410,53 +413,5 @@ internal fun initBytes() = buildTable { table ->
             offset += it.size
         }
         newBytes.metisValue()
-    }
-}
-
-internal fun initNull() = buildTable { table ->
-    table["__str__"] = oneArgFunction(true) {
-        "null".metisValue()
-    }
-    table["__call__"] = oneArgFunction(true) {
-        throw MetisRuntimeException("TypeError", "Cannot call null")
-    }
-    table["__eq__"] = twoArgFunction(true) { _, other ->
-        Value.Boolean.of(other == Value.Null)
-    }
-    table["__set__"] = threeArgFunction(true) { _, _, _ ->
-        throw MetisRuntimeException("TypeError", "Cannot set any key on null")
-    }
-}
-
-internal fun initChunk() = buildTable { table ->
-    table["__str__"] = oneArgFunction(true) { self ->
-        self.convertTo<Chunk.Instance>().toString().metisValue()
-    }
-    table["disassemble"] = oneArgFunction(true) { self ->
-        self.convertTo<Chunk.Instance>().dissasemble().metisValue()
-    }
-}
-
-internal fun initError() = buildTable { table ->
-    table["__str__"] = oneArgFunction(true) { self ->
-        self.convertTo<MetisRuntimeException>().message!!.metisValue()
-    }
-    table["__call__"] = oneArgFunction(true) {
-        throw MetisRuntimeException("TypeError", "Cannot call error")
-    }
-    table["__eq__"] = twoArgFunction(true) { self, other ->
-        Value.Boolean.of(self === other)
-    }
-    table["__contains__"] = twoArgFunction(true) { self, key ->
-        Value.Boolean.of(self.lookUp(key) != null)
-    }
-}
-
-private fun checkIndex(index: Int, size: Int) {
-    if (index < 0 || index >= size) {
-        throw MetisRuntimeException("IndexError", "Index out of bounds: $index", buildTable { table ->
-            table["index"] = index.metisValue()
-            table["size"] = size.metisValue()
-        })
     }
 }

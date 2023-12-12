@@ -22,7 +22,7 @@ object Lexer {
     }
 
     init {
-        regex("//.*(?:\\n|$)", Token.Type.COMMENT)
+        regex("#.*(?:\\n|$)", Token.Type.COMMENT)
         text("(", Token.Type.OPEN_PAREN)
         text(")", Token.Type.CLOSE_PAREN)
         text("{", Token.Type.OPEN_BRACE)

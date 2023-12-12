@@ -7,7 +7,7 @@ import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.*
-import io.github.seggan.metis.runtime.intrinsics.initChunk
+import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.util.*
 import java.util.*
 import kotlin.collections.ArrayDeque
@@ -267,7 +267,14 @@ class Chunk(
     }
 
     companion object {
-        private val metatable = initChunk()
+        private val metatable = buildTable { table ->
+            table["__str__"] = oneArgFunction(true) { self ->
+                self.convertTo<Instance>().toString().metisValue()
+            }
+            table["disassemble"] = oneArgFunction(true) { self ->
+                self.convertTo<Instance>().dissasemble().metisValue()
+            }
+        }
 
         /**
          * Loads a chunk from a [CodeSource], performing lexing, parsing and compilation.

@@ -1,6 +1,7 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.runtime.intrinsics.initError
+import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
+import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.MetisException
 
 /**
@@ -31,7 +32,20 @@ open class MetisRuntimeException(
     }
 
     companion object {
-        val metatable = initError()
+        val metatable = buildTable { table ->
+            table["__str__"] = oneArgFunction(true) { self ->
+                self.convertTo<MetisRuntimeException>().message!!.metisValue()
+            }
+            table["__call__"] = oneArgFunction(true) {
+                throw MetisRuntimeException("TypeError", "Cannot call error")
+            }
+            table["__eq__"] = twoArgFunction(true) { self, other ->
+                Value.Boolean.of(self === other)
+            }
+            table["__contains__"] = twoArgFunction(true) { self, key ->
+                Value.Boolean.of(self.lookUp(key) != null)
+            }
+        }
     }
 
     internal class Finally : MetisRuntimeException("INTERNAL ERROR, THIS IS A BUG", "Finally block not popped") {

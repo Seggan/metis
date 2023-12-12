@@ -6,7 +6,7 @@ do
         self.delete(length - n, length)
         return self
     end
-    // THIS GOES LAST
+    # THIS GOES LAST
     fn sbMeta.__set__(self, index, value) = self.__set(self, index, str(value))
 end
 
@@ -26,6 +26,24 @@ fn string.reverse(self)
         sb.append(self[i])
     end
     return str(sb)
+end
+
+fn string.strip(self) = self.stripLeft().stripRight()
+
+fn string.stripLeft(self)
+    let i = 0
+    while i < len(self) and self[i].isWhitespace()
+        i = i + 1
+    end
+    return self.sub(i)
+end
+
+fn string.stripRight(self)
+    let i = len(self) - 1
+    while i >= 0 and self[i].isWhitespace()
+        i = i - 1
+    end
+    return self.sub(0, i + 1)
 end
 
 string.metatable = collection
