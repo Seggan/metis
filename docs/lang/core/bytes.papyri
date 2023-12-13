@@ -27,6 +27,15 @@ index and has the given length.
 
 @h2 Metamethods
 
+@h3 { __band__(self, other: bytes): bytes }
+Bitwise AND the bytes objects.
+
+@h3 { __bor__(self, other: bytes): bytes }
+Bitwise OR the bytes objects.
+
+@h3 { __bxor__(self, other: bytes): bytes }
+Bitwise XOR the bytes objects.
+
 @h3 { __contains__(self, needle: number): boolean }
 Check if the given byte is contained in the bytes object.
 

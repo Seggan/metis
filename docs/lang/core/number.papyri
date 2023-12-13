@@ -42,7 +42,7 @@ Divide a number by another number.
 @h3 { __eq__(self, other: number): boolean }
 Check if a number is equal to another number.
 
-@h3 { __inclrange__(self, other: number): number }
+@h3 { __inclRange__(self, other: number): number }
 Create a range from a number to another number (inclusive).
 
 @h3 { __minus__(self, other: number): number }
