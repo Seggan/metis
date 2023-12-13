@@ -311,7 +311,7 @@ end)
 
 Coroutines can be run with `coroutine.run`:
 
-@metis `x:run() # "hello"`
+@metis `x.run() # "hello"`
 
 @h2 { Operators }
 

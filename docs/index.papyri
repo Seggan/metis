@@ -46,7 +46,7 @@ This will create a JAR file in `metis-app/build/libs` that can be run with `java
 [
     {Fixed upvalues having the wrong value when the function is passed as an argument},
     {Added functions to `list` and `string`},
-    {Changed the comment character from `//` to `\#`},
+    {Changed the comment character from `//` to `#`},
     {Implemented the `**` (power) and `//` (floor division) operators},
     {Changed `__inclrange__` to `__inclRange__` for consistency},
 ]
