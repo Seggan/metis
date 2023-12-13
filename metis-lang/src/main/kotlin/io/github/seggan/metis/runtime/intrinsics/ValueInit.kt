@@ -123,6 +123,9 @@ internal fun initNumber() = buildTable { table ->
     table["__div__"] = twoArgFunction(true) { self, other ->
         Value.Number.of(self.doubleValue() / other.doubleValue())
     }
+    table["__floordiv__"] = twoArgFunction(true) { self, other ->
+        Value.Number.of((self.doubleValue() / other.doubleValue()).toInt())
+    }
     table["__mod__"] = twoArgFunction(true) { self, other ->
         Value.Number.of(self.doubleValue() % other.doubleValue())
     }

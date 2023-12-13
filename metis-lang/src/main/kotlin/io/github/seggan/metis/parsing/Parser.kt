@@ -109,7 +109,8 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     )
 
     private fun parseComparison() = parseBinOp(
-        ::parseIn, mapOf(
+        ::parseIn,
+        mapOf(
             LESS_THAN to BinOp.LESS,
             LESS_THAN_OR_EQUAL to BinOp.LESS_EQ,
             GREATER_THAN to BinOp.GREATER,
@@ -127,8 +128,13 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     )
 
     private fun parseElvis() = parseBinOp(::parseRange, mapOf(ELVIS to BinOp.ELVIS))
-    private fun parseRange() =
-        parseBinOp(::parseBitOr, mapOf(RANGE to BinOp.RANGE, INCLUSIVE_RANGE to BinOp.INCLUSIVE_RANGE))
+    private fun parseRange() = parseBinOp(
+        ::parseBitOr,
+        mapOf(
+            RANGE to BinOp.RANGE,
+            INCLUSIVE_RANGE to BinOp.INCLUSIVE_RANGE
+        )
+    )
 
     private fun parseBitOr() = parseBinOp(::parseBitXor, mapOf(BOR to BinOp.BOR))
     private fun parseBitXor() = parseBinOp(::parseBitAnd, mapOf(BXOR to BinOp.BXOR))
@@ -142,9 +148,23 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         )
     )
 
-    private fun parseAddition() = parseBinOp(::parseMultiplication, mapOf(PLUS to BinOp.PLUS, MINUS to BinOp.MINUS))
-    private fun parseMultiplication() =
-        parseBinOp(::parseUnary, mapOf(STAR to BinOp.TIMES, SLASH to BinOp.DIV, PERCENT to BinOp.MOD))
+    private fun parseAddition() = parseBinOp(
+        ::parseMultiplication,
+        mapOf(
+            PLUS to BinOp.PLUS,
+            MINUS to BinOp.MINUS
+        )
+    )
+
+    private fun parseMultiplication() = parseBinOp(
+        ::parseUnary,
+        mapOf(
+            STAR to BinOp.TIMES,
+            SLASH to BinOp.DIV,
+            DOUBLE_SLASH to BinOp.FLOORDIV,
+            PERCENT to BinOp.MOD
+        )
+    )
 
     private fun parseUnary(): AstNode.Expression {
         val op = tryConsume(NOT, MINUS, BNOT)
@@ -159,7 +179,16 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
                 }, expr, op.span + expr.span
             )
         }
-        return parsePostfix()
+        return parsePower()
+    }
+
+    // Has to be separate because of right-associativity
+    private fun parsePower(): AstNode.Expression {
+        var expr = parsePostfix()
+        while (tryConsume(DOUBLE_STAR) != null) {
+            expr = AstNode.BinaryOp(expr, BinOp.POW, parsePower())
+        }
+        return expr
     }
 
     private fun parsePostfix(allowCalls: Boolean = true): AstNode.Expression {

@@ -43,7 +43,9 @@ object Lexer {
         text("+", Token.Type.PLUS)
         text("-", Token.Type.MINUS)
         text("*", Token.Type.STAR)
+        text("**", Token.Type.DOUBLE_STAR)
         text("/", Token.Type.SLASH)
+        text("//", Token.Type.DOUBLE_SLASH)
         text("%", Token.Type.PERCENT)
         text("&", Token.Type.BAND)
         text("|", Token.Type.BOR)
@@ -229,7 +231,9 @@ data class Token(val type: Type, val text: String, val span: Span) {
         PLUS("'+'"),
         MINUS("'-'"),
         STAR("'*'"),
+        DOUBLE_STAR("'**'"),
         SLASH("'/'"),
+        DOUBLE_SLASH("'//'"),
         PERCENT("'%'"),
         BAND("'&'"),
         BOR("'|'"),

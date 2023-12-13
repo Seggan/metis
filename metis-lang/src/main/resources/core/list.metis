@@ -54,7 +54,7 @@ end
 
 fn list.sort(self, compare)
     compare = compare ?: cmp
-    let pivot = self[len(self) / 2]
+    let pivot = self[len(self) // 2]
     let less = list.new()
     let equal = list.new()
     let greater = list.new()
