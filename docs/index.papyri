@@ -42,13 +42,14 @@ This will create a JAR file in `metis-app/build/libs` that can be run with `java
 
 @h2 Changelog
 
-@h2 { 0.3.0 (upcoming) }
+@h2 { 0.3.0 }
 [
     {Fixed upvalues having the wrong value when the function is passed as an argument},
     {Added functions to `list` and `string`},
     {Changed the comment character from `//` to `#`},
     {Implemented the `**` (power) and `//` (floor division) operators},
     {Changed `__inclrange__` to `__inclRange__` for consistency},
+    {Implemented the compound assignment operators},
 ]
 
 @h2 { 0.2.0 }

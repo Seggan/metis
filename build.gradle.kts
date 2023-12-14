@@ -11,4 +11,4 @@ subprojects {
 }
 
 group = "io.github.seggan"
-version = "0.1-SNAPSHOT"
+version = "0.3-SNAPSHOT"
