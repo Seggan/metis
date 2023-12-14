@@ -1,5 +1,6 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.parsing.SyntaxException
@@ -53,24 +54,12 @@ class Compiler private constructor(
      */
     fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
-        val compiled = compileBlock(code, false).toMutableList()
+        val compiled = compileBlock(code, false).filterTo(mutableListOf()) { it.first != Insn.NoOp }
         for (marker in compiled.filter { it.first is Insn.Label }) {
             backpatch(compiled, marker.first as Insn.Label)
         }
         val (insns, spans) = compiled.unzip()
         return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), upvalues, id, spans)
-    }
-
-    private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
-        val markerIndex = insns.indexOfFirst { it.first == label }
-        for (i in insns.indices) {
-            val (insn, span) = insns[i]
-            if (insn is Insn.RawJump && insn.label == label) {
-                insns[i] = Insn.Jump(markerIndex - i - 1) to span
-            } else if (insn is Insn.RawJumpIf && insn.label == label) {
-                insns[i] = Insn.JumpIf(markerIndex - i - 1, insn.condition, insn.consume) to span
-            }
-        }
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -398,22 +387,54 @@ class Compiler private constructor(
             is AstNode.Index -> buildInsns(target.span) {
                 +compileExpression(target.target)
                 +compileExpression(target.index)
-                +compileExpression(assign.value)
+                if (assign.type == null) {
+                    +compileExpression(assign.value)
+                } else {
+                    +Insn.CopyUnder(1)
+                    +Insn.CopyUnder(1)
+                    +Insn.Index
+                    assign.type.op.generateCode(
+                        this,
+                        // This will just consume the value on the stack
+                        listOf(Insn.NoOp to assign.span),
+                        compileExpression(assign.value)
+                    )
+                }
                 +Insn.Set
             }
 
             is AstNode.Var -> buildInsns(target.span) {
                 val name = target.name
-                +compileExpression(assign.value)
-                +Insn.UpdateGlobal(name)
-                resolveLocal(name)?.let { local ->
+                val local = resolveLocal(name)
+                if (local != null) {
+                    if (assign.type == null) {
+                        +compileExpression(assign.value)
+                    } else {
+                        +Insn.GetLocal(local.index)
+                        assign.type.op.generateCode(
+                            this,
+                            listOf(Insn.NoOp to assign.span),
+                            compileExpression(assign.value)
+                        )
+                    }
                     +Insn.SetLocal(local.index)
-                    return@buildInsns
+                } else {
+                    resolveUpvalue(name)?.let { upvalue ->
+                        val index = upvalues.indexOf(upvalue)
+                        if (assign.type == null) {
+                            +compileExpression(assign.value)
+                        } else {
+                            +Insn.GetUpvalue(index)
+                            assign.type.op.generateCode(
+                                this,
+                                listOf(Insn.NoOp to assign.span),
+                                compileExpression(assign.value)
+                            )
+                        }
+                        +Insn.SetUpvalue(index)
+                    }
                 }
-                resolveUpvalue(name)?.let { upvalue ->
-                    +Insn.SetUpvalue(upvalues.indexOf(upvalue))
-                    return@buildInsns
-                }
+                +Insn.UpdateGlobal(name)
             }
         }
     }
@@ -447,3 +468,15 @@ class Compiler private constructor(
 private data class LoopInfo(val start: Insn.Label, val end: Insn.Label, val scope: Int)
 
 private data class Local(val name: String, val scope: Int, val index: Int, var capturing: Upvalue? = null)
+
+private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
+    val markerIndex = insns.indexOfFirst { it.first == label }
+    for (i in insns.indices) {
+        val (insn, span) = insns[i]
+        if (insn is Insn.RawJump && insn.label == label) {
+            insns[i] = Insn.Jump(markerIndex - i - 1) to span
+        } else if (insn is Insn.RawJumpIf && insn.label == label) {
+            insns[i] = Insn.JumpIf(markerIndex - i - 1, insn.condition, insn.consume) to span
+        }
+    }
+}

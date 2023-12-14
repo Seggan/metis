@@ -68,14 +68,22 @@ sealed interface Insn {
         override fun hashCode() = System.identityHashCode(this)
     }
 
+    /**
+     * Used to mark instructions that should only be used internally by the compiler, and should never be
+     * emitted.
+     */
+    sealed interface IllegalInsn : Insn
+
     data class Jump(val offset: Int) : Insn
-    data class RawJump(val label: Label) : Insn
+    data class RawJump(val label: Label) : IllegalInsn
     data class JumpIf(val offset: Int, val condition: Boolean, val consume: Boolean = true) : Insn
-    data class RawJumpIf(val label: Label, val condition: Boolean, val consume: Boolean = true) : Insn
+    data class RawJumpIf(val label: Label, val condition: Boolean, val consume: Boolean = true) : IllegalInsn
 
     data object Not : Insn
     data object Is : Insn
 
     data class Import(val name: String) : Insn
     data class PostImport(val name: String, val global: Boolean) : Insn
+
+    data object NoOp : IllegalInsn
 }

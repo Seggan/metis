@@ -1,0 +1,98 @@
+package io.github.seggan.metis.parsing
+
+/**
+ * Represents a token.
+ *
+ * @property type The type of the token.
+ * @property text The text of the token.
+ * @property span The [Span] of the token.
+ */
+data class Token(val type: Type, val text: String, val span: Span) {
+    enum class Type(private val humanName: String? = null) {
+        IDENTIFIER("an identifier"),
+        STRING("a string"),
+        BYTES("a bytes literal"),
+        NUMBER("a number"),
+        OPEN_PAREN("'('"),
+        CLOSE_PAREN("')'"),
+        OPEN_BRACE("'{'"),
+        CLOSE_BRACE("'}'"),
+        OPEN_BRACKET("'['"),
+        CLOSE_BRACKET("']'"),
+        SEMICOLON("';'"),
+        EQUALS("'='"),
+        DOUBLE_EQUALS("'=='"),
+        NOT_EQUALS("'!='"),
+        GREATER_THAN("'>'"),
+        LESS_THAN("'<'"),
+        GREATER_THAN_OR_EQUAL("'>='"),
+        LESS_THAN_OR_EQUAL("'<='"),
+        DOT("'.'"),
+        COLON("':'"),
+        COMMA("','"),
+        COMMENT("a comment"),
+        WHITESPACE("whitespace"),
+        PLUS("'+'"),
+        PLUS_EQUALS("'+='"),
+        MINUS("'-'"),
+        MINUS_EQUALS("'-='"),
+        STAR("'*'"),
+        STAR_EQUALS("'*='"),
+        DOUBLE_STAR("'**'"),
+        DOUBLE_STAR_EQUALS("'**='"),
+        SLASH("'/'"),
+        SLASH_EQUALS("'/='"),
+        DOUBLE_SLASH("'//'"),
+        DOUBLE_SLASH_EQUALS("'//='"),
+        PERCENT("'%'"),
+        PERCENT_EQUALS("'%='"),
+        AMPERSAND("'&'"),
+        AMP_EQUALS("'&='"),
+        PIPE("'|'"),
+        PIPE_EQUALS("'|='"),
+        CARET("'^'"),
+        CARET_EQUALS("'^='"),
+        SHL("'<<'"),
+        SHL_EQUALS("'<<='"),
+        SHR("'>>'"),
+        SHR_EQUALS("'>>='"),
+        SHRU("'>>>'"),
+        SHRU_EQUALS("'>>>='"),
+        TILDE("'~'"),
+        RANGE("'..<'"),
+        INCLUSIVE_RANGE("'..='"),
+        ELVIS("'?:'"),
+        ELVIS_EQUALS("'?:='"),
+        QUESTION_MARK("'?'"),
+        IF,
+        ELSE,
+        ELIF,
+        WHILE,
+        FOR,
+        IN,
+        NOT_IN,
+        IS,
+        IS_NOT,
+        RETURN,
+        AND,
+        OR,
+        NOT,
+        BREAK,
+        CONTINUE,
+        FN,
+        GLOBAL,
+        LET,
+        DO,
+        END,
+        ERROR,
+        EXCEPT,
+        FINALLY,
+        RAISE,
+        IMPORT,
+        EOF("end of file");
+
+        override fun toString(): String {
+            return humanName ?: "'${name.lowercase().replace('_', ' ')}'"
+        }
+    }
+}

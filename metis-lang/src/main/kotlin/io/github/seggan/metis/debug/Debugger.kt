@@ -24,6 +24,18 @@ class Debugger(private val state: State, private val sourceName: String) {
                 nextSpan = debugInfo?.span ?: error("No debug info yet available")
             }
         },
+        DebugCommand("verboseNext", "vn") {
+            val currentSpan = debugInfo?.span ?: error("No debug info yet available")
+            var nextSpan = currentSpan
+            while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
+                step()
+                nextSpan = debugInfo?.span ?: error("No debug info yet available")
+            }
+            print("Current instruction: ")
+            println(debugInfo?.insn ?: error("No debug info yet available"))
+            println("\nCall stack: ")
+            printStacktrace(this)
+        },
         DebugCommand("continue", "c") {
             while (step() == StepResult.CONTINUE) {
             }

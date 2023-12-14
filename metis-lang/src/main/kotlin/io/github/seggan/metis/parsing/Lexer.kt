@@ -41,22 +41,36 @@ object Lexer {
         text(">=", Token.Type.GREATER_THAN_OR_EQUAL)
         text("<=", Token.Type.LESS_THAN_OR_EQUAL)
         text("+", Token.Type.PLUS)
+        text("+=", Token.Type.PLUS_EQUALS)
         text("-", Token.Type.MINUS)
+        text("-=", Token.Type.MINUS_EQUALS)
         text("*", Token.Type.STAR)
+        text("*=", Token.Type.STAR_EQUALS)
         text("**", Token.Type.DOUBLE_STAR)
+        text("**=", Token.Type.DOUBLE_STAR_EQUALS)
         text("/", Token.Type.SLASH)
+        text("/=", Token.Type.SLASH_EQUALS)
         text("//", Token.Type.DOUBLE_SLASH)
+        text("//=", Token.Type.DOUBLE_SLASH_EQUALS)
         text("%", Token.Type.PERCENT)
-        text("&", Token.Type.BAND)
-        text("|", Token.Type.BOR)
-        text("^", Token.Type.BXOR)
+        text("%=", Token.Type.PERCENT_EQUALS)
+        text("&", Token.Type.AMPERSAND)
+        text("&=", Token.Type.AMP_EQUALS)
+        text("|", Token.Type.PIPE)
+        text("|=", Token.Type.PIPE_EQUALS)
+        text("^", Token.Type.CARET)
+        text("^=", Token.Type.CARET_EQUALS)
         text("<<", Token.Type.SHL)
+        text("<<=", Token.Type.SHL_EQUALS)
         text(">>", Token.Type.SHR)
+        text(">>=", Token.Type.SHR_EQUALS)
         text(">>>", Token.Type.SHRU)
-        text("~", Token.Type.BNOT)
+        text(">>>=", Token.Type.SHRU_EQUALS)
+        text("~", Token.Type.TILDE)
         text("..<", Token.Type.RANGE)
         text("..=", Token.Type.INCLUSIVE_RANGE)
         text("?:", Token.Type.ELVIS)
+        text("?:=", Token.Type.ELVIS_EQUALS)
         text("?", Token.Type.QUESTION_MARK)
         keyword("if", Token.Type.IF)
         keyword("else", Token.Type.ELSE)
@@ -194,87 +208,4 @@ private sealed interface TokenMatcher {
 
 private fun String.toMatch(): TokenMatcher.Match {
     return TokenMatcher.Match(this, length)
-}
-
-/**
- * Represents a token.
- *
- * @property type The type of the token.
- * @property text The text of the token.
- * @property span The [Span] of the token.
- */
-data class Token(val type: Type, val text: String, val span: Span) {
-    enum class Type(private val humanName: String? = null) {
-        IDENTIFIER("an identifier"),
-        STRING("a string"),
-        BYTES("a bytes literal"),
-        NUMBER("a number"),
-        OPEN_PAREN("'('"),
-        CLOSE_PAREN("')'"),
-        OPEN_BRACE("'{'"),
-        CLOSE_BRACE("'}'"),
-        OPEN_BRACKET("'['"),
-        CLOSE_BRACKET("']'"),
-        SEMICOLON("';'"),
-        EQUALS("'='"),
-        DOUBLE_EQUALS("'=='"),
-        NOT_EQUALS("'!='"),
-        GREATER_THAN("'>'"),
-        LESS_THAN("'<'"),
-        GREATER_THAN_OR_EQUAL("'>='"),
-        LESS_THAN_OR_EQUAL("'<='"),
-        DOT("'.'"),
-        COLON("':'"),
-        COMMA("','"),
-        COMMENT("a comment"),
-        WHITESPACE("whitespace"),
-        PLUS("'+'"),
-        MINUS("'-'"),
-        STAR("'*'"),
-        DOUBLE_STAR("'**'"),
-        SLASH("'/'"),
-        DOUBLE_SLASH("'//'"),
-        PERCENT("'%'"),
-        BAND("'&'"),
-        BOR("'|'"),
-        BXOR("'^'"),
-        SHL("'<<'"),
-        SHR("'>>'"),
-        SHRU("'>>>'"),
-        BNOT("'~'"),
-        RANGE("'..<'"),
-        INCLUSIVE_RANGE("'..='"),
-        ELVIS("'?:'"),
-        QUESTION_MARK("'?'"),
-        IF,
-        ELSE,
-        ELIF,
-        WHILE,
-        FOR,
-        IN,
-        NOT_IN,
-        IS,
-        IS_NOT,
-        RETURN,
-        AND,
-        OR,
-        NOT,
-        BREAK,
-        CONTINUE,
-        FN,
-        GLOBAL,
-        LET,
-        DO,
-        END,
-        ERROR,
-        EXCEPT,
-        FINALLY,
-        RAISE,
-        IMPORT,
-        EOF("end of file");
-
-        override fun toString(): String {
-            return humanName ?: "'${name.lowercase().replace('_', ' ')}'"
-        }
-    }
 }

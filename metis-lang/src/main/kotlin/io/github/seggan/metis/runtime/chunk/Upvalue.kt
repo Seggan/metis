@@ -2,6 +2,7 @@ package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 import java.util.*
@@ -51,7 +52,7 @@ data class Upvalue(
         }
 
         fun set(state: State) {
-            val toSet = state.stack.pop()
+            val toSet = state.stack.peek()
             if (value != null) {
                 value = toSet
             } else {

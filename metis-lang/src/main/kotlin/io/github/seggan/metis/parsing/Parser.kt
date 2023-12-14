@@ -1,8 +1,9 @@
 package io.github.seggan.metis.parsing
 
-import io.github.seggan.metis.compilation.BinOp
-import io.github.seggan.metis.compilation.UnOp
 import io.github.seggan.metis.compilation.Visibility
+import io.github.seggan.metis.compilation.op.AssignType
+import io.github.seggan.metis.compilation.op.BinOp
+import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.Token.Type.*
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.util.escape
@@ -136,9 +137,9 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         )
     )
 
-    private fun parseBitOr() = parseBinOp(::parseBitXor, mapOf(BOR to BinOp.BOR))
-    private fun parseBitXor() = parseBinOp(::parseBitAnd, mapOf(BXOR to BinOp.BXOR))
-    private fun parseBitAnd() = parseBinOp(::parseShift, mapOf(BAND to BinOp.BAND))
+    private fun parseBitOr() = parseBinOp(::parseBitXor, mapOf(PIPE to BinOp.BOR))
+    private fun parseBitXor() = parseBinOp(::parseBitAnd, mapOf(CARET to BinOp.BXOR))
+    private fun parseBitAnd() = parseBinOp(::parseShift, mapOf(AMPERSAND to BinOp.BAND))
     private fun parseShift() = parseBinOp(
         ::parseAddition,
         mapOf(
@@ -167,14 +168,14 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     )
 
     private fun parseUnary(): AstNode.Expression {
-        val op = tryConsume(NOT, MINUS, BNOT)
+        val op = tryConsume(NOT, MINUS, TILDE)
         if (op != null) {
             val expr = parseUnary()
             return AstNode.UnaryOp(
                 when (op.type) {
                     NOT -> UnOp.NOT
                     MINUS -> UnOp.NEG
-                    BNOT -> UnOp.BNOT
+                    TILDE -> UnOp.BNOT
                     else -> throw AssertionError()
                 }, expr, op.span + expr.span
             )
@@ -334,7 +335,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
                 fn.span
             )
         } else {
-            AstNode.VarAssign(target, fn, fn.span)
+            AstNode.VarAssign(target, fn, null, fn.span)
         }
     }
 
@@ -367,9 +368,25 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parseVarAssign(): AstNode.VarAssign {
         val name = parseAssignTarget()
-        consume(EQUALS)
+        val assign = consume(
+            EQUALS,
+            PLUS_EQUALS,
+            MINUS_EQUALS,
+            STAR_EQUALS,
+            SLASH_EQUALS,
+            DOUBLE_SLASH_EQUALS,
+            PERCENT_EQUALS,
+            DOUBLE_STAR_EQUALS,
+            AMP_EQUALS,
+            PIPE_EQUALS,
+            CARET_EQUALS,
+            SHL_EQUALS,
+            SHR_EQUALS,
+            SHRU_EQUALS,
+            ELVIS_EQUALS
+        ).type
         val value = parseExpression()
-        return AstNode.VarAssign(name, value, name.span + value.span)
+        return AstNode.VarAssign(name, value, AssignType.fromToken(assign), name.span + value.span)
     }
 
     private fun parseAssignTarget(): AstNode.AssignTarget {

@@ -1,8 +1,9 @@
 package io.github.seggan.metis.parsing
 
-import io.github.seggan.metis.compilation.BinOp
-import io.github.seggan.metis.compilation.UnOp
 import io.github.seggan.metis.compilation.Visibility
+import io.github.seggan.metis.compilation.op.AssignType
+import io.github.seggan.metis.compilation.op.BinOp
+import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.runtime.Value
 
 sealed interface AstNode {
@@ -21,7 +22,12 @@ sealed interface AstNode {
     ) : Statement
 
     data class Except(val name: String, val variable: String?, val body: Block)
-    data class VarAssign(val target: AssignTarget, val value: Expression, override val span: Span) : Statement
+    data class VarAssign(
+        val target: AssignTarget,
+        val value: Expression,
+        val type: AssignType?,
+        override val span: Span
+    ) : Statement
     data class VarDecl(
         val visibility: Visibility,
         val name: String,

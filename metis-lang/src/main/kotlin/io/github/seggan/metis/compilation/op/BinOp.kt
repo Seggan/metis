@@ -1,5 +1,7 @@
-package io.github.seggan.metis.compilation
+package io.github.seggan.metis.compilation.op
 
+import io.github.seggan.metis.compilation.FullInsn
+import io.github.seggan.metis.compilation.InsnsBuilder
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
 
@@ -89,10 +91,4 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
             +Insn.Not
         }
     })
-}
-
-enum class UnOp(val metamethod: String? = null) {
-    NOT,
-    NEG("__neg__"),
-    BNOT("__bnot__"),
 }

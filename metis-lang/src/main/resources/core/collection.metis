@@ -4,7 +4,7 @@ let iterator = {}
 
 fn iterator.next(self)
     let res = self.coll[self.index]
-    self.index = self.index + 1
+    self.index += 1
     return res
 end
 
@@ -53,7 +53,7 @@ end
 fn collection.sum(self)
     let res = 0
     for v in self
-        res = res + v
+        res += v
     end
     return res
 end
@@ -98,7 +98,7 @@ fn collection.last(self, f)
         if f(self[i])
             return self[i]
         end
-        i = i - 1
+        i -= 1
     end
     return null
 end

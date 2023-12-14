@@ -53,7 +53,7 @@ fn list.reverse(self)
 end
 
 fn list.sort(self, compare)
-    compare = compare ?: cmp
+    compare ?:= cmp
     let pivot = self[len(self) // 2]
     let less = list.new()
     let equal = list.new()

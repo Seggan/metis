@@ -23,6 +23,26 @@ The difference is that local variables are only visible in the current scope, wh
 be accessed from anywhere. Global variables are also stored in a global table, so they can be accessed
 from other files.
 
+Variables may be updated using the `=` operator:
+
+@metis `x = 6`
+
+Variables may also be updated using the `+=`, `-=`, `*=`, `/=`, `//=`, `%=`, `&=`, `|=`, `^=`, `<<=`,
+`>>=`, `>>>=`, and `?:=` operators. These operators serve as the combination of assignment and their respective
+binary operator. For example, `x += 1` is the same as `x = x + 1`. `?:=` is officially called the
+@href(`https://chat.stackexchange.com/transcript/message/64856459`) walris operator, and acts like a compounded
+`?:` operator; `x ?:= 1` will set `x` to `1` if `x` is `null`, and leave it unchanged otherwise.
+
+@metis ```
+let x = 5
+x += 1
+print(x) # 6
+
+let y = { "z" = 5 }
+y.z += 1
+print(y.z) # 6
+```
+
 @h2 Functions
 
 Functions are declared with `fn`:
@@ -323,8 +343,8 @@ the metamethod `__index__`.
 
 `**`: this is used to raise a number to a power. It can be overloaded using `__pow__`.
 
-`not` and unary `-`: these are used to negate booleans and numbers. Only `-` can be overloaded using
-`__neg__`.
+`not`, `~`, and unary `-`: these are used to negate booleans and numbers, and to perform a bitwise NOT on
+numbers and bytes for `~`. Only `-` and `~` can be overloaded using `__neg__` and `__bnot__`.
 
 `*`, `/`, `//`, and `%`: these are used to multiply, divide, floor divide, and modulo numbers. They can
 be overloaded using `__times__`, `__div__`, `__floordiv__`, and `__mod__`.

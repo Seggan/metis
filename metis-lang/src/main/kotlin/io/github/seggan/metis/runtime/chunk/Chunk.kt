@@ -125,12 +125,13 @@ class Chunk(
                         is Insn.SetGlobal -> state.globals[insn.name] = state.stack.pop()
                         is Insn.UpdateGlobal -> {
                             val name = insn.name.metisValue()
+                            val value = state.stack.pop()
                             if (name in state.globals) {
-                                state.globals[name] = state.stack.peek()
+                                state.globals[name] = value
                             }
                         }
                         is Insn.GetLocal -> state.stack.push(state.stack[state.localsOffset + insn.index])
-                        is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.pop()
+                        is Insn.SetLocal -> state.stack[state.localsOffset + insn.index] = state.stack.peek()
                         is Insn.GetUpvalue -> upvalues[insn.index].get(state)
                         is Insn.SetUpvalue -> upvalues[insn.index].set(state)
                         is Insn.Index -> state.index()
@@ -234,7 +235,7 @@ class Chunk(
                         }
 
                         is Insn.Label -> {}
-                        is Insn.RawJump, is Insn.RawJumpIf -> error("Unbackpatched jump at $ip")
+                        is Insn.IllegalInsn -> error("Illegal instruction $insn at $ip")
                     }
                 } catch (e: MetisException) {
                     e.addStackFrame(spans[ip - 1])

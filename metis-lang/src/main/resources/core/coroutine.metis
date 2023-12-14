@@ -12,6 +12,6 @@ fn coroutine.runAtMost(self, n)
         if self.step() != "continue"
             break
         end
-        x = x + 1
+        x += 1
     end
 end

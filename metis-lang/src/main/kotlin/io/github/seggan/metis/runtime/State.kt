@@ -220,6 +220,7 @@ class State(parentState: State? = null) {
             var caught = false
             while (callStack.isNotEmpty()) {
                 if (e is MetisRuntimeException.Finally) {
+                    // TODO: handle this absolute mess
                     if (throwingException != null) {
                         err = throwingException!!
                         throwingException = null

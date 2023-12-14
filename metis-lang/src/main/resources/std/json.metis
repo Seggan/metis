@@ -7,7 +7,7 @@ fn parser.parseNumber(self)
         let c = self.text[self.pos]
         if c in numberChars
             sb.append(c)
-            self.pos = self.pos + 1
+            self.pos += 1
         else
             break
         end
@@ -17,14 +17,14 @@ end
 
 fn parser.parseString(self)
     let sb = string.builder()
-    self.pos = self.pos + 1
+    self.pos += 1
     while true
         let next = self.text[self.pos]
-        self.pos = self.pos + 1
+        self.pos += 1
         if next == "\""
             break
         elif next == "\\"
-            self.pos = self.pos + 1
+            self.pos += 1
             let c = self.text[self.pos]
             if c == "\""
                 sb.append("\"")
@@ -43,9 +43,9 @@ fn parser.parseString(self)
             elif c == "t"
                 sb.append("\t")
             elif c == "u"
-                self.pos = self.pos + 1
+                self.pos += 1
                 let hex = self.text.sub(self.pos, self.pos + 4)
-                self.pos = self.pos + 4
+                self.pos += 4
                 sb.append(number.parse(hex, 16).char())
             else
                 raise error ParseError("Invalid escape sequence: " + c + " (at position " + str(self.pos) + ")")
@@ -60,20 +60,20 @@ end
 
 fn parser.parseArray(self)
     let result = []
-    self.pos = self.pos + 1
+    self.pos += 1
     while true
         self.skipWhitespace()
         if self.text[self.pos] == "]"
-            self.pos = self.pos + 1
+            self.pos += 1
             break
         end
         result.append(self.parseValue())
         self.skipWhitespace()
         if self.text[self.pos] == "]"
-            self.pos = self.pos + 1
+            self.pos += 1
             break
         elif self.text[self.pos] == ","
-            self.pos = self.pos + 1
+            self.pos += 1
         else
             raise error ParseError("Expected ',' or ']' at " + str(self.pos)) : { "pos" = self.pos }
         end
@@ -83,11 +83,11 @@ end
 
 fn parser.parseObject(self)
     let result = {}
-    self.pos = self.pos + 1
+    self.pos += 1
     while true
         self.skipWhitespace()
         if self.text[self.pos] == "}"
-            self.pos = self.pos + 1
+            self.pos += 1
             break
         end
         let key = self.parseString()
@@ -95,16 +95,16 @@ fn parser.parseObject(self)
         if self.text[self.pos] != ":"
             raise error ParseError("Expected ':' at " + str(self.pos)) : { "pos" = self.pos }
         end
-        self.pos = self.pos + 1
+        self.pos += 1
         self.skipWhitespace()
         let value = self.parseValue()
         result[key] = value
         self.skipWhitespace()
         if self.text[self.pos] == "}"
-            self.pos = self.pos + 1
+            self.pos += 1
             break
         elif self.text[self.pos] == ","
-            self.pos = self.pos + 1
+            self.pos += 1
         else
             raise error ParseError("Expected ',' or '}' at " + str(self.pos)) : { "pos" = self.pos }
         end
@@ -124,13 +124,13 @@ fn parser.parseValue(self)
     elif c in numberChars
         return self.parseNumber()
     elif self.text.sub(self.pos, self.pos + 4) == "true"
-        self.pos = self.pos + 4
+        self.pos += 4
         return true
     elif self.text.sub(self.pos, self.pos + 5) == "false"
-        self.pos = self.pos + 5
+        self.pos += 5
         return false
     elif self.text.sub(self.pos, self.pos + 4) == "null"
-        self.pos = self.pos + 4
+        self.pos += 4
         return null
     else
         raise error ParseError("Unexpected character: " + c + " (at position " + str(self.pos) + ")")
@@ -142,7 +142,7 @@ fn parser.skipWhitespace(self)
     while self.pos < self.len
         let c = self.text[self.pos]
         if c == " " or c == "\t" or c == "\n" or c == "\r"
-            self.pos = self.pos + 1
+            self.pos += 1
         else
             break
         end
