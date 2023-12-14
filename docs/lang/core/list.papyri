@@ -44,8 +44,11 @@ Removes the first occurrence of the given value from the list.
 @h3 { removeAt(self, index: number): any }
 Removes the element at the given index from the list and returns it.
 
-@h3 { reverse(self): list }
+@h3 { reversed(self): list }
 Returns a new list with the elements of the given list in reverse order.
+
+@h3 { size(self): number }
+Returns the number of elements in the list.
 
 @h3 { slice(self, start: number, end: number): list }
 Returns a new list containing the elements from `start` to `end` (exclusive).
@@ -72,9 +75,6 @@ Returns the element at the given index.
 
 @h3 { __iter__(self): any }
 Returns an iterator over the elements of the list.
-
-@h3 { __len__(self): number }
-Returns the number of elements in the list.
 
 @h3 { __plus__(self, other: list \| any): list }
 Returns a new list containing the elements of the given list followed by the

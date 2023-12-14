@@ -59,8 +59,11 @@ Repeat the string `count` times.
 @h3 { replace(self, pattern: string, replacement: string): string }
 Replace all occurrences of `pattern` with `replacement`.
 
-@h3 { reverse(self): string }
-Reverse the string.
+@h3 { reversed(self): string }
+Return a reversed copy of the string.
+
+@h3 { size(self): number }
+Get the number of characters in the string.
 
 @h3 { split(self, separator: string): list\[string\] }
 Split the string into an array of strings, using `separator` as the delimiter.
@@ -97,9 +100,6 @@ Get the character at the specified index.
 @h3 { __iter__(self): table }
 Get an iterator for the string.
 
-@h3 { __len__(self): number }
-Get the length of the string.
-
 @h3 { __plus__(self, other: string): string }
 Concatenate two strings.
 
@@ -125,13 +125,13 @@ Delete a character from the builder at the specified index.
 @h3 { deleteLast(self, count: number): self }
 Delete the last `count` characters from the builder.
 
+@h3 { size(self): number }
+Get the number of characters in the builder.
+
 @h2 Metamethods
 
 @h3 { __index__(self, index: number): string }
 Get the character at the specified index.
-
-@h3 { __len__(self): number }
-Get the length of the builder.
 
 @h3 { __set__(self, index: number, value: string): self }
 Set the character at the specified index.

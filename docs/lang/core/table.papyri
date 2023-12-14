@@ -23,6 +23,9 @@ Returns a list of all keys in the table.
 Removes the key `key` from the table `self` and returns the value mapped to it. If the key does not exist, raises
 `KeyError`.
 
+@h3 { size(self): number }
+Returns the number of keys in the table.
+
 @h3 { values(self): list }
 Returns a list of all values in the table.
 
@@ -34,9 +37,6 @@ Returns `true` if the key `key` exists in the table `self`, `false` otherwise.
 @h3 { __index__(self, key: any): any }
 Returns the value of the key `key` in the table `self`. If the key does not exist,
 raises `KeyError`.
-
-@h3 { __len__(self): number }
-Returns the number of keys in the table `self`.
 
 @h3 { __plus__(self, other: table): table }
 Returns a new table containing the contents of `self` and `other`. If a key exists

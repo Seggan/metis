@@ -13,7 +13,7 @@ internal fun initString() = buildTable { table ->
     table["__plus__"] = twoArgFunction(true) { self, other ->
         Value.String(self.stringValue() + other.stringValue())
     }
-    table["__len__"] = oneArgFunction(true) { self ->
+    table["size"] = oneArgFunction(true) { self ->
         self.stringValue().length.toDouble().metisValue()
     }
     table["__index__"] = twoArgFunction(true) { self, key ->
@@ -218,7 +218,7 @@ internal fun initTable() = Value.Table(mutableMapOf(), null).also { table ->
         self.setOrError(key, value)
         Value.Null
     }
-    table["__len__"] = oneArgFunction(true) { self ->
+    table["size"] = oneArgFunction(true) { self ->
         self.tableValue().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
@@ -255,7 +255,7 @@ internal fun initList() = buildTable { table ->
         self.setOrError(key, value)
         Value.Null
     }
-    table["__len__"] = oneArgFunction(true) { self ->
+    table["size"] = oneArgFunction(true) { self ->
         self.listValue().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->
@@ -331,7 +331,7 @@ internal fun initBytes() = buildTable { table ->
         self.setOrError(key, value)
         Value.Null
     }
-    table["__len__"] = oneArgFunction(true) { self ->
+    table["size"] = oneArgFunction(true) { self ->
         self.bytesValue().size.metisValue()
     }
     table["__contains__"] = twoArgFunction(true) { self, key ->

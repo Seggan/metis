@@ -9,7 +9,7 @@ fn list.__str__(self)
         end
         sb.append(", ")
     end
-    if len(self) > 1
+    if self.size() > 1
         sb.deleteLast(2)
     end
     return str(sb.append("]"))
@@ -38,15 +38,15 @@ fn list.join(self, sep)
     for v in self
         sb.append(v).append(sep)
     end
-    sb.deleteLast(len(sep))
+    sb.deleteLast(sep.size())
     return str(sb)
 end
 
-fn list.pop(self) = self.removeAt(len(self) - 1)
+fn list.pop(self) = self.removeAt(self.size() - 1)
 
-fn list.reverse(self)
-    let result = list.new(len(self))
-    for i in range.inclusive(len(self) - 1, 0, -1)
+fn list.reversed(self)
+    let result = list.new(self.size())
+    for i in range.inclusive(self.size() - 1, 0, -1)
         result.append(self[i])
     end
     return result
@@ -54,7 +54,7 @@ end
 
 fn list.sort(self, compare)
     compare ?:= cmp
-    let pivot = self[len(self) // 2]
+    let pivot = self[self.size() // 2]
     let less = list.new()
     let equal = list.new()
     let greater = list.new()
@@ -68,10 +68,10 @@ fn list.sort(self, compare)
             equal.append(v)
         end
     end
-    if len(less) > 1
+    if less.size() > 1
         less.sort(compare)
     end
-    if len(greater) > 1
+    if greater.size() > 1
         greater.sort(compare)
     end
     self.clear()
@@ -87,7 +87,7 @@ fn list.sorted(self, compare)
 end
 
 fn list.clone(self)
-    let result = list.new(len(self))
+    let result = list.new(self.size())
     for v in self
         result.append(v)
     end

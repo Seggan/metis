@@ -2,7 +2,7 @@ do
     let sbMeta = string.builder().metatable
     fn sbMeta.append(self, value) = self.__append(str(value))
     fn sbMeta.deleteLast(self, n)
-        let length = len(self)
+        let length = self.size()
         self.delete(length - n, length)
         return self
     end
@@ -13,16 +13,16 @@ end
 fn string.charCode(self) = self.encode("UTF-8")[0]
 
 fn string.repeat(self, n)
-    let sb = string.builder(len(self) * n)
+    let sb = string.builder(self.size() * n)
     for _ in 0..<n
         sb.append(self)
     end
     return str(sb)
 end
 
-fn string.reverse(self)
-    let sb = string.builder(len(self))
-    for i in range.inclusive(len(self) - 1, 0, -1)
+fn string.reversed(self)
+    let sb = string.builder(self.size())
+    for i in range.inclusive(self.size() - 1, 0, -1)
         sb.append(self[i])
     end
     return str(sb)
@@ -32,14 +32,14 @@ fn string.strip(self) = self.stripLeft().stripRight()
 
 fn string.stripLeft(self)
     let i = 0
-    while i < len(self) and self[i].isWhitespace()
+    while i < self.size() and self[i].isWhitespace()
         i += 1
     end
     return self.sub(i)
 end
 
 fn string.stripRight(self)
-    let i = len(self) - 1
+    let i = self.size() - 1
     while i >= 0 and self[i].isWhitespace()
         i -= 1
     end

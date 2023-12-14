@@ -1,5 +1,4 @@
 global fn str(x) = x.__str__()
-global fn len(x) = x.__len__()
 global fn iter(x) = x.__iter__()
 global fn cmp(x, y) = x.__cmp__(y)
 

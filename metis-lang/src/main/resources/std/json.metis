@@ -152,7 +152,7 @@ end
 global fn parse(text) = withMetatable({
     "text" = text,
     "pos" = 0,
-    "len" = len(text)
+    "len" = text.size()
 }, parser).parseValue()
 
 global fn stringify(value)

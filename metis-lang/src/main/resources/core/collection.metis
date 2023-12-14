@@ -8,15 +8,15 @@ fn iterator.next(self)
     return res
 end
 
-fn iterator.hasNext(self) = self.index < len(self.coll)
+fn iterator.hasNext(self) = self.index < self.coll.size()
 
 fn collection.__iter__(self) = withMetatable({ "coll" = self, "index" = 0 }, iterator)
 
 fn collection.__eq__(self, other)
-    if type(self) != type(other) or len(self) != len(other)
+    if type(self) != type(other) or self.size() != other.size()
         return false
     end
-    for i in 0..<len(self)
+    for i in 0..<self.size()
         if self[i] != other[i]
             return false
         end
@@ -25,7 +25,7 @@ fn collection.__eq__(self, other)
 end
 
 fn collection.map(self, f)
-    let res = list.new(len(self))
+    let res = list.new(self.size())
     for v in self
         res.append(f(v))
     end
@@ -90,10 +90,10 @@ end
 
 fn collection.last(self, f)
     if f is null
-        return self[len(self) - 1]
+        return self[self.size() - 1]
     end
 
-    let i = len(self) - 1
+    let i = self.size() - 1
     while i >= 0
         if f(self[i])
             return self[i]
@@ -103,4 +103,4 @@ fn collection.last(self, f)
     return null
 end
 
-fn collection.isEmpty(self) = len(self) == 0
+fn collection.isEmpty(self) = self.size() == 0

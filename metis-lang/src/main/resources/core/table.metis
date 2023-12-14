@@ -8,12 +8,12 @@ fn table.__str__(self)
             .append(v)
             .append(", ")
     end
-    sb.deleteAt(len(sb) - 2)
+    sb.deleteAt(sb.size() - 2)
     return str(sb.append("}"))
 end
 
 fn table.__eq__(self, other)
-    if len(self) != len(other)
+    if self.size() != other.size()
         return false
     end
     for k in self.keys()

@@ -130,7 +130,7 @@ private val sbMetatable = buildTable { table ->
         self.asObj<StringBuilder>().clear()
         self
     }
-    table["__len__"] = oneArgFunction(true) { self ->
+    table["size"] = oneArgFunction(true) { self ->
         Value.Number.of(self.asObj<StringBuilder>().length)
     }
     table["__str__"] = oneArgFunction(true) { self ->

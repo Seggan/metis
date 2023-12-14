@@ -27,6 +27,11 @@ The end of the range (exclusive).
 @h3 { step: number }
 The step of the range.
 
+@h2 { Member functions }
+
+@h3 { size(self): number }
+Returns the length of the range.
+
 @h2 Metamethods
 
 @h3 { __index__(self, key: number): number }
@@ -34,6 +39,3 @@ Returns the value at the given index in the range.
 
 @h3 { __iter__(self): table }
 Returns an iterator for the range.
-
-@h3 { __len__(self): number }
-Returns the length of the range.

@@ -17,11 +17,14 @@ Concatenate a list of bytes objects into a single bytes object.
 
 @h2 { Member functions }
 
-@h3 { decode(encoding: string = "UTF-8"): string }
+@h3 { decode(self, encoding: string = "UTF-8"): string }
 Decode the bytes object into a string using the given encoding. If no encoding is given, UTF-8 is
 used.
 
-@h3 { slice(start: number, length: number): bytes }
+@h3 { size(self): number }
+Get the length of the bytes object.
+
+@h3 { slice(self, start: number, length: number): bytes }
 Create a new bytes object from a slice of the current bytes object. The slice starts at the given
 index and has the given length.
 
@@ -47,9 +50,6 @@ Get the byte at the given index.
 
 @h3 { __iter__(self): any }
 Get an iterator for the bytes object.
-
-@h3 { __len__(self): number }
-Get the length of the bytes object.
 
 @h3 { __set__(self, index: number, value: number) }
 Set the byte at the given index to the given value.
