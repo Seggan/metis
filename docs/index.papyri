@@ -42,6 +42,11 @@ This will create a JAR file in `metis-app/build/libs` that can be run with `java
 
 @h2 Changelog
 
+@h3 { 0.4.0 }
+[
+    {Removed the `__len__` metamethod (and the `len` function) and replaced it with the `size` function},
+]
+
 @h2 { 0.3.0 }
 [
     {Fixed upvalues having the wrong value when the function is passed as an argument},
