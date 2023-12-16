@@ -100,9 +100,9 @@ internal fun initString() = buildTable { table ->
 
     table["builder"] = oneArgFunction { init ->
         when (init) {
-            Value.Null -> wrapStringBuilder(StringBuilder())
-            is Value.String -> wrapStringBuilder(StringBuilder(init.stringValue()))
-            else -> wrapStringBuilder(StringBuilder(init.intValue()))
+            Value.Null -> Value.Native(StringBuilder(), NativeObjects.STRING_BUILDER)
+            is Value.String -> Value.Native(StringBuilder(init.stringValue()), NativeObjects.STRING_BUILDER)
+            else -> Value.Native(StringBuilder(init.stringValue()), NativeObjects.STRING_BUILDER)
         }
     }
 }

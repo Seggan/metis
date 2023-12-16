@@ -72,16 +72,6 @@ class State(parentState: State? = null) {
      */
     var currentDir = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
 
-    /**
-     * The function used to wrap [InputStream]s into Metis objects.
-     */
-    var inStreamWrapper: InputStreamWrapper = InputStreamWrapper { Value.Native(it, inStreamMetatable) }
-
-    /**
-     * The function used to wrap [OutputStream]s into Metis objects.
-     */
-    var outStreamWrapper: OutputStreamWrapper = OutputStreamWrapper { Value.Native(it, outStreamMetatable) }
-
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
     private var throwingException: MetisRuntimeException? = null
@@ -144,12 +134,12 @@ class State(parentState: State? = null) {
             }
 
             val io = Value.Table()
-            io["stdout"] = zeroArgFunction { outStreamWrapper.wrap(stdout) }
-            io["stderr"] = zeroArgFunction { outStreamWrapper.wrap(stderr) }
-            io["stdin"] = zeroArgFunction { inStreamWrapper.wrap(stdin) }
+            io["stdout"] = zeroArgFunction { Value.Native(stdout, NativeObjects.OUTPUT_STREAM) }
+            io["stderr"] = zeroArgFunction { Value.Native(stderr, NativeObjects.OUTPUT_STREAM) }
+            io["stdin"] = zeroArgFunction { Value.Native(stdin, NativeObjects.INPUT_STREAM) }
 
-            io["inStream"] = inStreamMetatable
-            io["outStream"] = outStreamMetatable
+            io["inStream"] = NativeObjects.INPUT_STREAM
+            io["outStream"] = NativeObjects.OUTPUT_STREAM
             globals["io"] = io
 
             globals["string"] = Value.String.metatable

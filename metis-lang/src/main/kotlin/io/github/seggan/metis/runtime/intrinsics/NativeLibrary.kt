@@ -154,8 +154,8 @@ object PathLib : NativeLibrary("__path") {
         lib["createDir"] = pathFunction { it.createDirectory().absolutePathString().metisValue() }
         lib["createDirs"] = pathFunction { it.createDirectories().absolutePathString().metisValue() }
         lib["deleteRecursive"] = pathFunction { it.deleteRecursively(); Value.Null }
-        lib["openWrite"] = pathFunction { outStreamWrapper.wrap(it.outputStream()) }
-        lib["openRead"] = pathFunction { inStreamWrapper.wrap(it.inputStream()) }
+        lib["openWrite"] = pathFunction { Value.Native(it.outputStream(), NativeObjects.OUTPUT_STREAM) }
+        lib["openRead"] = pathFunction { Value.Native(it.inputStream(), NativeObjects.INPUT_STREAM) }
     }
 }
 
