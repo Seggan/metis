@@ -29,7 +29,7 @@ import kotlin.collections.set
 /**
  * Represents the state of a Metis virtual machine. This is the class that is used to run Metis code.
  */
-class State(parentState: State? = null) {
+class State(val parentState: State? = null) {
 
     /**
      * The global variables of the state.
