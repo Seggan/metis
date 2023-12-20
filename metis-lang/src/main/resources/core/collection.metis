@@ -103,4 +103,11 @@ fn collection.last(self, f)
     return null
 end
 
+fn collection.getOrDefault(self, i, def)
+    if i < 0 or i >= self.size()
+        return def
+    end
+    return self[i]
+end
+
 fn collection.isEmpty(self) = self.size() == 0

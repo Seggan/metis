@@ -12,6 +12,10 @@ functions for manipulating tables.
 @h3 { clone(self): table }
 Returns a shallow copy of the table `self`.
 
+@h3 { getOrDefault(self, key: any, default: any): any }
+Returns the value of the key `key` in the table `self`. If the key does not exist,
+returns `default`.
+
 @h3 { merge(self, other: table): null }
 Merges the table `other` into `self`. If a key exists in both tables, the value
 from `other` is used.

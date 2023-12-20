@@ -24,6 +24,9 @@ passed to `predicate`.
 Returns the first element in the collection that returns `true` when passed to `f`. If `f` is
 `null`, returns the first element in the collection.
 
+@h3 { getOrDefault(self, i: number, default: any): any }
+Returns the value at `i` if it exists, otherwise returns `default`.
+
 @h3 { isEmpty(self): boolean }
 Returns `true` if the collection is empty.
 

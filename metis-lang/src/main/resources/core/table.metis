@@ -24,6 +24,13 @@ fn table.__eq__(self, other)
     return true
 end
 
+fn table.getOrDefault(self, key, default)
+    if key in self
+        return self[key]
+    end
+    return default
+end
+
 fn table.merge(self, other)
     for k in other.keys()
         self[k] = other[k]
