@@ -227,6 +227,7 @@ class Chunk(
                             } else {
                                 loaded!!
                             }
+                            loaded = null
                             if (insn.global) {
                                 state.globals[insn.name] = module
                             } else {
