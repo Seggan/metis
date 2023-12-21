@@ -39,17 +39,17 @@ class Coroutine(state: State, chunk: Chunk.Instance, args: List<Value>) : Value 
          * The global metatable for coroutines.
          */
         val metatable = buildTable { table ->
-            table["__str__"] = oneArgFunction { _ ->
+            table["__str__"] = oneArgFunction(true) { _ ->
                 "a coroutine".metisValue()
             }
-            table["__eq__"] = twoArgFunction { self, other ->
+            table["__eq__"] = twoArgFunction(true) { self, other ->
                 Value.Boolean.of(self === other)
             }
-            table["__contains__"] = twoArgFunction { self, key ->
+            table["__contains__"] = twoArgFunction(true) { self, key ->
                 Value.Boolean.of(self.lookUp(key) != null)
             }
 
-            table["step"] = oneArgFunction { self ->
+            table["step"] = oneArgFunction(true) { self ->
                 val coroutine = self.convertTo<Coroutine>()
                 if (coroutine.lastResult == StepResult.FINISHED) {
                     "finished".metisValue()
@@ -63,10 +63,10 @@ class Coroutine(state: State, chunk: Chunk.Instance, args: List<Value>) : Value 
                     result.name.lowercase().metisValue()
                 }
             }
-            table["lastResult"] = oneArgFunction { self ->
+            table["lastResult"] = oneArgFunction(true) { self ->
                 self.convertTo<Coroutine>().lastResult.name.lowercase().metisValue()
             }
-            table["lastYielded"] = oneArgFunction { self ->
+            table["lastYielded"] = oneArgFunction(true) { self ->
                 self.convertTo<Coroutine>().lastYielded
             }
 
