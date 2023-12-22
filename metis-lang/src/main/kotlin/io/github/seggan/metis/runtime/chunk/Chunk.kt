@@ -55,7 +55,7 @@ class Chunk(
     /**
      * An instance of the chunk.
      *
-     * @property state The state of the instance.
+     * @param state The state of the instance.
      */
     inner class Instance(state: State) : CallableValue {
 

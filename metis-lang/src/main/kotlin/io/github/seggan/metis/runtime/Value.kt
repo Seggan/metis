@@ -285,6 +285,10 @@ interface Value {
 
         override fun hashCode() = value.contentHashCode()
 
+        override fun toString(): kotlin.String {
+            return value.joinToString(prefix = "[", postfix = "]")
+        }
+
         companion object {
 
             /**
