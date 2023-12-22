@@ -23,9 +23,6 @@ class Coroutine(state: State, chunk: Chunk.Instance, args: List<Value>) : Value 
     private var lastYielded: Value = Value.Null
 
     init {
-        if (chunk.upvalues.any { it.value == null }) {
-            throw MetisRuntimeException("ValueError", "Cannot create a coroutine with any open upvalues")
-        }
         for (arg in args) {
             innerState.stack.push(arg)
         }

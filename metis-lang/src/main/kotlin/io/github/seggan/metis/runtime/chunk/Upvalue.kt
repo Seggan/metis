@@ -32,8 +32,7 @@ data class Upvalue(
                 return upvalue
             }
         }
-        val bottom = state.callStack.first { it.id == function }.stackBottom
-        val instance = Instance(null, bottom)
+        val instance = Instance(state, null)
         state.openUpvalues.addFirst(instance)
         return instance
     }
@@ -43,12 +42,29 @@ data class Upvalue(
      *
      * @see Upvalue.newInstance
      */
-    inner class Instance internal constructor(internal var value: Value?, private val stackBottom: Int) {
+    inner class Instance internal constructor(
+        private val owningState: State,
+        private var value: Value?
+    ) {
 
         val template: Upvalue = this@Upvalue
 
+        val isClosed: Boolean
+            get() = value != null
+
+        private val stackBottom = owningState.callStack.first { it.id == function }.stackBottom
+
         fun get(state: State) {
-            state.stack.push(value ?: state.stack[stackBottom + index])
+            val toPush = if (value == null) {
+                var realState = state
+                while (realState !== owningState) {
+                    realState = realState.parentState ?: error("Upvalue not found in state chain")
+                }
+                realState.stack[stackBottom + index]
+            } else {
+                value!!
+            }
+            state.stack.push(toPush)
         }
 
         fun set(state: State) {
@@ -56,11 +72,17 @@ data class Upvalue(
             if (value != null) {
                 value = toSet
             } else {
-                state.stack[stackBottom + index] = toSet
+                var realState = state
+                while (realState !== owningState) {
+                    realState = realState.parentState ?: error("Upvalue not found in state chain")
+                }
+                realState.stack[stackBottom + index] = toSet
             }
         }
 
         fun close(state: State) {
+            require(value == null)
+            require(state === owningState)
             value = state.stack.pop()
             state.openUpvalues.remove(this)
         }
