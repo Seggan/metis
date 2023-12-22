@@ -89,7 +89,7 @@ object OsLib : NativeLibrary("os") {
             System.setProperty(value.stringValue(), other.stringValue())
             Value.Null
         }
-        lib["getCwd"] = zeroArgFunction { currentDir.absolutePathString().metisValue() }
+        lib["getCwd"] = zeroArgFunction { currentDir.metisValue() }
         lib["setCwd"] = oneArgFunction { p ->
             val path = fileSystem.getPath(p.stringValue())
             if (!path.isAbsolute) {
@@ -98,7 +98,7 @@ object OsLib : NativeLibrary("os") {
                     "Cannot set cwd to relative path: ${path.absolutePathString()}"
                 )
             }
-            currentDir = path
+            currentDir = path.absolutePathString()
             Value.Null
         }
     }
@@ -113,7 +113,9 @@ object PathLib : NativeLibrary("__path") {
         translateIoError { fn(toPath(self)) }
     }
 
-    private fun State.toPath(value: Value) = currentDir.resolve(fileSystem.getPath(value.stringValue()))
+    private fun State.toPath(value: Value): Path {
+        return fileSystem.getPath(currentDir).resolve(fileSystem.getPath(value.stringValue()))
+    }
 
     @OptIn(ExperimentalPathApi::class)
     override fun init(lib: MutableMap<String, Value>) {

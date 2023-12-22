@@ -49,8 +49,9 @@ class NativeLoader(private val libs: List<NativeLibrary>) : ModuleLoader {
  */
 object FileLoader : ModuleLoader {
     override fun load(state: State, module: String): CallableValue? {
+        val currentDir = state.fileSystem.getPath(state.currentDir)
         val searchPaths = state.globals.lookUpHierarchy("package", "path")!!.listValue().map {
-            state.currentDir.resolve(state.fileSystem.getPath(it.stringValue()))
+            currentDir.resolve(state.fileSystem.getPath(it.stringValue()))
         }
         for (searchPath in searchPaths) {
             val path = searchPath.resolve("$module.metis")

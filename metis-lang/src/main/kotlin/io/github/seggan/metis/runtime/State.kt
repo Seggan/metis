@@ -70,7 +70,7 @@ class State(val parentState: State? = null) {
     /**
      * The current working directory of the state.
      */
-    var currentDir = fileSystem.getPath(System.getProperty("user.dir")).toAbsolutePath()
+    var currentDir = System.getProperty("user.dir")
 
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
