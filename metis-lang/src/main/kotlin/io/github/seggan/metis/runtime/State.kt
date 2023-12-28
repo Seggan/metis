@@ -50,27 +50,27 @@ class State(val parentState: State? = null) {
     /**
      * The standard output stream of the state.
      */
-    var stdout: OutputStream = System.out
+    var stdout: OutputStream = parentState?.stdout ?: System.out
 
     /**
      * The standard error stream of the state.
      */
-    var stderr: OutputStream = System.err
+    var stderr: OutputStream = parentState?.stderr ?: System.err
 
     /**
      * The standard input stream of the state.
      */
-    var stdin: InputStream = System.`in`
+    var stdin: InputStream = parentState?.stdin ?: System.`in`
 
     /**
      * The [FileSystem] used by the state.
      */
-    var fileSystem: FileSystem = FileSystems.getDefault()
+    var fileSystem: FileSystem = parentState?.fileSystem ?: FileSystems.getDefault()
 
     /**
      * The current working directory of the state.
      */
-    var currentDir = System.getProperty("user.dir")
+    var currentDir: String = parentState?.currentDir ?: System.getProperty("user.dir")
 
     internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
