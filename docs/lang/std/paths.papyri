@@ -54,7 +54,7 @@ Returns a boolean value indicating whether the given path is hidden.
 @h3 { isSymlink(path: string): boolean }
 Returns a boolean value indicating whether the given path is a symbolic link.
 
-@h3 { list(path: string): list\[string\] }
+@h3 { listDir(path: string): list\[string\] }
 Returns a list of the files and directories in the given directory.
 
 @h3 { move(from: string, to: string): null }

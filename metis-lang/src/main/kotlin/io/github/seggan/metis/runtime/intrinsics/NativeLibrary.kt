@@ -134,7 +134,7 @@ object PathLib : NativeLibrary("__path") {
         lib["fileName"] = pathFunction { it.fileName.toString().metisValue() }
         lib["root"] = pathFunction { it.root.toString().metisValue() }
         lib["isAbsolute"] = pathFunction { it.isAbsolute.metisValue() }
-        lib["list"] = pathFunction { path ->
+        lib["listDir"] = pathFunction { path ->
             val list = Value.List()
             path.toFile().listFiles()?.forEach {
                 list.add(it.absolutePath.metisValue())
