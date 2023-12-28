@@ -91,12 +91,9 @@ object OsLib : NativeLibrary("os") {
         }
         lib["getCwd"] = zeroArgFunction { currentDir.metisValue() }
         lib["setCwd"] = oneArgFunction { p ->
-            val path = fileSystem.getPath(p.stringValue())
+            var path = fileSystem.getPath(p.stringValue())
             if (!path.isAbsolute) {
-                throw MetisRuntimeException(
-                    "IoError",
-                    "Cannot set cwd to relative path: ${path.absolutePathString()}"
-                )
+                path = fileSystem.getPath(currentDir).resolve(path)
             }
             currentDir = path.absolutePathString()
             Value.Null
@@ -109,12 +106,20 @@ object OsLib : NativeLibrary("os") {
  */
 object PathLib : NativeLibrary("__path") {
 
-    private inline fun pathFunction(crossinline fn: State.(Path) -> Value) = oneArgFunction { self ->
-        translateIoError { fn(toPath(self)) }
+    private inline fun pathFunction(
+        autoResolve: Boolean = false,
+        crossinline fn: State.(Path) -> Value
+    ) = oneArgFunction { self ->
+        translateIoError { fn(toPath(self, autoResolve)) }
     }
 
-    private fun State.toPath(value: Value): Path {
-        return fileSystem.getPath(currentDir).resolve(fileSystem.getPath(value.stringValue()))
+    private fun State.toPath(value: Value, autoResolve: Boolean): Path {
+        val path = fileSystem.getPath(value.stringValue())
+        return if (autoResolve) {
+            fileSystem.getPath(currentDir).resolve(path)
+        } else {
+            path
+        }
     }
 
     @OptIn(ExperimentalPathApi::class)
@@ -124,7 +129,7 @@ object PathLib : NativeLibrary("__path") {
         lib["absolute"] = pathFunction { it.toAbsolutePath().toString().metisValue() }
         lib["resolve"] = twoArgFunction { self, other ->
             translateIoError {
-                toPath(self)
+                toPath(self, false)
                     .resolve(other.stringValue())
                     .toString()
                     .metisValue()
@@ -134,30 +139,30 @@ object PathLib : NativeLibrary("__path") {
         lib["fileName"] = pathFunction { it.fileName.toString().metisValue() }
         lib["root"] = pathFunction { it.root.toString().metisValue() }
         lib["isAbsolute"] = pathFunction { it.isAbsolute.metisValue() }
-        lib["listDir"] = pathFunction { path ->
+        lib["listDir"] = pathFunction(true) { path ->
             val list = Value.List()
             path.listDirectoryEntries().forEach {
                 list.add(it.pathString.metisValue())
             }
             list
         }
-        lib["exists"] = pathFunction { it.exists().metisValue() }
-        lib["isFile"] = pathFunction { it.isRegularFile().metisValue() }
-        lib["isDir"] = pathFunction { it.isDirectory().metisValue() }
-        lib["isSymlink"] = pathFunction { it.isSymbolicLink().metisValue() }
-        lib["isHidden"] = pathFunction { it.isHidden().metisValue() }
+        lib["exists"] = pathFunction(true) { it.exists().metisValue() }
+        lib["isFile"] = pathFunction(true) { it.isRegularFile().metisValue() }
+        lib["isDir"] = pathFunction(true) { it.isDirectory().metisValue() }
+        lib["isSymlink"] = pathFunction(true) { it.isSymbolicLink().metisValue() }
+        lib["isHidden"] = pathFunction(true) { it.isHidden().metisValue() }
         lib["move"] = twoArgFunction { src, dest ->
             translateIoError {
-                toPath(src).moveTo(toPath(dest))
+                toPath(src, true).moveTo(toPath(dest, true))
             }
             Value.Null
         }
-        lib["delete"] = pathFunction { it.deleteIfExists().metisValue() }
-        lib["createDir"] = pathFunction { it.createDirectory().absolutePathString().metisValue() }
-        lib["createDirs"] = pathFunction { it.createDirectories().absolutePathString().metisValue() }
-        lib["deleteRecursive"] = pathFunction { it.deleteRecursively(); Value.Null }
-        lib["openWrite"] = pathFunction { Value.Native(it.outputStream(), NativeObjects.OUTPUT_STREAM) }
-        lib["openRead"] = pathFunction { Value.Native(it.inputStream(), NativeObjects.INPUT_STREAM) }
+        lib["delete"] = pathFunction(true) { it.deleteIfExists().metisValue() }
+        lib["createDir"] = pathFunction(true) { it.createDirectory().absolutePathString().metisValue() }
+        lib["createDirs"] = pathFunction(true) { it.createDirectories().absolutePathString().metisValue() }
+        lib["deleteRecursive"] = pathFunction(true) { it.deleteRecursively(); Value.Null }
+        lib["openWrite"] = pathFunction(true) { Value.Native(it.outputStream(), NativeObjects.OUTPUT_STREAM) }
+        lib["openRead"] = pathFunction(true) { Value.Native(it.inputStream(), NativeObjects.INPUT_STREAM) }
     }
 }
 
