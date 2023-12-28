@@ -137,7 +137,7 @@ object PathLib : NativeLibrary("__path") {
         lib["listDir"] = pathFunction { path ->
             val list = Value.List()
             path.listDirectoryEntries().forEach {
-                list.add(it.absolutePathString().metisValue())
+                list.add(it.pathString.metisValue())
             }
             list
         }
