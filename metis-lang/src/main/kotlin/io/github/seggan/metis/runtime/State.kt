@@ -129,48 +129,59 @@ class State(val parentState: State? = null) {
             globals["false"] = Value.Boolean.FALSE
             globals["null"] = Value.Null
 
-            for ((name, value) in Intrinsics.intrinsics) {
-                globals[name] = value
-            }
-
-            val io = Value.Table()
-            io["stdout"] = zeroArgFunction { Value.Native(stdout, NativeObjects.OUTPUT_STREAM) }
-            io["stderr"] = zeroArgFunction { Value.Native(stderr, NativeObjects.OUTPUT_STREAM) }
-            io["stdin"] = zeroArgFunction { Value.Native(stdin, NativeObjects.INPUT_STREAM) }
-
-            io["inStream"] = NativeObjects.INPUT_STREAM
-            io["outStream"] = NativeObjects.OUTPUT_STREAM
-            globals["io"] = io
-
-            globals["string"] = Value.String.metatable
-            globals["number"] = Value.Number.metatable
-            globals["table"] = Value.Table.metatable
-            globals["list"] = Value.List.metatable
-            globals["bytes"] = Value.Bytes.metatable
-            globals["coroutine"] = Coroutine.metatable
-
-            val pkg = Value.Table()
-            pkg["path"] = Value.List(mutableListOf("./".metisValue(), "/usr/lib/metis/".metisValue()))
-            pkg["loaded"] = Value.Table()
-            globals["package"] = pkg
-
-            runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
-            for (script in coreScripts) {
-                runCode(CodeSource(script) {
-                    State::class.java.getResource("/core/$it.metis")!!.readText()
-                })
-            }
-
-            addNativeLibrary(OsLib)
-            addNativeLibrary(RegexLib)
-            addNativeLibrary(PathLib)
-            addNativeLibrary(MathLib)
-            addNativeLibrary(RandomLib)
-
-            loaders.add(ResourceLoader)
             loaders.add(NativeLoader(nativeLibraries))
-            loaders.add(FileLoader)
         }
+    }
+
+    /**
+     * Loads all the core globals into the state, like `print`, `io`, etc.
+     */
+    fun loadCoreGlobals() {
+        for ((name, value) in Intrinsics.intrinsics) {
+            globals[name] = value
+        }
+
+        val io = Value.Table()
+        io["stdout"] = zeroArgFunction { Value.Native(stdout, NativeObjects.OUTPUT_STREAM) }
+        io["stderr"] = zeroArgFunction { Value.Native(stderr, NativeObjects.OUTPUT_STREAM) }
+        io["stdin"] = zeroArgFunction { Value.Native(stdin, NativeObjects.INPUT_STREAM) }
+
+        io["inStream"] = NativeObjects.INPUT_STREAM
+        io["outStream"] = NativeObjects.OUTPUT_STREAM
+        globals["io"] = io
+
+        globals["string"] = Value.String.metatable
+        globals["number"] = Value.Number.metatable
+        globals["table"] = Value.Table.metatable
+        globals["list"] = Value.List.metatable
+        globals["bytes"] = Value.Bytes.metatable
+        globals["coroutine"] = Coroutine.metatable
+
+        val pkg = Value.Table()
+        pkg["path"] = Value.List(mutableListOf("./".metisValue(), "/usr/lib/metis/".metisValue()))
+        pkg["loaded"] = Value.Table()
+        globals["package"] = pkg
+
+        runCode(CodeSource("core") { State::class.java.classLoader.getResource("core.metis")!!.readText() })
+        for (script in coreScripts) {
+            runCode(CodeSource(script) {
+                State::class.java.getResource("/core/$it.metis")!!.readText()
+            })
+        }
+
+        loaders.add(FileLoader)
+    }
+
+    /**
+     * Loads the standard library into the state.
+     */
+    fun loadStandardLibrary() {
+        addNativeLibrary(OsLib)
+        addNativeLibrary(RegexLib)
+        addNativeLibrary(PathLib)
+        addNativeLibrary(MathLib)
+        addNativeLibrary(RandomLib)
+        loaders.add(ResourcesLoader)
     }
 
     /**
@@ -189,6 +200,15 @@ class State(val parentState: State? = null) {
      */
     fun addNativeLibrary(lib: NativeLibrary) {
         nativeLibraries.add(lib)
+    }
+
+    /**
+     * Removes a [NativeLibrary] from the state.
+     *
+     * @param name The library to remove.
+     */
+    fun removeNativeLibrary(name: String) {
+        nativeLibraries.removeIf { it.name == name }
     }
 
     /**

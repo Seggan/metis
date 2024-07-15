@@ -55,6 +55,8 @@ private object Main : CliktCommand(name = "metis") {
                     println(chunk)
                 }
                 val state = State()
+                state.loadCoreGlobals()
+                state.loadStandardLibrary()
                 state.loadChunk(chunk)
                 state.call(0)
                 if (debug) {

@@ -23,9 +23,9 @@ fun interface ModuleLoader {
 /**
  * A loader that loads from the Metis JAR's resources
  */
-object ResourceLoader : ModuleLoader {
+object ResourcesLoader : ModuleLoader {
     override fun load(state: State, module: String): CallableValue? {
-        return ResourceLoader::class.java.getResource("/std/$module.metis")?.let { resource ->
+        return ResourcesLoader::class.java.getResource("/std/$module.metis")?.let { resource ->
             val source = CodeSource(module) { resource.readText() }
             val chunk = Chunk.load(source)
             chunk.Instance(state)
