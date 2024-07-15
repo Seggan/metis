@@ -9,7 +9,7 @@ import kotlin.collections.set
 /**
  * An instance of a coroutine.
  *
- * @param globals The globals of the coroutine. If null, the globals of the current state are used.
+ * @param state The parent state of the coroutine.
  * @param chunk The chunk to run.
  * @param args The arguments to pass to the chunk.
  */
