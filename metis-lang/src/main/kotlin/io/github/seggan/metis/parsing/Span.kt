@@ -48,7 +48,7 @@ data class Span(val start: Int, val end: Int, val source: CodeSource) {
         val lines = source.text.split("\n")
         val lineText = lines[line - 1]
         val sb = StringBuilder()
-        sb.append("|> ").appendLine(lineText)
+        sb.append("|> ").appendLine(lineText.replace("\t", " "))
         sb.append(" ".repeat(col + 2))
         sb.append("^")
         if (length > 1) {
