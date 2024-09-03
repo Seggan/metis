@@ -2,7 +2,7 @@
 
 package io.github.seggan.metis.util
 
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.value.Value
 
 typealias Stack = ArrayDeque<Value>
 

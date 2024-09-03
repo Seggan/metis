@@ -37,7 +37,7 @@ class Debugger(private val state: State, private val sourceName: String) {
             printStacktrace(this)
         },
         DebugCommand("continue", "c") {
-            while (step() == StepResult.CONTINUE) {
+            while (step() == StepResult.Continue) {
             }
         },
         DebugCommand("breakpoint", "break", "b") {
@@ -59,13 +59,13 @@ class Debugger(private val state: State, private val sourceName: String) {
         DebugCommand("into", "i") {
             val startSize = state.callStack.size
             while (state.callStack.size <= startSize) {
-                if (step() != StepResult.CONTINUE) break
+                if (step() != StepResult.Continue) break
             }
         },
         DebugCommand("out", "o") {
             val startSize = state.callStack.size
             while (state.callStack.size >= startSize) {
-                if (step() != StepResult.CONTINUE) break
+                if (step() != StepResult.Continue) break
             }
         },
         DebugCommand("backtrace", "bt") {

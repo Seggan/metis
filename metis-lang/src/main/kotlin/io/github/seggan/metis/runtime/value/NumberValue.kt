@@ -1,46 +1,114 @@
 package io.github.seggan.metis.runtime.value
 
+import java.io.Serial
 import java.math.BigDecimal
+import java.math.BigInteger
 
-class NumberValue private constructor(private val value: BigDecimal) : Number(), Value, Comparable<NumberValue> {
+sealed interface NumberValue : Value, Comparable<NumberValue> {
 
-    companion object {
+    operator fun plus(other: NumberValue): NumberValue
+    operator fun minus(other: NumberValue): NumberValue
+    operator fun times(other: NumberValue): NumberValue
+    operator fun div(other: NumberValue): NumberValue
+    operator fun rem(other: NumberValue): NumberValue
+    operator fun unaryMinus(): NumberValue
 
-        private const val CACHE_SIZE = 256
-        private const val HALF_CACHE = CACHE_SIZE / 2
-        private val cache = Array(CACHE_SIZE) { NumberValue(BigDecimal(it - HALF_CACHE)) }
+    fun toInteger(): Int
+    fun toFloat(): Float
 
-        fun of(value: BigDecimal): NumberValue = NumberValue(value)
+    class Int(private val value: BigInteger) : NumberValue {
+        override fun plus(other: NumberValue): NumberValue = when (other) {
+            is Int -> Int(value + other.value)
+            is Float -> toFloat() + other
+        }
 
-        fun of(value: Long): NumberValue = when {
-            value in -HALF_CACHE..HALF_CACHE -> cache[(value + HALF_CACHE).toInt()]
-            else -> NumberValue(BigDecimal(value))
+        override fun minus(other: NumberValue): NumberValue = when (other) {
+            is Int -> Int(value - other.value)
+            is Float -> toFloat() - other
+        }
+
+        override fun times(other: NumberValue): NumberValue = when (other) {
+            is Int -> Int(value * other.value)
+            is Float -> toFloat() * other
+        }
+
+        override fun div(other: NumberValue): NumberValue = when (other) {
+            is Int -> Int(value / other.value)
+            is Float -> toFloat() / other
+        }
+
+        override fun rem(other: NumberValue): NumberValue = when (other) {
+            is Int -> Int(value % other.value)
+            is Float -> toFloat() % other
+        }
+
+        override fun unaryMinus(): NumberValue = Int(-value)
+
+        override fun compareTo(other: NumberValue): kotlin.Int = when (other) {
+            is Int -> value.compareTo(other.value)
+            is Float -> toFloat().compareTo(other)
+        }
+
+        override fun toString(): String = value.toString()
+
+        override fun toInteger(): Int = this
+        override fun toFloat(): Float = value.toBigDecimal().metis()
+
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -3192086186905085639L
         }
     }
 
-    operator fun plus(other: NumberValue): NumberValue = NumberValue(value + other.value)
-    operator fun minus(other: NumberValue): NumberValue = NumberValue(value - other.value)
-    operator fun times(other: NumberValue): NumberValue = NumberValue(value * other.value)
-    operator fun div(other: NumberValue): NumberValue = NumberValue(value / other.value)
-    operator fun rem(other: NumberValue): NumberValue = NumberValue(value % other.value)
-    operator fun unaryPlus(): NumberValue = this
-    operator fun unaryMinus(): NumberValue = NumberValue(-value)
-    override operator fun compareTo(other: NumberValue): Int = value.compareTo(other.value)
+    class Float(private val value: BigDecimal) : NumberValue {
+        override fun plus(other: NumberValue): NumberValue = when (other) {
+            is Int -> this + other.toFloat()
+            is Float -> Float(value + other.value)
+        }
 
-    override fun equals(other: Any?): Boolean = other is NumberValue && value == other.value
-    override fun hashCode(): Int = value.hashCode()
+        override fun minus(other: NumberValue): NumberValue = when (other) {
+            is Int -> this - other.toFloat()
+            is Float -> Float(value - other.value)
+        }
 
-    override fun toByte(): Byte = value.toByte()
-    override fun toDouble(): Double = value.toDouble()
-    override fun toFloat(): Float = value.toFloat()
-    override fun toInt(): Int = value.toInt()
-    override fun toLong(): Long = value.toLong()
-    override fun toShort(): Short = value.toShort()
-    fun toBigDecimal(): BigDecimal = value
+        override fun times(other: NumberValue): NumberValue = when (other) {
+            is Int -> this * other.toFloat()
+            is Float -> Float(value * other.value)
+        }
+
+        override fun div(other: NumberValue): NumberValue = when (other) {
+            is Int -> this / other.toFloat()
+            is Float -> Float(value / other.value)
+        }
+
+        override fun rem(other: NumberValue): NumberValue = when (other) {
+            is Int -> this % other.toFloat()
+            is Float -> Float(value % other.value)
+        }
+
+        override fun unaryMinus(): NumberValue = Float(-value)
+
+        override fun compareTo(other: NumberValue): kotlin.Int = when (other) {
+            is Int -> compareTo(other.toFloat())
+            is Float -> value.compareTo(other.value)
+        }
+
+        override fun toString(): String = value.toString()
+
+        override fun toInteger(): Int = value.toBigInteger().metis()
+        override fun toFloat(): Float = this
+
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 8095133059564862993L
+        }
+    }
 }
 
-fun Int.metis(): NumberValue = NumberValue.of(this.toLong())
-fun Long.metis(): NumberValue = NumberValue.of(this)
-fun Float.metis(): NumberValue = NumberValue.of(this.toBigDecimal())
-fun Double.metis(): NumberValue = NumberValue.of(this.toBigDecimal())
-fun BigDecimal.metis(): NumberValue = NumberValue.of(this)
+fun BigInteger.metis() = NumberValue.Int(this)
+fun BigDecimal.metis() = NumberValue.Float(this)
+
+fun Int.metis() = toBigInteger().metis()
+fun Long.metis() = toBigInteger().metis()
+fun Float.metis() = toBigDecimal().metis()
+fun Double.metis() = toBigDecimal().metis()

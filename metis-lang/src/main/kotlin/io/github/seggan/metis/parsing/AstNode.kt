@@ -4,7 +4,7 @@ import io.github.seggan.metis.compilation.Visibility
 import io.github.seggan.metis.compilation.op.AssignType
 import io.github.seggan.metis.compilation.op.BinOp
 import io.github.seggan.metis.compilation.op.UnOp
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.value.Value
 
 sealed interface AstNode {
 

@@ -9,7 +9,7 @@ fun highlight(tokens: List<Token>): String = createHTML(prettyPrint = false).spa
     for (token in tokens) {
         val cls = when (token.type) {
             STRING -> "string"
-            NUMBER -> "number"
+            INTEGER, FLOAT -> "number"
             BYTES -> "bytes"
             COMMENT -> "comment"
 
