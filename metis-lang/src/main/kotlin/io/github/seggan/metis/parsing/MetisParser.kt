@@ -13,12 +13,9 @@ import io.github.seggan.metis.util.escape
 import java.util.*
 
 /**
- * The Metis parser.
- *
- * @param tokens The list of [Token]s to parse.
- * @param source The [CodeSource] of the tokens.
+ * The Metis parser
  */
-class Parser(tokens: List<Token>, private val source: CodeSource) {
+class MetisParser private constructor(tokens: List<Token>, private val source: CodeSource) {
 
     private val tokens = tokens.filter { it.type !in SKIPPED_TOKENS }
 
@@ -37,7 +34,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
      *
      * @return The root [AstNode].
      */
-    fun parse(): AstNode.Block {
+    private fun parse(): AstNode.Block {
         val statements = mutableListOf<AstNode.Statement>()
         while (tryConsume(EOF) == null) {
             skip(SEMICOLON)
@@ -517,6 +514,12 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
             }
         }
         throw errors.maxBy { it.consumed }
+    }
+
+    companion object {
+        fun parse(tokens: List<Token>, source: CodeSource): AstNode.Block {
+            return MetisParser(tokens, source).parse()
+        }
     }
 }
 

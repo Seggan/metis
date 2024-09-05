@@ -1,7 +1,5 @@
-package io.github.seggan.metis.runtime
+package io.github.seggan.metis.runtime.value
 
-import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
-import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.MetisException
 
 /**
@@ -15,11 +13,11 @@ import io.github.seggan.metis.util.MetisException
 open class MetisRuntimeException(
     val type: String,
     private val actualMessage: String,
-    private val companionData: Value.Table = Value.Table(),
+    private val companionData: TableValue = TableValue(),
     cause: Throwable? = null
 ) : MetisException("$type: $actualMessage", mutableListOf(), cause), Value {
 
-    override var metatable: Value.Table? = Companion.metatable
+    override var metatable: TableValue? = Companion.metatable
 
     override fun lookUpDirect(key: Value): Value? {
         if (key == messageString) return actualMessage.metisValue()
@@ -47,10 +45,6 @@ open class MetisRuntimeException(
             }
         }
     }
-
-    internal class Finally : MetisRuntimeException("INTERNAL ERROR, THIS IS A BUG", "Finally block not popped") {
-        override val message = "Finally"
-    }
 }
 
-private val messageString = Value.String("message")
+private val messageString = StringValue("message")

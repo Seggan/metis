@@ -5,7 +5,7 @@ import org.intellij.lang.annotations.Language
 /**
  * The Metis lexer. Converts source code into a list of [Token]s.
  */
-object Lexer {
+object MetisLexer {
 
     private val matchers = mutableListOf<TokenMatcher>()
 

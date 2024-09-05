@@ -2,8 +2,9 @@ package io.github.seggan.metis.compilation.op
 
 import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.InsnsBuilder
-import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.value.NullValue
+import io.github.seggan.metis.runtime.value.metis
 
 enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
     PLUS("__plus__"),
@@ -57,9 +58,9 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     }),
     ELVIS({ left, right ->
         +left
-        +Insn.Push(Value.Null)
-        +Insn.CopyUnder(1)
-        +Insn.MetaCall(1, "__eq__")
+        +Insn.CopyUnder(0)
+        +Insn.Push(NullValue)
+        +Insn.Is
         val end = Insn.Label()
         +Insn.RawJumpIf(end, condition = false)
         +Insn.Pop
@@ -84,11 +85,12 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +Insn.MetaCall(1, "__cmp__")
         +Insn.Push(number)
         +Insn.CopyUnder(1)
-        +Insn.Push("__eq__")
-        +Insn.Index
+        +Insn.GetIndexDirect(eqString)
         +Insn.Call(2, true)
         if (inverse) {
             +Insn.Not
         }
     })
 }
+
+private val eqString = "__eq__".metis()

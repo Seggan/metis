@@ -15,7 +15,7 @@ class CodeSource(val name: String, private val textGetter: (String) -> String) {
     private var textRef: WeakReference<String> = WeakReference(null)
 
     /**
-     * The source code. It is backed by a [WeakReference] so it does not take up memory if it is not used.
+     * The source code
      */
     val text: String
         get() = textRef.get() ?: textGetter(name).also { textRef = WeakReference(it) }

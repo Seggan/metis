@@ -8,9 +8,9 @@ import io.github.seggan.metis.util.MetisException
 class Debugger(private val state: State, private val sourceName: String) {
 
     private val commands = listOf(
-        DebugCommand("step", "s") { step() },
+        DebugCommand("step", "s") { stepOnce() },
         DebugCommand("verboseStep", "vs", "v") {
-            step()
+            stepOnce()
             print("Current instruction: ")
             println(debugInfo?.insn ?: error("No debug info yet available"))
             println("\nCall stack: ")
@@ -20,7 +20,7 @@ class Debugger(private val state: State, private val sourceName: String) {
             val currentSpan = debugInfo?.span ?: error("No debug info yet available")
             var nextSpan = currentSpan
             while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
-                step()
+                stepOnce()
                 nextSpan = debugInfo?.span ?: error("No debug info yet available")
             }
         },
@@ -28,7 +28,7 @@ class Debugger(private val state: State, private val sourceName: String) {
             val currentSpan = debugInfo?.span ?: error("No debug info yet available")
             var nextSpan = currentSpan
             while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
-                step()
+                stepOnce()
                 nextSpan = debugInfo?.span ?: error("No debug info yet available")
             }
             print("Current instruction: ")
@@ -37,7 +37,7 @@ class Debugger(private val state: State, private val sourceName: String) {
             printStacktrace(this)
         },
         DebugCommand("continue", "c") {
-            while (step() == StepResult.Continue) {
+            while (stepOnce() == StepResult.Continue) {
             }
         },
         DebugCommand("breakpoint", "break", "b") {
@@ -59,13 +59,13 @@ class Debugger(private val state: State, private val sourceName: String) {
         DebugCommand("into", "i") {
             val startSize = state.callStack.size
             while (state.callStack.size <= startSize) {
-                if (step() != StepResult.Continue) break
+                if (stepOnce() !is StepResult.Continue) break
             }
         },
         DebugCommand("out", "o") {
             val startSize = state.callStack.size
             while (state.callStack.size >= startSize) {
-                if (step() != StepResult.Continue) break
+                if (stepOnce() !is StepResult.Continue) break
             }
         },
         DebugCommand("backtrace", "bt") {

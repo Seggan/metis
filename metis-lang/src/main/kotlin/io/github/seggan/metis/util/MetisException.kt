@@ -1,6 +1,7 @@
 package io.github.seggan.metis.util
 
 import io.github.seggan.metis.parsing.Span
+import java.io.Serial
 
 /**
  * An exception thrown by Metis by the parser, compiler, or runtime.
@@ -52,5 +53,10 @@ abstract class MetisException(
      */
     fun addStackFrame(span: Span) {
         backtrace.add(span)
+    }
+
+    companion object {
+        @Serial
+        private const val serialVersionUID: Long = 3614478819340206164L
     }
 }

@@ -10,7 +10,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import io.github.seggan.metis.debug.Debugger
 import io.github.seggan.metis.parsing.CodeSource
-import io.github.seggan.metis.parsing.Lexer
+import io.github.seggan.metis.parsing.MetisLexer
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.util.MetisException
@@ -48,7 +48,7 @@ private object Main : CliktCommand(name = "metis") {
     override fun run() {
         try {
             if (syntaxHighlight) {
-                println(highlight(Lexer.lex(source.mapText(HtmlEscape::unescapeHtml))))
+                println(highlight(MetisLexer.lex(source.mapText(HtmlEscape::unescapeHtml))))
             } else {
                 val chunk = Chunk.load(source)
                 if (printChunk) {
