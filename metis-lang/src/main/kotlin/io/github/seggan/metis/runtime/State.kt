@@ -30,7 +30,8 @@ class State {
     }
 
     fun stepOnce(): StepResult {
-        val result = with(callStack.peek().executor) { step() }
+        if (callStack.isEmpty()) return StepResult.Finished
+        val result = callStack.peek().executor.step(this)
         if (result is StepResult.Finished) {
             callStack.pop()
             return if (callStack.isEmpty()) StepResult.Finished else StepResult.Continue
@@ -40,7 +41,7 @@ class State {
 
     fun call(nargs: Int, selfProvided: Boolean = false) {
         val callable = stack.pop().convertTo<CallableValue>()
-        callStack.push(CallFrame(callable.call(nargs), stack.size))
+        callStack.push(CallFrame(callable.call(), stack.size))
     }
 
     fun not() {

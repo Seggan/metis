@@ -19,35 +19,35 @@ class Chunk(
 ) : CallableValue {
 
     @Suppress("serial")
-    override fun call(nargs: Int): CallableValue.Executor = object : CallableValue.Executor {
+    override fun call(): CallableValue.Executor = object : CallableValue.Executor {
 
         private var ip = 0
 
         private lateinit var saved: Value
 
-        override fun State.step(): StepResult {
+        override fun step(state: State): StepResult {
             val (insn, span) = insns[ip]
             when (insn) {
-                is Insn.Push -> stack.push(insn.value)
-                is Insn.Pop -> stack.pop()
-                is Insn.CopyUnder -> stack.push(stack[insn.index])
-                is Insn.GetLocal -> stack.push(stack[insn.index - stackBottom])
-                is Insn.SetLocal -> stack[insn.index - stackBottom] = stack.pop()
-                is Insn.GetGlobal -> stack.push(
-                    globals[insn.name] ?: throw MetisRuntimeException(
+                is Insn.Push -> state.stack.push(insn.value)
+                is Insn.Pop -> state.stack.pop()
+                is Insn.CopyUnder -> state.stack.push(state.stack[insn.index])
+                is Insn.GetLocal -> state.stack.push(state.stack[insn.index - state.stackBottom])
+                is Insn.SetLocal -> state.stack[insn.index - state.stackBottom] = state.stack.pop()
+                is Insn.GetGlobal -> state.stack.push(
+                    state.globals[insn.name] ?: throw MetisRuntimeException(
                         "MissingKeyError",
                         "Undefined variable: ${insn.name}"
                     )
                 )
 
                 is Insn.SetGlobal -> {
-                    if (!insn.define && insn.name !in globals) {
+                    if (!insn.define && insn.name !in state.globals) {
                         throw MetisRuntimeException(
                             "MissingKeyError",
                             "Undefined variable: ${insn.name}"
                         )
                     }
-                    globals[insn.name] = stack.pop()
+                    state.globals[insn.name] = state.stack.pop()
                 }
 
                 is Insn.GetIndexDirect -> {
@@ -66,12 +66,12 @@ class Chunk(
                     TODO()
                 }
 
-                is Insn.Call -> call(insn.nargs, insn.selfProvided)
+                is Insn.Call -> state.call(insn.nargs, insn.selfProvided)
                 is Insn.MetaCall -> TODO()
 
                 is Insn.DirectJump -> ip = insn.target
                 is Insn.JumpIf -> {
-                    val value = if (insn.consume) stack.pop() else stack.peek()
+                    val value = if (insn.consume) state.stack.pop() else state.stack.peek()
                     if (value.convertTo<BooleanValue>().value == insn.condition) {
                         ip = insn.target
                     }
@@ -81,14 +81,14 @@ class Chunk(
                     // Congratulations, you found this comment!
                 }
 
-                is Insn.Save -> saved = stack.pop()
+                is Insn.Save -> saved = state.stack.pop()
                 is Insn.Return -> {
-                    stack.push(saved)
+                    state.stack.push(saved)
                     return StepResult.Finished
                 }
 
-                is Insn.Is -> stack.push(BooleanValue.of(stack.pop() === stack.pop()))
-                is Insn.Not -> not()
+                is Insn.Is -> state.stack.push(BooleanValue.of(state.stack.pop() === state.stack.pop()))
+                is Insn.Not -> state.not()
 
                 is Insn.IllegalInsn -> throw IllegalStateException("Illegal instruction: $insn at $span")
             }

@@ -8,10 +8,10 @@ interface CallableValue : Value {
 
     val arity: Arity
 
-    fun call(nargs: Int): Executor
+    fun call(): Executor
 
     fun interface Executor : Serializable {
-        fun State.step(): StepResult
+        fun step(state: State): StepResult
     }
 
     data class Arity(val nargs: Int, val needsSelf: Boolean)

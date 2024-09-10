@@ -30,7 +30,7 @@ open class MetisRuntimeException(
     }
 
     companion object {
-        val metatable = buildTable { table ->
+        val metatable = buildTable {
             table["__str__"] = oneArgFunction(true) { self ->
                 self.convertTo<MetisRuntimeException>().message!!.metisValue()
             }

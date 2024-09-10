@@ -16,3 +16,5 @@ data class TableValue(
 }
 
 fun Map<Value, Value>.metis() = TableValue(toMutableMap())
+
+inline fun buildTable(builder: (TableValue) -> Unit) = TableValue().apply(builder)
