@@ -77,7 +77,8 @@ class Chunk(
                     }
                 }
 
-                is Insn.Label -> { /* nop */
+                is Insn.Label -> {
+                    // Congratulations, you found this comment!
                 }
 
                 is Insn.Save -> saved = stack.pop()

@@ -1,21 +1,31 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.value.CallableValue
+import io.github.seggan.metis.runtime.value.metis
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 
-class MetisCompiler private constructor(private val name: String) {
+class MetisCompiler private constructor(
+    private val args: List<String>,
+    private val name: String
+) {
 
     private val locals = ArrayDeque<Local>()
     private var scope = 0
     private val loops = ArrayDeque<Loop>()
 
     private fun compileCode(code: AstNode.Block): Chunk {
+        for (arg in args) {
+            locals.push(Local(arg, locals.size, scope))
+        }
+
         val insns = compileBlock(code)
 
         // backpatch jumps
@@ -27,7 +37,11 @@ class MetisCompiler private constructor(private val name: String) {
             } to span
         }
 
-        return Chunk(name, backpatched)
+        return Chunk(
+            name,
+            CallableValue.Arity(args.size, args.firstOrNull() == "self"),
+            backpatched
+        )
     }
 
     private fun compileBlock(block: AstNode.Block): List<FullInsn> {
@@ -171,15 +185,38 @@ class MetisCompiler private constructor(private val name: String) {
                 }
             }
 
-            is AstNode.Call -> TODO()
-            is AstNode.CombinedCall -> TODO()
+            is AstNode.Call -> buildInsns(expression.span) {
+                for (arg in expression.args) {
+                    +compileExpression(arg)
+                }
+                +compileExpression(expression.expr)
+                +Insn.Call(expression.args.size, false)
+            }
+
+            is AstNode.CombinedCall -> buildInsns(expression.span) {
+                +compileExpression(expression.expr)
+                for (arg in expression.args) {
+                    +compileExpression(arg)
+                }
+                +Insn.CopyUnder(args.size)
+                +Insn.GetIndexDirect(expression.name.metis())
+                +Insn.Call(expression.args.size + 1, true)
+            }
+
             is AstNode.ErrorLiteral -> TODO()
             is AstNode.FunctionLiteral -> TODO()
             is AstNode.ListLiteral -> TODO()
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
             is AstNode.TableLiteral -> TODO()
             is AstNode.TernaryOp -> TODO()
-            is AstNode.UnaryOp -> TODO()
+            is AstNode.UnaryOp -> buildInsns(expression.span) {
+                +compileExpression(expression.expr)
+                if (expression.op == UnOp.NOT) {
+                    +Insn.Not
+                } else {
+                    +Insn.MetaCall(1, expression.op.metamethod!!)
+                }
+            }
         }
     }
 
@@ -208,7 +245,7 @@ class MetisCompiler private constructor(private val name: String) {
 
     companion object {
         fun compile(name: String, code: AstNode.Block): Chunk {
-            return MetisCompiler(name).compileCode(code)
+            return MetisCompiler(listOf(), name).compileCode(code)
         }
     }
 }
