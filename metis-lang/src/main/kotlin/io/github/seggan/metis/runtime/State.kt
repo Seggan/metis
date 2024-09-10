@@ -381,18 +381,7 @@ class State(val parentState: State? = null) {
         if (callable is CallableValue) {
             callValue(callable, nargs, selfProvided, span)
         } else {
-            val possiblyCallable = callable.lookUp("__call__".metisValue())
-            if (possiblyCallable is CallableValue) {
-                callValue(possiblyCallable, nargs, selfProvided, span)
-            } else {
-                throw MetisRuntimeException(
-                    "TypeError",
-                    "Cannot call non-callable: ${stringify(callable)}",
-                    buildTable { table ->
-                        table["callable"] = callable
-                    }
-                )
-            }
+            metaCall(nargs, "__call__")
         }
     }
 
