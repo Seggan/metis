@@ -142,7 +142,25 @@ class Chunk(
     }
 
     override fun toString(): String {
-        return "Chunk(name='$name', insns=$insns)"
+        val lines = insns.withIndex().map { (i, insn) -> "$i: $insn" }
+        val padLength = lines.maxOf { it.length } + 1
+        return buildString {
+            append("=== ")
+            append(name)
+            appendLine(" ===")
+            for ((i, line) in lines.withIndex()) {
+                append(line.padEnd(padLength))
+                append(" (")
+                val span = spans[i]
+                append(span.start)
+                append("..")
+                append(span.end)
+                append("; ")
+                append(span)
+                append(')')
+                appendLine()
+            }
+        }
     }
 
     companion object {

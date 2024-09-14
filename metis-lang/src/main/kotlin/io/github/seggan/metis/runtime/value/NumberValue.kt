@@ -3,6 +3,7 @@ package io.github.seggan.metis.runtime.value
 import ch.obermuhlner.math.big.BigDecimalMath
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
+import io.github.seggan.metis.util.LazyVar
 import io.github.seggan.metis.util.isInteger
 import java.io.Serial
 import java.math.BigDecimal
@@ -24,7 +25,7 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
 
     class Int private constructor(val value: BigInteger) : NumberValue {
 
-        override var metatable = Companion.metatable
+        override var metatable by LazyVar { Companion.metatable }
 
         override fun plus(other: NumberValue): NumberValue = when (other) {
             is Int -> Int(value + other.value)
@@ -85,10 +86,11 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
             private const val serialVersionUID: Long = -3192086186905085639L
 
             private const val CACHE_SIZE = 256
-            private val CACHE = Array(CACHE_SIZE) { (it - CACHE_SIZE / 2).metis() }
+            private val HALF_CACHE_SIZE = (CACHE_SIZE / 2).toBigInteger()
+            private val CACHE = Array(CACHE_SIZE) { Int((it - CACHE_SIZE / 2).toBigInteger()) }
 
             operator fun invoke(value: BigInteger): Int = when {
-                value >= (-CACHE_SIZE / 2).toBigInteger() && value < (CACHE_SIZE / 2).toBigInteger() -> CACHE[value.toInt() + CACHE_SIZE / 2]
+                value >= -HALF_CACHE_SIZE && value < HALF_CACHE_SIZE -> CACHE[value.toInt() + CACHE_SIZE / 2]
                 else -> Int(value)
             }
 
