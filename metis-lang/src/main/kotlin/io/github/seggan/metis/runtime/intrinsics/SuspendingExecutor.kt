@@ -3,12 +3,13 @@ package io.github.seggan.metis.runtime.intrinsics
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.value.CallableValue
+import io.github.seggan.metis.runtime.value.NullValue
 import io.github.seggan.metis.runtime.value.Value
 import io.github.seggan.metis.util.push
 import java.io.Serial
 import kotlin.coroutines.*
 
-abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value> {
+abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?> {
 
     override val context = EmptyCoroutineContext
 
@@ -43,12 +44,12 @@ abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value> 
         }
     }
 
-    override fun resumeWith(result: Result<Value>) {
-        returnValue = result.getOrThrow()
+    override fun resumeWith(result: Result<Value?>) {
+        returnValue = result.getOrThrow() ?: NullValue
         currentState = ExecutionState.DONE
     }
 
-    abstract suspend fun NativeScope.execute(): Value
+    abstract suspend fun NativeScope.execute(): Value?
 
     private inner class NativeScopeImpl(override val state: State) : NativeScope {
         override suspend fun stepWith(result: StepResult) {

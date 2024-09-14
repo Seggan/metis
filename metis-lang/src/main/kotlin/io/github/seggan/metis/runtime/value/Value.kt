@@ -46,18 +46,7 @@ fun Value.getInHierarchy(key: Value): Value? {
     return getDirect(key) ?: metatable?.getInHierarchy(key)
 }
 
-fun Value.setInHierarchy(key: Value, value: Value): Boolean {
-    if (this === metatable) return setDirect(key, value)
-    return setDirect(key, value) || metatable?.setInHierarchy(key, value) ?: false
-}
-
-fun Value.setOrError(key: Value, value: Value) {
-    if (!setInHierarchy(key, value)) throw MetisRuntimeException(
-        "TypeError",
-        "Cannot set value on object of type ${metisTypeName(this::class)}",
-        mapOf("obj" to this, "key" to key, "value" to value).metis()
-    )
-}
+fun Value.orNull(): Value? = if (this == NullValue) null else this
 
 internal fun TableValue.useNativeToString() {
     this["__str__"] = oneArgFunction(true) { self ->

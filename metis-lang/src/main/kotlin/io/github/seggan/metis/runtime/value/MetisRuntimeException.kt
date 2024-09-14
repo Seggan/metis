@@ -2,7 +2,10 @@
 
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
+import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.MetisException
+import java.io.Serial
 
 /**
  * A runtime exception that can be thrown from Metis code.
@@ -12,7 +15,7 @@ import io.github.seggan.metis.util.MetisException
  * @param companionData The companion data of the exception.
  * @param cause The cause of the exception.
  */
-open class MetisRuntimeException(
+class MetisRuntimeException(
     val type: String,
     private val actualMessage: String,
     private val companionData: TableValue = TableValue(),
@@ -21,35 +24,36 @@ open class MetisRuntimeException(
 
     override var metatable: TableValue? = Companion.metatable
 
-    override fun lookUpDirect(key: Value): Value? {
-        if (key == messageString) return actualMessage.metisValue()
-        return companionData.lookUpDirect(key)
+    init {
+        companionData["type"] = type.metis()
+        companionData["message"] = actualMessage.metis()
     }
 
+    override fun getDirect(key: Value): Value? = companionData[key]
+
     override fun setDirect(key: Value, value: Value): Boolean {
-        if (key == messageString) throw MetisRuntimeException("IndexError", "Cannot set message of error")
+        if (key is StringValue) {
+            if (key.value == "type") return false
+            if (key.value == "message") return false
+        }
         return companionData.setDirect(key, value)
     }
 
     companion object {
-        val metatable = buildTable {
+        @Serial
+        private const val serialVersionUID: Long = -2267358319541695837L
+
+        val metatable by buildTableLazy { table ->
+            table.useReferentialEquality()
             table["__str__"] = oneArgFunction(true) { self ->
-                self.convertTo<MetisRuntimeException>().message!!.metisValue()
-            }
-            table["__call__"] = oneArgFunction(true) {
-                throw MetisRuntimeException("TypeError", "Cannot call error")
-            }
-            table["__eq__"] = twoArgFunction(true) { self, other ->
-                Value.Boolean.of(self === other)
+                self.convertTo<MetisRuntimeException>().message!!.metis()
             }
             table["__contains__"] = twoArgFunction(true) { self, key ->
-                Value.Boolean.of(self.lookUp(key) != null)
+                (self.getInHierarchy(key) != null).metis()
             }
         }
     }
 }
-
-private val messageString = StringValue("message")
 
 fun MetisValueError(
     obj: Value,
@@ -67,5 +71,18 @@ fun MetisTypeError(
     "TypeError",
     "Expected $expected, got $actual",
     companionData.also { it["expected"] = expected.metis(); it["actual"] = actual.metis() },
+    cause
+)
+
+fun MetisKeyError(
+    obj: Value,
+    key: Value,
+    message: String,
+    companionData: TableValue = TableValue(),
+    cause: Throwable? = null
+) = MetisRuntimeException(
+    "KeyError",
+    message,
+    companionData.also { it["obj"] = obj; it["key"] = key },
     cause
 )

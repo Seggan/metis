@@ -33,35 +33,33 @@ data class TableValue(
                 sb.append('{')
                 for ((key, value) in self.tableValue.entries) {
                     sb.append(", ")
-                    sb.append(key)
+                    sb.append(key.metisToString())
                     sb.append(" = ")
-                    sb.append(value)
+                    sb.append(value.metisToString())
                 }
                 sb.delete(sb.length - 2, sb.length)
                 sb.append('}')
                 sb.toString().metis()
             }
             table["__get__"] = twoArgFunction(true) { self, key ->
-                self.getInHierarchy(key) ?: throw MetisRuntimeException(
-                    "KeyError",
-                    "Key '${key}' not found in table",
-                    mapOf("obj" to self, "key" to key).metis()
-                )
+                self.getInHierarchy(key) ?: throw MetisKeyError(self, key, "Key '${key.metisToString()}' not found")
             }
             table["__set__"] = threeArgFunction(true) { self, key, value ->
-                self.setOrError(key, value)
-                NullValue
+                if (!self.setDirect(key, value)) {
+                    throw MetisKeyError(
+                        self,
+                        key,
+                        "Cannot set key '${key.metisToString()}' on value of type ${metisTypeName(self::class)}"
+                    )
+                }
+                null
             }
             table["size"] = oneArgFunction(true) { self -> self.tableValue.size.metis() }
-            table["__contains__"] = twoArgFunction(true) { self, key ->
-                (key in self.tableValue).metis()
-            }
+            table["__contains__"] = twoArgFunction(true) { self, key -> (key in self.tableValue).metis() }
+            table["keys"] = oneArgFunction(true) { self -> self.tableValue.keys.metis() }
+            table["values"] = oneArgFunction(true) { self -> self.tableValue.values.metis() }
             table["remove"] = twoArgFunction(true) { self, key ->
-                self.tableValue.remove(key) ?: throw MetisRuntimeException(
-                    "KeyError",
-                    "Key '${key}' not found in table",
-                    mapOf("obj" to self, "key" to key).metis()
-                )
+                self.tableValue.remove(key) ?: throw MetisKeyError(self, key, "Key '${key.metisToString()}' not found")
             }
 
             table.metatable = table

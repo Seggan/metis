@@ -1,5 +1,6 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import java.io.Serial
 
 class BooleanValue private constructor(val value: Boolean) : Value {
@@ -18,6 +19,8 @@ class BooleanValue private constructor(val value: Boolean) : Value {
         val metatable by buildTableLazy { table ->
             table.useNativeToString()
             table.useReferentialEquality()
+
+            table["parse"] = oneArgFunction { it.stringValue.toBoolean().metis() }
         }
     }
 

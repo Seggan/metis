@@ -132,6 +132,16 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
                 table["stringWithRadix"] = twoArgFunction(true) { self, radix ->
                     self.intValue.toString(radix.intValue.intValueExact()).metis()
                 }
+                table["parse"] = twoArgFunction { value, radix ->
+                    val trueRadix = radix.orNull()?.intValue?.intValueExact() ?: 10
+                    try {
+                        value.stringValue.toBigInteger(trueRadix).metis()
+                    } catch (e: NumberFormatException) {
+                        throw MetisValueError(value, "Invalid number format: ${value.metisToString()}")
+                    } catch (e: IllegalArgumentException) {
+                        throw MetisValueError(radix, "Invalid radix: ${radix.metisToString()}")
+                    }
+                }
             }
         }
 
