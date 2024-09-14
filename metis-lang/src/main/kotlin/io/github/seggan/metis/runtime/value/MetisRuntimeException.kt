@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package io.github.seggan.metis.runtime.value
 
 import io.github.seggan.metis.util.MetisException
@@ -48,3 +50,22 @@ open class MetisRuntimeException(
 }
 
 private val messageString = StringValue("message")
+
+fun MetisValueError(
+    obj: Value,
+    message: String,
+    companionData: TableValue = TableValue(),
+    cause: Throwable? = null
+) = MetisRuntimeException("ValueError", message, companionData.also { it["value"] = obj }, cause)
+
+fun MetisTypeError(
+    expected: String,
+    actual: String,
+    companionData: TableValue = TableValue(),
+    cause: Throwable? = null
+) = MetisRuntimeException(
+    "TypeError",
+    "Expected $expected, got $actual",
+    companionData.also { it["expected"] = expected.metis(); it["actual"] = actual.metis() },
+    cause
+)

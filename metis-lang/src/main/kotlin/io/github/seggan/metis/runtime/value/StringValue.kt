@@ -10,3 +10,5 @@ data class StringValue(val value: String) : Value {
 }
 
 fun String.metis() = StringValue(this)
+
+val Value.stringValue get() = convertTo<StringValue>().value

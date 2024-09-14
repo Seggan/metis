@@ -1,5 +1,7 @@
 package io.github.seggan.metis.util
 
+import java.math.BigDecimal
+
 /**
  * Converts string escapes to their actual characters.
  *
@@ -37,3 +39,5 @@ fun String.escape(): String {
     }
     return sb.toString()
 }
+
+val BigDecimal.isInteger: Boolean get() = stripTrailingZeros().scale() <= 0

@@ -3,6 +3,10 @@ plugins {
     `maven-publish`
 }
 
+dependencies {
+    implementation("ch.obermuhlner:big-math:2.3.2")
+}
+
 tasks.dokkaHtml {
     moduleName.set("metis-lang")
     outputDirectory.set(rootDir.resolve("gendocs/javadocs"))

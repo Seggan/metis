@@ -44,6 +44,10 @@ class State {
         callStack.push(CallFrame(callable.call(), stack.size))
     }
 
+    fun metaCall(nargs: Int, metamethod: String) {
+        TODO()
+    }
+
     fun not() {
         stack[0] = stack[0].convertTo<BooleanValue>().value.not().metis()
     }

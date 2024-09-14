@@ -4,6 +4,8 @@ import java.io.Serial
 
 class BooleanValue private constructor(val value: Boolean) : Value {
 
+    override var metatable = Companion.metatable
+
     companion object {
         @Serial
         private const val serialVersionUID: Long = 7665977906852438519L
@@ -12,6 +14,11 @@ class BooleanValue private constructor(val value: Boolean) : Value {
         val FALSE = BooleanValue(false)
 
         fun of(value: Boolean) = if (value) TRUE else FALSE
+
+        val metatable by buildTableLazy { table ->
+            table.useNativeToString()
+            table.useReferentialEquality()
+        }
     }
 
     override fun toString() = value.toString()
@@ -22,3 +29,5 @@ class BooleanValue private constructor(val value: Boolean) : Value {
 }
 
 fun Boolean.metis() = BooleanValue.of(this)
+
+val Value.booleanValue get() = convertTo<BooleanValue>().value
