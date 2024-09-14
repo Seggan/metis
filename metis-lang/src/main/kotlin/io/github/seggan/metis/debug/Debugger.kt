@@ -111,7 +111,7 @@ class Debugger(private val state: State, private val sourceName: String) {
 
     private fun printStacktrace(state: State) {
         println(state.debugInfo?.span?.fancyToString() ?: "<unknown>")
-        val it = state.callStack.reversed().iterator()
+        val it = state.callStack.iterator()
         while (it.hasNext()) {
             val span = it.next().span
             if (!it.hasNext()) break

@@ -2,9 +2,11 @@ package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.MetisCompiler
+import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.MetisLexer
 import io.github.seggan.metis.parsing.MetisParser
+import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.value.*
 import io.github.seggan.metis.util.peek
@@ -15,8 +17,19 @@ import java.io.Serial
 class Chunk(
     private val name: String,
     override val arity: CallableValue.Arity,
-    private val insns: List<FullInsn>
+    insns: List<FullInsn>
 ) : CallableValue {
+
+    override var metatable: TableValue? = mapOf("__str__" to name.metis()).metis()
+
+    private val insns: List<Insn>
+    private val spans: List<Span>
+
+    init {
+        val unzipped = insns.unzip()
+        this.insns = unzipped.first
+        this.spans = unzipped.second
+    }
 
     @Suppress("serial")
     override fun call(): CallableValue.Executor = object : CallableValue.Executor {
@@ -25,8 +38,39 @@ class Chunk(
 
         private lateinit var saved: Value
 
+        private var justHitBreakpoint = false
+
         override fun step(state: State): StepResult {
-            val (insn, span) = insns[ip]
+            if (ip >= insns.size) return StepResult.Finished
+            val insn = insns[ip]
+            if (state.debugMode) {
+                val span = spans[ip]
+                if (!justHitBreakpoint) {
+                    if (state.breakpoints.any { it.isInSpan(span) }) {
+                        println("Hit breakpoint at ${span.source.name}:${span.line}")
+                        println(span.fancyToString())
+                        justHitBreakpoint = true
+                        return StepResult.Breakpoint
+                    }
+                } else {
+                    justHitBreakpoint = false
+                }
+                state.debugInfo = DebugInfo(span, insn)
+            }
+
+            try {
+                return stepImpl(state, insn).also { ip++ }
+            } catch (e: MetisRuntimeException) {
+                e.addStackFrame(spans[ip])
+                throw e
+            } catch (e: RuntimeException) {
+                val err = MetisRuntimeException("InternalError", e.message ?: "Unknown error", cause = e)
+                err.addStackFrame(spans[ip])
+                throw err
+            }
+        }
+
+        private fun stepImpl(state: State, insn: Insn): StepResult {
             when (insn) {
                 is Insn.Push -> state.stack.push(insn.value)
                 is Insn.Pop -> state.stack.pop()
@@ -84,15 +128,15 @@ class Chunk(
                 is Insn.Save -> saved = state.stack.pop()
                 is Insn.Return -> {
                     state.stack.push(saved)
+                    ip = insns.size
                     return StepResult.Finished
                 }
 
                 is Insn.Is -> state.stack.push(BooleanValue.of(state.stack.pop() === state.stack.pop()))
                 is Insn.Not -> state.not()
 
-                is Insn.IllegalInsn -> throw IllegalStateException("Illegal instruction: $insn at $span")
+                is Insn.IllegalInsn -> throw IllegalStateException("Illegal instruction: $insn at ${spans[ip]}")
             }
-            ip++
             return StepResult.Continue
         }
     }

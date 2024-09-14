@@ -14,6 +14,7 @@ import io.github.seggan.metis.parsing.MetisLexer
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.util.MetisException
+import io.github.seggan.metis.util.push
 import org.unbescape.html.HtmlEscape
 import kotlin.io.path.absolutePathString
 
@@ -57,7 +58,7 @@ private object Main : CliktCommand(name = "metis") {
                 val state = State()
                 state.loadCoreGlobals()
                 state.loadStandardLibrary()
-                state.loadChunk(chunk)
+                state.stack.push(chunk)
                 state.call(0)
                 if (debug) {
                     Debugger(state, source.name).debug()

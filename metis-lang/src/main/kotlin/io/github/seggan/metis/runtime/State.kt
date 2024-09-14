@@ -1,6 +1,8 @@
 package io.github.seggan.metis.runtime
 
-import io.github.seggan.metis.runtime.chunk.Chunk
+import io.github.seggan.metis.debug.Breakpoint
+import io.github.seggan.metis.debug.DebugInfo
+import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.value.*
 import io.github.seggan.metis.util.Stack
@@ -12,10 +14,14 @@ class State {
 
     val stack = Stack()
 
-    private val callStack = ArrayDeque<CallFrame>()
+    internal val callStack = ArrayDeque<CallFrame>()
     val stackBottom get() = callStack.peek().stackBottom
 
     val globals = TableValue()
+
+    var debugInfo: DebugInfo? = null
+    var debugMode = false
+    val breakpoints = mutableListOf<Breakpoint>()
 
     fun loadCoreGlobals() {
         // TODO
@@ -23,10 +29,6 @@ class State {
 
     fun loadStandardLibrary() {
         // TODO
-    }
-
-    fun loadChunk(chunk: Chunk) {
-        stack.push(chunk)
     }
 
     fun stepOnce(): StepResult {
@@ -39,9 +41,15 @@ class State {
         return result
     }
 
-    fun call(nargs: Int, selfProvided: Boolean = false) {
+    fun runTillComplete() {
+        while (stepOnce() != StepResult.Finished) {
+            // side effects go brr
+        }
+    }
+
+    fun call(nargs: Int, selfProvided: Boolean = false, span: Span? = null) {
         val callable = stack.pop().convertTo<CallableValue>()
-        callStack.push(CallFrame(callable.call(), stack.size))
+        callStack.push(CallFrame(callable.call(), stack.size, span))
     }
 
     fun metaCall(nargs: Int, metamethod: String) {
@@ -53,4 +61,8 @@ class State {
     }
 }
 
-private data class CallFrame(val executor: CallableValue.Executor, val stackBottom: Int)
+internal data class CallFrame(
+    val executor: CallableValue.Executor,
+    val stackBottom: Int,
+    val span: Span?
+)

@@ -77,7 +77,10 @@ data class TableValue(
     }
 }
 
+@JvmName("metisValueMap")
 fun Map<Value, Value>.metis() = TableValue(toMutableMap())
+
+@JvmName("metisStringMap")
 fun Map<String, Value>.metis() = TableValue(mapKeys { it.key.metis() }.toMutableMap())
 
 val Value.tableValue get() = convertTo<TableValue>()
