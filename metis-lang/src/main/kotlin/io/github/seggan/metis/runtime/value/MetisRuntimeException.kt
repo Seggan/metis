@@ -2,6 +2,7 @@
 
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.MetisException
@@ -45,10 +46,10 @@ class MetisRuntimeException(
 
         val metatable by buildTableLazy { table ->
             table.useReferentialEquality()
-            table["__str__"] = oneArgFunction(true) { self ->
+            table[Metamethod.TO_STRING] = oneArgFunction(true) { self ->
                 self.convertTo<MetisRuntimeException>().message!!.metis()
             }
-            table["__contains__"] = twoArgFunction(true) { self, key ->
+            table[Metamethod.CONTAINS] = twoArgFunction(true) { self, key ->
                 (self.getInHierarchy(key) != null).metis()
             }
         }

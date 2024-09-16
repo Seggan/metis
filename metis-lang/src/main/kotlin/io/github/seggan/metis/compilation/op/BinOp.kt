@@ -3,29 +3,29 @@ package io.github.seggan.metis.compilation.op
 import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.InsnsBuilder
 import io.github.seggan.metis.runtime.chunk.Insn
-import io.github.seggan.metis.runtime.value.NullValue
+import io.github.seggan.metis.runtime.value.Value
 import io.github.seggan.metis.runtime.value.metis
 
 enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
-    PLUS("__plus__"),
-    MINUS("__minus__"),
-    TIMES("__times__"),
-    DIV("__div__"),
-    FLOORDIV("__floordiv__"),
-    MOD("__mod__"),
-    POW("__pow__"),
-    RANGE("__range__"),
-    INCLUSIVE_RANGE("__inclRange__"),
-    BAND("__band__"),
-    BOR("__bor__"),
-    BXOR("__bxor__"),
-    SHL("__shl__"),
-    SHR("__shr__"),
-    SHRU("__shru__"),
+    PLUS(Metamethod.PLUS),
+    MINUS(Metamethod.MINUS),
+    TIMES(Metamethod.TIMES),
+    DIV(Metamethod.DIV),
+    FLOORDIV(Metamethod.FLOORDIV),
+    MOD(Metamethod.MOD),
+    POW(Metamethod.POW),
+    RANGE(Metamethod.RANGE),
+    INCLUSIVE_RANGE(Metamethod.INCLUSIVE_RANGE),
+    BIT_AND(Metamethod.BIT_AND),
+    BIT_OR(Metamethod.BIT_OR),
+    BIT_XOR(Metamethod.BIT_XOR),
+    SHL(Metamethod.SHL),
+    SHR(Metamethod.SHR),
+    SHRU(Metamethod.USHR),
     IN({ left, right ->
         +right
         +left
-        +Insn.MetaCall(1, "__contains__")
+        +Insn.MetaCall(1, Metamethod.CONTAINS)
     }),
     NOT_IN(IN),
     IS({ left, right ->
@@ -34,7 +34,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +Insn.Is
     }),
     IS_NOT(IS),
-    EQ("__eq__"),
+    EQ(Metamethod.EQUALS),
     NOT_EQ(EQ),
     LESS(-1),
     LESS_EQ(1, true),
@@ -59,7 +59,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     ELVIS({ left, right ->
         +left
         +Insn.CopyUnder(0)
-        +Insn.Push(NullValue)
+        +Insn.Push(Value.Null)
         +Insn.Is
         val end = Insn.Label()
         +Insn.RawJumpIf(end, condition = false)
@@ -82,10 +82,10 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     constructor(number: Int, inverse: Boolean = false) : this({ left, right ->
         +left
         +right
-        +Insn.MetaCall(1, "__cmp__")
+        +Insn.MetaCall(1, Metamethod.COMPARE)
         +Insn.Push(number)
         +Insn.CopyUnder(1)
-        +Insn.GetIndexDirect(eqString)
+        +Insn.GetIndexDirect(Metamethod.EQUALS.metis())
         +Insn.Call(2, true)
         if (inverse) {
             +Insn.Not
@@ -93,4 +93,3 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     })
 }
 
-private val eqString = "__eq__".metis()

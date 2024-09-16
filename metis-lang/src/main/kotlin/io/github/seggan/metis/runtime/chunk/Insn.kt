@@ -87,6 +87,18 @@ sealed interface Insn : Serializable {
         private fun readResolve(): Any = SetIndex
     }
 
+    data object GetMetatable : Insn {
+        @Serial
+        private const val serialVersionUID: Long = -5245828283200239656L
+        private fun readResolve(): Any = GetMetatable
+    }
+
+    data object SetMetatable : Insn {
+        @Serial
+        private const val serialVersionUID: Long = 329436542746925990L
+        private fun readResolve(): Any = SetMetatable
+    }
+
     data class Call(val nargs: Int, val selfProvided: Boolean) : Insn {
         companion object {
             @Serial

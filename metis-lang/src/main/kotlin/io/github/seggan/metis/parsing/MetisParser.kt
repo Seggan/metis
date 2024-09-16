@@ -6,9 +6,9 @@ import io.github.seggan.metis.compilation.op.BinOp
 import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.Token.Type.*
 import io.github.seggan.metis.runtime.value.BytesValue
-import io.github.seggan.metis.runtime.value.NullValue
 import io.github.seggan.metis.runtime.value.NumberValue
 import io.github.seggan.metis.runtime.value.StringValue
+import io.github.seggan.metis.runtime.value.Value
 import io.github.seggan.metis.util.escape
 import java.util.*
 
@@ -43,7 +43,7 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
         }
         val returnSpan = Span(0, tokens.lastOrNull()?.span?.end ?: 0, source)
         return AstNode.Block(
-            statements + AstNode.Return(AstNode.Literal(NullValue, returnSpan), returnSpan),
+            statements + AstNode.Return(AstNode.Literal(Value.Null, returnSpan), returnSpan),
             returnSpan
         )
     }
@@ -79,7 +79,7 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
 
     private fun parseReturn(): AstNode.Return {
         val startSpan = consume(RETURN).span
-        val expr = tryParse(::parseExpression) ?: AstNode.Literal(NullValue, startSpan)
+        val expr = tryParse(::parseExpression) ?: AstNode.Literal(Value.Null, startSpan)
         return AstNode.Return(expr, startSpan + expr.span)
     }
 
@@ -137,9 +137,9 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
         )
     )
 
-    private fun parseBitOr() = parseBinOp(::parseBitXor, mapOf(PIPE to BinOp.BOR))
-    private fun parseBitXor() = parseBinOp(::parseBitAnd, mapOf(CARET to BinOp.BXOR))
-    private fun parseBitAnd() = parseBinOp(::parseShift, mapOf(AMPERSAND to BinOp.BAND))
+    private fun parseBitOr() = parseBinOp(::parseBitXor, mapOf(PIPE to BinOp.BIT_OR))
+    private fun parseBitXor() = parseBinOp(::parseBitAnd, mapOf(CARET to BinOp.BIT_XOR))
+    private fun parseBitAnd() = parseBinOp(::parseShift, mapOf(AMPERSAND to BinOp.BIT_AND))
     private fun parseShift() = parseBinOp(
         ::parseAddition,
         mapOf(
@@ -175,7 +175,7 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
                 when (op.type) {
                     NOT -> UnOp.NOT
                     MINUS -> UnOp.NEG
-                    TILDE -> UnOp.BNOT
+                    TILDE -> UnOp.BIT_NOT
                     else -> throw AssertionError()
                 }, expr, op.span + expr.span
             )
@@ -321,7 +321,7 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
         } else parseBlock(END)
         if (block.lastOrNull() !is AstNode.Return) {
             val nodes = block.toMutableList()
-            nodes.add(AstNode.Return(AstNode.Literal(NullValue, block.span), block.span))
+            nodes.add(AstNode.Return(AstNode.Literal(Value.Null, block.span), block.span))
             block = AstNode.Block(nodes, block.span)
         }
         return AstNode.FunctionLiteral(args, block, name, startSpan + block.span)
@@ -367,7 +367,7 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
         return AstNode.VarDecl(
             visibility,
             name,
-            value ?: AstNode.Literal(NullValue, start.span + previous.span),
+            value ?: AstNode.Literal(Value.Null, start.span + previous.span),
             start.span + previous.span
         )
     }

@@ -1,5 +1,6 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.threeArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
@@ -28,7 +29,7 @@ data class TableValue(
 
         val metatable = TableValue(mutableMapOf(), null).also { table ->
             table.useNativeEquality()
-            table["__str__"] = oneArgFunction(true) { self ->
+            table[Metamethod.TO_STRING] = oneArgFunction(true) { self ->
                 val sb = StringBuilder()
                 sb.append('{')
                 for ((key, value) in self.tableValue.entries) {
@@ -41,10 +42,10 @@ data class TableValue(
                 sb.append('}')
                 sb.toString().metis()
             }
-            table["__get__"] = twoArgFunction(true) { self, key ->
+            table[Metamethod.GET] = twoArgFunction(true) { self, key ->
                 self.getInHierarchy(key) ?: throw MetisKeyError(self, key, "Key '${key.metisToString()}' not found")
             }
-            table["__set__"] = threeArgFunction(true) { self, key, value ->
+            table[Metamethod.SET] = threeArgFunction(true) { self, key, value ->
                 if (!self.setDirect(key, value)) {
                     throw MetisKeyError(
                         self,
@@ -55,7 +56,7 @@ data class TableValue(
                 null
             }
             table["size"] = oneArgFunction(true) { self -> self.tableValue.size.metis() }
-            table["__contains__"] = twoArgFunction(true) { self, key -> (key in self.tableValue).metis() }
+            table[Metamethod.CONTAINS] = twoArgFunction(true) { self, key -> (key in self.tableValue).metis() }
             table["keys"] = oneArgFunction(true) { self -> self.tableValue.keys.metis() }
             table["values"] = oneArgFunction(true) { self -> self.tableValue.values.metis() }
             table["remove"] = twoArgFunction(true) { self, key ->

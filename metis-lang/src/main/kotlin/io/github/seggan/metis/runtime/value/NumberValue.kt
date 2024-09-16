@@ -1,6 +1,7 @@
 package io.github.seggan.metis.runtime.value
 
 import ch.obermuhlner.math.big.BigDecimalMath
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.LazyVar
@@ -96,28 +97,28 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
 
             val metatable by buildTableLazy { table ->
                 superOps(table)
-                table["__floordiv__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.FLOORDIV] = twoArgFunction(true) { self, other ->
                     Int(self.intValue / other.intValue)
                 }
-                table["__band__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.BIT_AND] = twoArgFunction(true) { self, other ->
                     Int(self.intValue and other.intValue)
                 }
-                table["__bor__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.BIT_OR] = twoArgFunction(true) { self, other ->
                     Int(self.intValue or other.intValue)
                 }
-                table["__bxor__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.BIT_XOR] = twoArgFunction(true) { self, other ->
                     Int(self.intValue xor other.intValue)
                 }
-                table["__bnot__"] = oneArgFunction(true) { self ->
+                table[Metamethod.BIT_NOT] = oneArgFunction(true) { self ->
                     Int(self.intValue.inv())
                 }
-                table["__shl__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.SHL] = twoArgFunction(true) { self, other ->
                     Int(self.intValue shl other.intValue.intValueExact())
                 }
-                table["__shr__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.SHR] = twoArgFunction(true) { self, other ->
                     Int(self.intValue shr other.intValue.intValueExact())
                 }
-                table["__shru__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.USHR] = twoArgFunction(true) { self, other ->
                     val start = self.intValue
                     if (start.signum() == 0) return@twoArgFunction self
 
@@ -209,7 +210,7 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
 
             val metatable by buildTableLazy { table ->
                 superOps(table)
-                table["__floordiv__"] = twoArgFunction(true) { self, other ->
+                table[Metamethod.FLOORDIV] = twoArgFunction(true) { self, other ->
                     Float(self.floatValue.divideToIntegralValue(other.floatValue))
                 }
                 table["parse"] = oneArgFunction(true) { self ->
@@ -238,25 +239,28 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
         private fun superOps(table: TableValue) {
             table.useNativeEquality()
             table.useNativeToString()
-            table["__plus__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.PLUS] = twoArgFunction(true) { self, other ->
                 self.numberValue + other.numberValue
             }
-            table["__minus__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.MINUS] = twoArgFunction(true) { self, other ->
                 self.numberValue - other.numberValue
             }
-            table["__times__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.TIMES] = twoArgFunction(true) { self, other ->
                 self.numberValue * other.numberValue
             }
-            table["__div__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.DIV] = twoArgFunction(true) { self, other ->
                 self.numberValue / other.numberValue
             }
-            table["__mod__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.MOD] = twoArgFunction(true) { self, other ->
                 self.numberValue % other.numberValue
             }
-            table["__neg__"] = oneArgFunction(true) { self ->
+            table[Metamethod.POW] = twoArgFunction(true) { self, other ->
+                self.numberValue.pow(other.numberValue)
+            }
+            table[Metamethod.NEGATE] = oneArgFunction(true) { self ->
                 -self.numberValue
             }
-            table["__cmp__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.COMPARE] = twoArgFunction(true) { self, other ->
                 self.numberValue.compareTo(other.numberValue).metis()
             }
         }

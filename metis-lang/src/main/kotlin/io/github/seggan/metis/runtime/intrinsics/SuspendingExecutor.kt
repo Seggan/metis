@@ -3,7 +3,6 @@ package io.github.seggan.metis.runtime.intrinsics
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.value.CallableValue
-import io.github.seggan.metis.runtime.value.NullValue
 import io.github.seggan.metis.runtime.value.Value
 import io.github.seggan.metis.util.push
 import java.io.Serial
@@ -45,7 +44,7 @@ abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?>
     }
 
     override fun resumeWith(result: Result<Value?>) {
-        returnValue = result.getOrThrow() ?: NullValue
+        returnValue = result.getOrThrow() ?: Value.Null
         currentState = ExecutionState.DONE
     }
 
@@ -60,14 +59,14 @@ abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?>
         }
     }
 
-    private enum class ExecutionState {
-        NOT_STARTED,
-        RUNNING,
-        DONE
-    }
-
     companion object {
         @Serial
         private const val serialVersionUID: Long = 8946074591453746488L
     }
+}
+
+private enum class ExecutionState {
+    NOT_STARTED,
+    RUNNING,
+    DONE
 }

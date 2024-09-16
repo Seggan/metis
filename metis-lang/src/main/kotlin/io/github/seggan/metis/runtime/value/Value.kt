@@ -1,5 +1,6 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import java.io.Serial
@@ -14,22 +15,22 @@ sealed interface Value : Serializable {
 
     fun getDirect(key: Value): Value? = null
     fun setDirect(key: Value, value: Value): Boolean = false
-}
 
-object NullValue : Value {
+    object Null : Value {
 
-    override var metatable: TableValue? = buildTable { table ->
-        table["__str__"] = oneArgFunction(true) { selfString }
-        table.useReferentialEquality()
+        override var metatable: TableValue? = buildTable { table ->
+            table[Metamethod.TO_STRING] = oneArgFunction(true) { selfString }
+            table.useReferentialEquality()
+        }
+
+        private val selfString = "null".metis()
+
+        @Serial
+        private const val serialVersionUID: Long = 3286383784003129982L
+
+        private fun readResolve(): Any = Null
+        override fun toString(): String = "null"
     }
-
-    private val selfString = "null".metis()
-
-    @Serial
-    private const val serialVersionUID: Long = 3286383784003129982L
-
-    private fun readResolve(): Any = NullValue
-    override fun toString(): String = "null"
 }
 
 @OptIn(ExperimentalContracts::class)
@@ -46,22 +47,20 @@ fun Value.getInHierarchy(key: Value): Value? {
     return getDirect(key) ?: metatable?.getInHierarchy(key)
 }
 
-fun Value.orNull(): Value? = if (this == NullValue) null else this
+fun Value.orNull(): Value? = if (this === Value.Null) null else this
 
 internal fun TableValue.useNativeToString() {
-    this["__str__"] = oneArgFunction(true) { self ->
-        self.toString().metis()
-    }
+    this[Metamethod.TO_STRING] = oneArgFunction(true) { it.toString().metis() }
 }
 
 internal fun TableValue.useReferentialEquality() {
-    this["__eq__"] = twoArgFunction(true) { self, other ->
+    this[Metamethod.EQUALS] = twoArgFunction(true) { self, other ->
         (self === other).metis()
     }
 }
 
 internal fun TableValue.useNativeEquality() {
-    this["__eq__"] = twoArgFunction(true) { self, other ->
+    this[Metamethod.EQUALS] = twoArgFunction(true) { self, other ->
         (self == other).metis()
     }
 }
@@ -72,7 +71,7 @@ fun metisTypeName(clazz: KClass<out Value>): String = when (clazz) {
     StringValue::class -> "string"
     TableValue::class -> "table"
     BooleanValue::class -> "boolean"
-    NullValue::class -> "null"
+    Value.Null::class -> "null"
     MetisRuntimeException::class -> "error"
     else -> if (CallableValue::class.java.isAssignableFrom(clazz.java)) "function"
     else clazz.simpleName ?: "unknown"

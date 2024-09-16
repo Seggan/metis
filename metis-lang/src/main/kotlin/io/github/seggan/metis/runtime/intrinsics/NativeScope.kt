@@ -1,5 +1,6 @@
 package io.github.seggan.metis.runtime.intrinsics
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.value.Value
@@ -17,7 +18,7 @@ interface NativeScope {
 
     suspend fun Value.metisToString(): String {
         state.stack.push(this)
-        state.metaCall(0, "__str__")
+        state.metaCall(0, Metamethod.TO_STRING)
         stepWith(StepResult.Continue)
         return state.stack.pop().stringValue
     }

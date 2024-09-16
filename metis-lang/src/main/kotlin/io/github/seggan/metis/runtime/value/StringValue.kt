@@ -1,13 +1,15 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.threeArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.LazyVar
 import java.io.Serial
 import java.nio.charset.Charset
+import java.util.*
 
-data class StringValue(val value: String) : Value {
+class StringValue private constructor(val value: String) : Value {
 
     override var metatable: TableValue? by LazyVar { Companion.metatable }
 
@@ -24,17 +26,23 @@ data class StringValue(val value: String) : Value {
         @Serial
         private const val serialVersionUID: Long = -2065581470768471818L
 
+        private val internMap = WeakHashMap<String, StringValue>()
+
+        operator fun invoke(value: String): StringValue {
+            return internMap.computeIfAbsent(value, ::StringValue)
+        }
+
         val metatable by buildTableLazy { table ->
             table.useNativeToString()
             table.useNativeEquality()
-            table["__plus__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.PLUS] = twoArgFunction(true) { self, other ->
                 (self.stringValue + other.stringValue).metis()
             }
             table["size"] = oneArgFunction(true) { self -> self.stringValue.length.metis() }
-            table["__contains__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.CONTAINS] = twoArgFunction(true) { self, other ->
                 self.stringValue.contains(other.stringValue).metis()
             }
-            table["__cmp__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.COMPARE] = twoArgFunction(true) { self, other ->
                 self.stringValue.compareTo(other.stringValue).metis()
             }
             table["encode"] = twoArgFunction(true) { self, encoding ->
@@ -76,6 +84,13 @@ data class StringValue(val value: String) : Value {
     }
 
     override fun toString(): String = value
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is StringValue && value == other.value
+    }
+
+    override fun hashCode(): Int = value.hashCode()
 }
 
 fun String.metis() = StringValue(this)

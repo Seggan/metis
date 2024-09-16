@@ -1,5 +1,6 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.threeArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
@@ -33,7 +34,7 @@ data class BytesValue(val value: ByteArray) : Value {
 
         val metatable by buildTableLazy { table ->
             table.useNativeEquality()
-            table["__str__"] = oneArgFunction(true) { self ->
+            table[Metamethod.TO_STRING] = oneArgFunction(true) { self ->
                 val sb = StringBuilder()
                 sb.append('\'')
                 for (byte in self.bytesValue) {
@@ -48,10 +49,10 @@ data class BytesValue(val value: ByteArray) : Value {
                 sb.toString().metis()
             }
             table["size"] = oneArgFunction(true) { it.bytesValue.size.metis() }
-            table["__contains__"] = twoArgFunction(true) { self, value ->
+            table[Metamethod.CONTAINS] = twoArgFunction(true) { self, value ->
                 self.bytesValue.contains(value.intValue.byteValueExact()).metis()
             }
-            table["__band__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.BIT_AND] = twoArgFunction(true) { self, other ->
                 val selfBytes = self.bytesValue
                 val otherBytes = other.bytesValue
                 if (selfBytes.size != otherBytes.size) {
@@ -59,7 +60,7 @@ data class BytesValue(val value: ByteArray) : Value {
                 }
                 ByteArray(selfBytes.size) { index -> selfBytes[index] and otherBytes[index] }.metis()
             }
-            table["__bor__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.BIT_OR] = twoArgFunction(true) { self, other ->
                 val selfBytes = self.bytesValue
                 val otherBytes = other.bytesValue
                 if (selfBytes.size != otherBytes.size) {
@@ -67,7 +68,7 @@ data class BytesValue(val value: ByteArray) : Value {
                 }
                 ByteArray(selfBytes.size) { index -> selfBytes[index] or otherBytes[index] }.metis()
             }
-            table["__bxor__"] = twoArgFunction(true) { self, other ->
+            table[Metamethod.BIT_XOR] = twoArgFunction(true) { self, other ->
                 val selfBytes = self.bytesValue
                 val otherBytes = other.bytesValue
                 if (selfBytes.size != otherBytes.size) {
@@ -75,7 +76,7 @@ data class BytesValue(val value: ByteArray) : Value {
                 }
                 ByteArray(selfBytes.size) { index -> selfBytes[index] xor otherBytes[index] }.metis()
             }
-            table["__bnot__"] = oneArgFunction(true) { self ->
+            table[Metamethod.BIT_NOT] = oneArgFunction(true) { self ->
                 val selfBytes = self.bytesValue
                 ByteArray(selfBytes.size) { index -> selfBytes[index].inv() }.metis()
             }
