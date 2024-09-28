@@ -61,42 +61,16 @@ sealed interface Insn : Serializable {
         }
     }
 
-    data class GetIndexDirect(val key: Value) : Insn {
-        companion object {
-            @Serial
-            private const val serialVersionUID: Long = 994767372474558036L
-        }
-    }
-
     data object GetIndex : Insn {
         @Serial
         private const val serialVersionUID: Long = 8772037543541626775L
         private fun readResolve(): Any = GetIndex
     }
 
-    data class SetIndexDirect(val key: Value) : Insn {
-        companion object {
-            @Serial
-            private const val serialVersionUID: Long = 6236289749921918409L
-        }
-    }
-
     data object SetIndex : Insn {
         @Serial
         private const val serialVersionUID: Long = -3869441033433834753L
         private fun readResolve(): Any = SetIndex
-    }
-
-    data object GetMetatable : Insn {
-        @Serial
-        private const val serialVersionUID: Long = -5245828283200239656L
-        private fun readResolve(): Any = GetMetatable
-    }
-
-    data object SetMetatable : Insn {
-        @Serial
-        private const val serialVersionUID: Long = 329436542746925990L
-        private fun readResolve(): Any = SetMetatable
     }
 
     data class Call(val nargs: Int, val selfProvided: Boolean) : Insn {

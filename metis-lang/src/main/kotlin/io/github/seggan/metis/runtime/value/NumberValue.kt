@@ -26,7 +26,7 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
 
     class Int private constructor(val value: BigInteger) : NumberValue {
 
-        override var metatable by LazyVar { Companion.metatable }
+        override var metatable: TableValue? by LazyVar { Companion.metatable }
 
         override fun plus(other: NumberValue): NumberValue = when (other) {
             is Int -> Int(value + other.value)
@@ -162,7 +162,7 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
 
     class Float(val value: BigDecimal) : NumberValue {
 
-        override var metatable = Companion.metatable
+        override var metatable: TableValue? = Companion.metatable
 
         override fun plus(other: NumberValue): NumberValue = when (other) {
             is Int -> this + other.toFloat()
@@ -270,9 +270,9 @@ sealed interface NumberValue : Value, Comparable<NumberValue> {
 fun BigInteger.metis() = NumberValue.Int(this)
 fun BigDecimal.metis() = NumberValue.Float(this)
 
-val Value.intValue get() = convertTo<NumberValue>().toInteger().value
-val Value.floatValue get() = convertTo<NumberValue>().toFloat().value
-val Value.numberValue get() = convertTo<NumberValue>()
+val Value.intValue get() = into<NumberValue>().toInteger().value
+val Value.floatValue get() = into<NumberValue>().toFloat().value
+val Value.numberValue get() = into<NumberValue>()
 
 fun Int.metis() = toBigInteger().metis()
 fun Long.metis() = toBigInteger().metis()

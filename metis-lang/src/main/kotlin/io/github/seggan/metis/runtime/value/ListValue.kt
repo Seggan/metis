@@ -106,4 +106,4 @@ data class ListValue(
 
 fun Collection<Value>.metis() = ListValue(this.toMutableList())
 
-val Value.listValue get() = convertTo<ListValue>()
+val Value.listValue get() = into<ListValue>()

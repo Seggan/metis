@@ -13,7 +13,7 @@ import kotlin.experimental.xor
 
 data class BytesValue(val value: ByteArray) : Value {
 
-    override var metatable = Companion.metatable
+    override var metatable: TableValue? = Companion.metatable
 
     override fun getDirect(key: Value): Value? = when (key) {
         is NumberValue.Int -> value.getOrNull(key.intValue.intValueExact())?.toInt()?.metis()
@@ -123,4 +123,4 @@ data class BytesValue(val value: ByteArray) : Value {
 
 fun ByteArray.metis() = BytesValue(this)
 
-val Value.bytesValue get() = convertTo<BytesValue>().value
+val Value.bytesValue get() = into<BytesValue>().value

@@ -34,9 +34,9 @@ sealed interface Value : Serializable {
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <reified T : Value> Value.convertTo(): T {
+inline fun <reified T : Value> Value.into(): T {
     contract {
-        returns() implies (this@convertTo is T)
+        returns() implies (this@into is T)
     }
     if (this is T) return this
     throw MetisTypeError(metisTypeName(T::class), metisTypeName(this::class))

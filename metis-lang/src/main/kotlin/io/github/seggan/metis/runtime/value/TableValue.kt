@@ -84,7 +84,7 @@ fun Map<Value, Value>.metis() = TableValue(toMutableMap())
 @JvmName("metisStringMap")
 fun Map<String, Value>.metis() = TableValue(mapKeys { it.key.metis() }.toMutableMap())
 
-val Value.tableValue get() = convertTo<TableValue>()
+val Value.tableValue get() = into<TableValue>()
 
 inline fun buildTable(builder: (TableValue) -> Unit) =
     TableValue()
@@ -93,4 +93,4 @@ inline fun buildTable(builder: (TableValue) -> Unit) =
             if (it.metatable == null) throw AssertionError("Table metatable is null")
         }
 
-fun buildTableLazy(builder: (TableValue) -> Unit): LazyVar<TableValue?> = LazyVar { buildTable(builder) }
+fun buildTableLazy(builder: (TableValue) -> Unit): LazyVar<TableValue> = LazyVar { buildTable(builder) }

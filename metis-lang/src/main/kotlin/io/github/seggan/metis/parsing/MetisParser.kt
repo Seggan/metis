@@ -261,7 +261,7 @@ class MetisParser private constructor(tokens: List<Token>, private val source: C
     private fun parseString(): AstNode.Literal {
         val token = consume(STRING)
         val text = token.text.substring(1, token.text.length - 1).escape()
-        val value = stringConstantPool.computeIfAbsent(text, ::StringValue)
+        val value = stringConstantPool.computeIfAbsent(text, StringValue::invoke)
         return AstNode.Literal(value, token.span)
     }
 

@@ -4,7 +4,6 @@ import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.InsnsBuilder
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.value.Value
-import io.github.seggan.metis.runtime.value.metis
 
 enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
     PLUS(Metamethod.PLUS),
@@ -84,9 +83,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
         +right
         +Insn.MetaCall(1, Metamethod.COMPARE)
         +Insn.Push(number)
-        +Insn.CopyUnder(1)
-        +Insn.GetIndexDirect(Metamethod.EQUALS.metis())
-        +Insn.Call(2, true)
+        +Insn.MetaCall(1, Metamethod.EQUALS)
         if (inverse) {
             +Insn.Not
         }

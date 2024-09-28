@@ -2,6 +2,7 @@ package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.MetisCompiler
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.MetisLexer
@@ -20,7 +21,7 @@ class Chunk(
     insns: List<FullInsn>
 ) : CallableValue {
 
-    override var metatable: TableValue? = mapOf("__str__" to name.metis()).metis()
+    override var metatable: TableValue? = mapOf(Metamethod.TO_STRING to name.metis()).metis()
 
     private val insns: List<Insn>
     private val spans: List<Span>
@@ -94,29 +95,16 @@ class Chunk(
                     state.globals[insn.name] = state.stack.pop()
                 }
 
-                is Insn.GetIndexDirect -> {
-                    TODO()
-                }
+                is Insn.GetIndex -> state.getIndex()
+                is Insn.SetIndex -> state.setIndex()
 
-                is Insn.GetIndex -> {
-                    TODO()
-                }
-
-                is Insn.SetIndexDirect -> {
-                    TODO()
-                }
-
-                is Insn.SetIndex -> {
-                    TODO()
-                }
-
-                is Insn.Call -> state.call(insn.nargs, insn.selfProvided)
-                is Insn.MetaCall -> TODO()
+                is Insn.Call -> state.call(insn.nargs, insn.selfProvided, spans[ip])
+                is Insn.MetaCall -> state.metaCall(insn.nargs, insn.meta, spans[ip])
 
                 is Insn.DirectJump -> ip = insn.target
                 is Insn.JumpIf -> {
                     val value = if (insn.consume) state.stack.pop() else state.stack.peek()
-                    if (value.convertTo<BooleanValue>().value == insn.condition) {
+                    if (value.into<BooleanValue>().value == insn.condition) {
                         ip = insn.target
                     }
                 }

@@ -7,7 +7,6 @@ import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.value.CallableValue
-import io.github.seggan.metis.runtime.value.metis
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
@@ -128,7 +127,10 @@ class MetisCompiler private constructor(
             }
 
             is AstNode.Index -> {
-                chooseIndexOp(target.index, compileExpression(target.target), IndexOperation.SET)
+                +compileExpression(target.target)
+                +compileExpression(target.index)
+                +compileExpression(assignment.value)
+                +Insn.SetIndex
             }
         }
     }
@@ -173,7 +175,9 @@ class MetisCompiler private constructor(
             }
 
             is AstNode.Index -> buildInsns(expression.span) {
-                chooseIndexOp(expression.index, compileExpression(expression.target), IndexOperation.GET)
+                +compileExpression(expression.target)
+                +compileExpression(expression.index)
+                +Insn.GetIndex
             }
 
             is AstNode.Var -> buildInsns(expression.span) {
@@ -199,7 +203,8 @@ class MetisCompiler private constructor(
                     +compileExpression(arg)
                 }
                 +Insn.CopyUnder(args.size)
-                +Insn.GetIndexDirect(expression.name.metis())
+                +Insn.Push(expression.name)
+                +Insn.GetIndex
                 +Insn.Call(expression.args.size + 1, true)
             }
 
@@ -224,34 +229,11 @@ class MetisCompiler private constructor(
         return locals.firstOrNull { it.name == name }
     }
 
-    private fun InsnsBuilder.chooseIndexOp(expr: AstNode.Expression, value: List<FullInsn>, op: IndexOperation) {
-        if (expr is AstNode.Literal) {
-            +value
-            if (op == IndexOperation.SET) {
-                +Insn.SetIndexDirect(expr.value)
-            } else {
-                +Insn.GetIndexDirect(expr.value)
-            }
-        } else {
-            +compileExpression(expr)
-            +value
-            if (op == IndexOperation.SET) {
-                +Insn.SetIndex
-            } else {
-                +Insn.GetIndex
-            }
-        }
-    }
-
     companion object {
         fun compile(name: String, code: AstNode.Block): Chunk {
             return MetisCompiler(listOf(), name).compileCode(code)
         }
     }
-}
-
-private enum class IndexOperation {
-    GET, SET
 }
 
 private data class Loop(val start: Insn.Label, val end: Insn.Label, val scope: Int)

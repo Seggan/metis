@@ -95,4 +95,4 @@ class StringValue private constructor(val value: String) : Value {
 
 fun String.metis() = StringValue(this)
 
-val Value.stringValue get() = convertTo<StringValue>().value
+val Value.stringValue get() = into<StringValue>().value

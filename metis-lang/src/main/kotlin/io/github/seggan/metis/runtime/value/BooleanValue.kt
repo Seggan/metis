@@ -5,7 +5,7 @@ import java.io.Serial
 
 class BooleanValue private constructor(val value: Boolean) : Value {
 
-    override var metatable = Companion.metatable
+    override var metatable: TableValue? = Companion.metatable
 
     companion object {
         @Serial
@@ -33,4 +33,4 @@ class BooleanValue private constructor(val value: Boolean) : Value {
 
 fun Boolean.metis() = BooleanValue.of(this)
 
-val Value.booleanValue get() = convertTo<BooleanValue>().value
+val Value.booleanValue get() = into<BooleanValue>().value

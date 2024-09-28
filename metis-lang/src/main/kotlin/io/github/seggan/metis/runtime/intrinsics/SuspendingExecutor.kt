@@ -6,7 +6,12 @@ import io.github.seggan.metis.runtime.value.CallableValue
 import io.github.seggan.metis.runtime.value.Value
 import io.github.seggan.metis.util.push
 import java.io.Serial
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.createCoroutineUnintercepted
+import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+import kotlin.coroutines.resume
 
 abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?> {
 
@@ -23,7 +28,7 @@ abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?>
             ExecutionState.NOT_STARTED -> {
                 currentState = ExecutionState.RUNNING
                 val coro = suspend { NativeScopeImpl(state).execute() }
-                continuation = coro.createCoroutine(this)
+                continuation = coro.createCoroutineUnintercepted(this)
                 continuation.resume(Unit)
                 StepResult.Continue
             }
@@ -53,8 +58,9 @@ abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?>
     private inner class NativeScopeImpl(override val state: State) : NativeScope {
         override suspend fun stepWith(result: StepResult) {
             stepResult = result
-            return suspendCoroutine {
+            return suspendCoroutineUninterceptedOrReturn {
                 continuation = it
+                COROUTINE_SUSPENDED
             }
         }
     }

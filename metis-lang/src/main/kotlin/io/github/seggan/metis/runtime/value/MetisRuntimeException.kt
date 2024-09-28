@@ -47,7 +47,7 @@ class MetisRuntimeException(
         val metatable by buildTableLazy { table ->
             table.useReferentialEquality()
             table[Metamethod.TO_STRING] = oneArgFunction(true) { self ->
-                self.convertTo<MetisRuntimeException>().message!!.metis()
+                self.into<MetisRuntimeException>().message!!.metis()
             }
             table[Metamethod.CONTAINS] = twoArgFunction(true) { self, key ->
                 (self.getInHierarchy(key) != null).metis()
@@ -87,3 +87,9 @@ fun MetisKeyError(
     companionData.also { it["obj"] = obj; it["key"] = key },
     cause
 )
+
+fun MetisInternalError(
+    message: String,
+    companionData: TableValue = TableValue(),
+    cause: Throwable? = null
+) = MetisRuntimeException("InternalError", message, companionData, cause)
