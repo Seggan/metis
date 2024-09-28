@@ -20,6 +20,27 @@ sealed interface Insn : Serializable {
         }
     }
 
+    data class WrapList(val size: Int) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -5364502813247120988L
+        }
+    }
+
+    data class WrapTable(val size: Int) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 6621803040666534871L
+        }
+    }
+
+    data class BuildError(val type: String) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 5115800999210780055L
+        }
+    }
+
     data object Pop : Insn {
         @Serial
         private const val serialVersionUID: Long = -6739265494872448178L

@@ -1,5 +1,6 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Insn
 
@@ -50,6 +51,10 @@ class InsnsBuilder(val span: Span) {
  */
 inline fun buildInsns(span: Span, block: InsnsBuilder.() -> Unit): List<FullInsn> {
     return InsnsBuilder(span).apply(block).build()
+}
+
+inline fun buildInsns(node: AstNode, block: InsnsBuilder.() -> Unit): List<FullInsn> {
+    return buildInsns(node.span, block)
 }
 
 /**

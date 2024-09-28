@@ -7,6 +7,7 @@ import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.value.CallableValue
+import io.github.seggan.metis.runtime.value.TableValue
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
@@ -66,7 +67,7 @@ class MetisCompiler private constructor(
         return when (statement) {
             is AstNode.Expression -> compileExpression(statement)
             is AstNode.Block -> compileBlock(statement)
-            is AstNode.Break -> buildInsns(statement.span) {
+            is AstNode.Break -> buildInsns(statement) {
                 if (loops.isEmpty()) {
                     throw SyntaxException("Break statement outside of loop", statement.span)
                 }
@@ -75,7 +76,7 @@ class MetisCompiler private constructor(
                 +Insn.RawDirectJump(loop.end)
             }
 
-            is AstNode.Continue -> buildInsns(statement.span) {
+            is AstNode.Continue -> buildInsns(statement) {
                 if (loops.isEmpty()) {
                     throw SyntaxException("Continue statement outside of loop", statement.span)
                 }
@@ -89,7 +90,7 @@ class MetisCompiler private constructor(
             is AstNode.If -> compileIf(statement)
             is AstNode.Import -> TODO()
             is AstNode.Raise -> TODO()
-            is AstNode.Return -> buildInsns(statement.span) {
+            is AstNode.Return -> buildInsns(statement) {
                 +compileExpression(statement.value)
                 +Insn.Save
                 +exitScope(statement.span) { true }
@@ -102,7 +103,7 @@ class MetisCompiler private constructor(
         }
     }
 
-    private fun compileDeclaration(declaration: AstNode.VarDecl) = buildInsns(declaration.span) {
+    private fun compileDeclaration(declaration: AstNode.VarDecl) = buildInsns(declaration) {
         if (getLocal(declaration.name) != null) {
             throw SyntaxException("Variable '${declaration.name}' already declared", declaration.span)
         }
@@ -114,7 +115,7 @@ class MetisCompiler private constructor(
         }
     }
 
-    private fun compileAssignment(assignment: AstNode.VarAssign) = buildInsns(assignment.span) {
+    private fun compileAssignment(assignment: AstNode.VarAssign) = buildInsns(assignment) {
         when (val target = assignment.target) {
             is AstNode.Var -> {
                 +compileExpression(assignment.value)
@@ -135,7 +136,7 @@ class MetisCompiler private constructor(
         }
     }
 
-    private fun compileIf(node: AstNode.If) = buildInsns(node.span) {
+    private fun compileIf(node: AstNode.If) = buildInsns(node) {
         val end = Insn.Label()
         +compileExpression(node.condition)
         +Insn.RawJumpIf(end, condition = false)
@@ -151,7 +152,7 @@ class MetisCompiler private constructor(
         }
     }
 
-    private fun compileWhile(node: AstNode.While) = buildInsns(node.span) {
+    private fun compileWhile(node: AstNode.While) = buildInsns(node) {
         val start = Insn.Label()
         val end = Insn.Label()
         loops.push(Loop(start, end, scope))
@@ -166,7 +167,7 @@ class MetisCompiler private constructor(
 
     private fun compileExpression(expression: AstNode.Expression): List<FullInsn> {
         return when (expression) {
-            is AstNode.BinaryOp -> buildInsns(expression.span) {
+            is AstNode.BinaryOp -> buildInsns(expression) {
                 expression.op.generateCode(
                     this,
                     compileExpression(expression.left),
@@ -174,13 +175,13 @@ class MetisCompiler private constructor(
                 )
             }
 
-            is AstNode.Index -> buildInsns(expression.span) {
+            is AstNode.Index -> buildInsns(expression) {
                 +compileExpression(expression.target)
                 +compileExpression(expression.index)
                 +Insn.GetIndex
             }
 
-            is AstNode.Var -> buildInsns(expression.span) {
+            is AstNode.Var -> buildInsns(expression) {
                 val local = getLocal(expression.name)
                 if (local == null) {
                     +Insn.GetGlobal(expression.name)
@@ -189,7 +190,7 @@ class MetisCompiler private constructor(
                 }
             }
 
-            is AstNode.Call -> buildInsns(expression.span) {
+            is AstNode.Call -> buildInsns(expression) {
                 for (arg in expression.args) {
                     +compileExpression(arg)
                 }
@@ -197,7 +198,7 @@ class MetisCompiler private constructor(
                 +Insn.Call(expression.args.size, false)
             }
 
-            is AstNode.CombinedCall -> buildInsns(expression.span) {
+            is AstNode.CombinedCall -> buildInsns(expression) {
                 +compileExpression(expression.expr)
                 for (arg in expression.args) {
                     +compileExpression(arg)
@@ -208,18 +209,40 @@ class MetisCompiler private constructor(
                 +Insn.Call(expression.args.size + 1, true)
             }
 
-            is AstNode.ErrorLiteral -> TODO()
+            is AstNode.ErrorLiteral -> buildInsns(expression) {
+                +compileExpression(expression.message)
+                if (expression.companionData != null) {
+                    +compileExpression(expression.companionData)
+                } else {
+                    +Insn.Push(TableValue())
+                }
+                +Insn.BuildError(expression.type)
+            }
+
             is AstNode.FunctionLiteral -> TODO()
-            is AstNode.ListLiteral -> TODO()
+            is AstNode.ListLiteral -> buildInsns(expression) {
+                for (value in expression.values) {
+                    +compileExpression(value)
+                }
+                +Insn.WrapList(expression.values.size)
+            }
+
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
-            is AstNode.TableLiteral -> TODO()
+            is AstNode.TableLiteral -> buildInsns(expression) {
+                for ((key, value) in expression.values) {
+                    +compileExpression(key)
+                    +compileExpression(value)
+                }
+                +Insn.WrapTable(expression.values.size)
+            }
+
             is AstNode.TernaryOp -> TODO()
-            is AstNode.UnaryOp -> buildInsns(expression.span) {
+            is AstNode.UnaryOp -> buildInsns(expression) {
                 +compileExpression(expression.expr)
                 if (expression.op == UnOp.NOT) {
                     +Insn.Not
                 } else {
-                    +Insn.MetaCall(1, expression.op.metamethod!!)
+                    +Insn.MetaCall(0, expression.op.metamethod!!)
                 }
             }
         }

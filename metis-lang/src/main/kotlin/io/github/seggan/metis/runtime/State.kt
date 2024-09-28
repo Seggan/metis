@@ -13,15 +13,19 @@ import io.github.seggan.metis.util.push
 class State {
 
     val stack = ArrayDeque<Value>()
-
-    internal val callStack = ArrayDeque<CallFrame>()
-    val stackBottom get() = callStack.peek().stackBottom
+    private val callStack = ArrayDeque<CallFrame>()
 
     val globals = TableValue()
 
     var debugInfo: DebugInfo? = null
     var debugMode = false
     val breakpoints = mutableListOf<Breakpoint>()
+
+    init {
+        globals["true"] = BooleanValue.TRUE
+        globals["false"] = BooleanValue.FALSE
+        globals["null"] = Value.Null
+    }
 
     fun loadCoreGlobals() {
         globals["boolean"] = BooleanValue.metatable
@@ -52,6 +56,14 @@ class State {
         while (stepOnce() != StepResult.Finished) {
             // side effects go brr
         }
+    }
+
+    fun getLocal(index: Int) {
+        stack.push(stack[index - callStack.peek().stackBottom])
+    }
+
+    fun setLocal(index: Int) {
+        stack[index - callStack.peek().stackBottom] = stack.pop()
     }
 
     fun getIndex() {
@@ -135,7 +147,7 @@ class State {
     }
 }
 
-internal data class CallFrame(
+private data class CallFrame(
     val executor: CallableValue.Executor,
     val stackBottom: Int,
     val span: Span?

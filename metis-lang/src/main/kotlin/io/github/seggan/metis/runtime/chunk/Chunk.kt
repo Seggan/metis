@@ -76,8 +76,9 @@ class Chunk(
                 is Insn.Push -> state.stack.push(insn.value)
                 is Insn.Pop -> state.stack.pop()
                 is Insn.CopyUnder -> state.stack.push(state.stack[insn.index])
-                is Insn.GetLocal -> state.stack.push(state.stack[insn.index - state.stackBottom])
-                is Insn.SetLocal -> state.stack[insn.index - state.stackBottom] = state.stack.pop()
+                is Insn.GetLocal -> state.getLocal(insn.index)
+                is Insn.SetLocal -> state.setLocal(insn.index)
+
                 is Insn.GetGlobal -> state.stack.push(
                     state.globals[insn.name] ?: throw MetisRuntimeException(
                         "MissingKeyError",
@@ -93,6 +94,36 @@ class Chunk(
                         )
                     }
                     state.globals[insn.name] = state.stack.pop()
+                }
+
+                is Insn.WrapList -> {
+                    val list = ArrayDeque<Value>(insn.size)
+                    repeat(insn.size) {
+                        list.addFirst(state.stack.pop())
+                    }
+                    state.stack.push(list.metis())
+                }
+
+                is Insn.WrapTable -> {
+                    val table = HashMap<Value, Value>(insn.size)
+                    repeat(insn.size) {
+                        val value = state.stack.pop()
+                        val key = state.stack.pop()
+                        table[key] = value
+                    }
+                    state.stack.push(table.metis())
+                }
+
+                is Insn.BuildError -> {
+                    val companionData = state.stack.pop().tableValue
+                    val message = state.stack.pop().stringValue
+                    state.stack.push(
+                        MetisRuntimeException(
+                            insn.type,
+                            message,
+                            companionData
+                        )
+                    )
                 }
 
                 is Insn.GetIndex -> state.getIndex()
