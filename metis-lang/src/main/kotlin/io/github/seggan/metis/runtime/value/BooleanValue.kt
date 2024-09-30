@@ -1,11 +1,12 @@
 package io.github.seggan.metis.runtime.value
 
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
+import io.github.seggan.metis.util.LazyVar
 import java.io.Serial
 
 class BooleanValue private constructor(val value: Boolean) : Value {
 
-    override var metatable: TableValue? = Companion.metatable
+    override var metatable: TableValue? by LazyVar { Companion.metatable }
 
     companion object {
         @Serial
@@ -16,7 +17,7 @@ class BooleanValue private constructor(val value: Boolean) : Value {
 
         fun of(value: Boolean) = if (value) TRUE else FALSE
 
-        val metatable by buildTableLazy { table ->
+        val metatable = buildTable { table ->
             table.useNativeToString()
             table.useReferentialEquality()
 

@@ -7,6 +7,7 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.runtime.modules.DefaultModuleManager
 import io.github.seggan.metis.runtime.modules.ModuleManager
+import io.github.seggan.metis.runtime.modules.impl.StdioModule
 import io.github.seggan.metis.runtime.value.*
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
@@ -15,7 +16,7 @@ import io.github.seggan.metis.util.push
 class State {
 
     val stack = ArrayDeque<Value>()
-    private val callStack = ArrayDeque<CallFrame>()
+    internal val callStack = ArrayDeque<CallFrame>()
 
     val globals = TableValue()
 
@@ -49,7 +50,7 @@ class State {
     }
 
     fun loadStandardLibrary() {
-        // TODO
+        moduleManager.nativeLoader.addNativeModule(StdioModule)
     }
 
     fun stepOnce(): StepResult {
@@ -157,7 +158,7 @@ class State {
     }
 }
 
-private data class CallFrame(
+internal data class CallFrame(
     val executor: CallableValue.Executor,
     val stackBottom: Int,
     val span: Span?
