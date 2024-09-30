@@ -39,7 +39,7 @@ inline fun <reified T : Value> Value.into(): T {
         returns() implies (this@into is T)
     }
     if (this is T) return this
-    throw MetisTypeError(metisTypeName(T::class), metisTypeName(this::class))
+    throw MetisTypeError(metisTypeName(T::class), metisTypeName(this::class, this))
 }
 
 fun Value.metaGet(key: Value): Value? {
@@ -75,14 +75,16 @@ internal fun TableValue.useNativeEquality() {
     }
 }
 
-fun metisTypeName(clazz: KClass<out Value>): String = when (clazz) {
+fun metisTypeName(clazz: KClass<out Value>, value: Value? = null): String = when (clazz) {
+    BooleanValue::class -> "boolean"
+    BytesValue::class -> "bytes"
+    ListValue::class -> "list"
+    MetisRuntimeException::class -> "error"
+    NativeValue::class -> if (value is NativeValue) "native (${value.value::class.qualifiedName})" else "native (unknown)"
     NumberValue.Int::class -> "int"
     NumberValue.Float::class -> "float"
     StringValue::class -> "string"
     TableValue::class -> "table"
-    BooleanValue::class -> "boolean"
     Value.Null::class -> "null"
-    MetisRuntimeException::class -> "error"
-    else -> if (CallableValue::class.java.isAssignableFrom(clazz.java)) "function"
-    else clazz.simpleName ?: "unknown"
+    else -> if (CallableValue::class.java.isAssignableFrom(clazz.java)) "function" else clazz.simpleName ?: "unknown"
 }
