@@ -1,27 +1,35 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.runtime.value.CallableValue
 import io.github.seggan.metis.runtime.value.TableValue
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
+import java.util.UUID
 
 class MetisCompiler private constructor(
     private val args: List<String>,
-    private val name: String
+    private val enclosingCompiler: MetisCompiler?
 ) {
+
+    private val id = UUID.randomUUID()
 
     private val locals = ArrayDeque<Local>()
     private var scope = 0
+    private val upvalues = mutableListOf<Upvalue>()
     private val loops = ArrayDeque<Loop>()
 
-    private fun compileCode(code: AstNode.Block): Chunk {
+    private var name: String? = null
+
+    private fun compileCode(name: String, code: AstNode.Block): Chunk {
         for (arg in args) {
             locals.push(Local(arg, locals.size, scope))
         }
@@ -40,7 +48,9 @@ class MetisCompiler private constructor(
         return Chunk(
             name,
             CallableValue.Arity(args.size, args.firstOrNull() == "self"),
-            backpatched
+            backpatched,
+            upvalues,
+            id
         )
     }
 
@@ -57,7 +67,12 @@ class MetisCompiler private constructor(
         while (localIt.hasNext()) {
             val local = localIt.next()
             if (cond(local.scope)) {
-                +Insn.Pop
+                val capturer = local.capturer
+                if (capturer != null) {
+                    +Insn.CloseUpvalue(capturer)
+                } else {
+                    +Insn.Pop
+                }
                 localIt.remove()
             }
         }
@@ -120,7 +135,11 @@ class MetisCompiler private constructor(
         if (getLocal(declaration.name) != null) {
             throw SyntaxException("Variable '${declaration.name}' already declared", declaration.span)
         }
+        if (declaration.value is AstNode.FunctionLiteral) {
+            name = declaration.name
+        }
         +compileExpression(declaration.value)
+        name = null
         if (declaration.visibility == Visibility.GLOBAL) {
             +Insn.SetGlobal(declaration.name, true)
         } else {
@@ -131,12 +150,19 @@ class MetisCompiler private constructor(
     private fun compileAssignment(assignment: AstNode.VarAssign) = buildInsns(assignment) {
         when (val target = assignment.target) {
             is AstNode.Var -> {
+                val name = target.name
                 +compileExpression(assignment.value)
-                val local = getLocal(target.name)
-                if (local == null) {
-                    +Insn.SetGlobal(target.name, false)
-                } else {
+                val local = getLocal(name)
+                if (local != null) {
                     +Insn.SetLocal(local.index)
+                } else {
+                    val upvalue = getUpvalue(name)
+                    if (upvalue != null) {
+                        val index = upvalues.indexOf(upvalue)
+                        +Insn.SetUpvalue(index)
+                    } else {
+                        +Insn.SetGlobal(name, false)
+                    }
                 }
             }
 
@@ -194,13 +220,14 @@ class MetisCompiler private constructor(
                 +Insn.GetIndex
             }
 
-            is AstNode.Var -> buildInsns(expression) {
-                val local = getLocal(expression.name)
-                if (local == null) {
-                    +Insn.GetGlobal(expression.name)
-                } else {
-                    +Insn.GetLocal(local.index)
+            is AstNode.Var -> {
+                getLocal(expression.name)?.let { local ->
+                    return listOf(Insn.GetLocal(local.index) to expression.span)
                 }
+                getUpvalue(expression.name)?.let { upvalue ->
+                    return listOf(Insn.GetUpvalue(upvalues.indexOf(upvalue)) to expression.span)
+                }
+                listOf(Insn.GetGlobal(expression.name) to expression.span)
             }
 
             is AstNode.Call -> buildInsns(expression) {
@@ -224,20 +251,26 @@ class MetisCompiler private constructor(
 
             is AstNode.ErrorLiteral -> buildInsns(expression) {
                 +compileExpression(expression.message)
+                +Insn.MetaCall(0, Metamethod.TO_STRING)
                 if (expression.companionData != null) {
                     +compileExpression(expression.companionData)
                 } else {
                     +Insn.Push(TableValue())
                 }
-                +Insn.BuildError(expression.type)
+                +Insn.PushError(expression.type)
             }
 
-            is AstNode.FunctionLiteral -> TODO()
+            is AstNode.FunctionLiteral -> {
+                val compiler = MetisCompiler(expression.args, this)
+                val chunk = compiler.compileCode(name ?: "<function>", expression.body)
+                listOf(Insn.PushClosure(chunk) to expression.span)
+            }
+
             is AstNode.ListLiteral -> buildInsns(expression) {
                 for (value in expression.values) {
                     +compileExpression(value)
                 }
-                +Insn.WrapList(expression.values.size)
+                +Insn.PushList(expression.values.size)
             }
 
             is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
@@ -246,7 +279,7 @@ class MetisCompiler private constructor(
                     +compileExpression(key)
                     +compileExpression(value)
                 }
-                +Insn.WrapTable(expression.values.size)
+                +Insn.PushTable(expression.values.size)
             }
 
             is AstNode.TernaryOp -> buildInsns(expression) {
@@ -276,13 +309,34 @@ class MetisCompiler private constructor(
         return locals.firstOrNull { it.name == name }
     }
 
+    private fun getUpvalue(name: String): Upvalue? {
+        val found = upvalues.firstOrNull { it.name == name }
+        if (found != null) return found
+        if (enclosingCompiler == null) return null
+        val local = enclosingCompiler.getLocal(name)
+        if (local != null) {
+            if (local.capturer == null) {
+                local.capturer = Upvalue(name, local.index, enclosingCompiler.id)
+            }
+            val upvalue = local.capturer!!
+            upvalues.add(upvalue)
+            return upvalue
+        }
+        val upvalue = enclosingCompiler.getUpvalue(name)
+        if (upvalue != null) {
+            upvalues.add(upvalue)
+            return upvalue
+        }
+        return null
+    }
+
     companion object {
         fun compile(name: String, code: AstNode.Block): Chunk {
-            return MetisCompiler(listOf(), name).compileCode(code)
+            return MetisCompiler(listOf(), null).compileCode(name, code)
         }
     }
 }
 
 private data class Loop(val start: Insn.Label, val end: Insn.Label, val scope: Int)
 
-private data class Local(val name: String, val index: Int, val scope: Int)
+private data class Local(val name: String, val index: Int, val scope: Int, var capturer: Upvalue? = null)

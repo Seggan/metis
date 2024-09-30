@@ -7,7 +7,7 @@ import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
 import io.github.seggan.metis.util.LazyVar
 import java.io.Serial
 import java.nio.charset.Charset
-import java.util.*
+import java.util.WeakHashMap
 
 class StringValue private constructor(val value: String) : Value {
 

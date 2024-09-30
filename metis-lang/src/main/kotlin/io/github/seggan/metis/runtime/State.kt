@@ -4,7 +4,9 @@ import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.debug.Breakpoint
 import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.Span
+import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
+import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.runtime.modules.DefaultModuleManager
 import io.github.seggan.metis.runtime.modules.ModuleManager
 import io.github.seggan.metis.runtime.modules.impl.StdioModule
@@ -12,11 +14,14 @@ import io.github.seggan.metis.runtime.value.*
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
+import java.util.UUID
 
-class State {
+class State(val parentState: State? = null) {
 
     val stack = ArrayDeque<Value>()
-    internal val callStack = ArrayDeque<CallFrame>()
+
+    private val _callStack = ArrayDeque<CallFrame>()
+    val callStack: List<CallFrame> get() = _callStack
 
     val globals = TableValue()
 
@@ -24,12 +29,18 @@ class State {
     var debugMode = false
     val breakpoints = mutableListOf<Breakpoint>()
 
-    var moduleManager: ModuleManager = DefaultModuleManager(this)
+    var moduleManager: ModuleManager = parentState?.moduleManager ?: DefaultModuleManager(this)
+
+    internal val openUpvalues = ArrayDeque<Upvalue.Instance>()
 
     init {
-        globals["true"] = BooleanValue.TRUE
-        globals["false"] = BooleanValue.FALSE
-        globals["null"] = Value.Null
+        if (parentState != null) {
+            globals.putAll(parentState.globals)
+        } else {
+            globals["true"] = BooleanValue.TRUE
+            globals["false"] = BooleanValue.FALSE
+            globals["null"] = Value.Null
+        }
     }
 
     fun loadCoreGlobals() {
@@ -54,11 +65,11 @@ class State {
     }
 
     fun stepOnce(): StepResult {
-        if (callStack.isEmpty()) return StepResult.Finished
-        val result = callStack.peek().executor.step(this)
+        if (_callStack.isEmpty()) return StepResult.Finished
+        val result = _callStack.peek().executor.step(this)
         if (result is StepResult.Finished) {
-            callStack.pop()
-            return if (callStack.isEmpty()) StepResult.Finished else StepResult.Continue
+            _callStack.pop()
+            return if (_callStack.isEmpty()) StepResult.Finished else StepResult.Continue
         }
         return result
     }
@@ -69,12 +80,17 @@ class State {
         }
     }
 
+    fun pushChunk(chunk: Chunk) {
+        stack.push(chunk.Instance(this))
+    }
+
     fun getLocal(index: Int) {
-        stack.push(stack[index - callStack.peek().stackBottom])
+        stack.push(stack[_callStack.peek().getLocalIndex(index)])
     }
 
     fun setLocal(index: Int) {
-        stack[index - callStack.peek().stackBottom] = stack.pop()
+        val value = stack.pop()
+        stack[_callStack.peek().getLocalIndex(index)] = value
     }
 
     fun getIndex() {
@@ -145,7 +161,8 @@ class State {
             numArgs++
         }
         val executor = value.call()
-        callStack.push(CallFrame(executor, stack.size - numArgs, span))
+        val id = (value as? Chunk.Instance)?.template?.id
+        _callStack.push(CallFrame(executor, stack.size - numArgs, id, span))
     }
 
     fun not() {
@@ -158,12 +175,15 @@ class State {
             throw MetisInternalError("Stack underflow: expected $n values, got ${stack.size}")
         }
     }
-}
 
-internal data class CallFrame(
-    val executor: CallableValue.Executor,
-    val stackBottom: Int,
-    val span: Span?
-)
+    inner class CallFrame(
+        val executor: CallableValue.Executor,
+        val stackBottom: Int,
+        internal val id: UUID?,
+        val span: Span?
+    ) {
+        fun getLocalIndex(index: Int): Int = stack.size - (index + stackBottom) - 1
+    }
+}
 
 private val metatableString = "metatable".metis()

@@ -1,7 +1,7 @@
 package io.github.seggan.metis.compilation.op
 
 import io.github.seggan.metis.parsing.Token
-import java.util.*
+import java.util.EnumMap
 
 enum class AssignType(val op: BinOp, private val token: Token.Type) {
     PLUS(BinOp.PLUS, Token.Type.PLUS_EQUALS),

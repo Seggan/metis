@@ -20,24 +20,31 @@ sealed interface Insn : Serializable {
         }
     }
 
-    data class WrapList(val size: Int) : Insn {
+    data class PushList(val size: Int) : Insn {
         companion object {
             @Serial
             private const val serialVersionUID: Long = -5364502813247120988L
         }
     }
 
-    data class WrapTable(val size: Int) : Insn {
+    data class PushTable(val size: Int) : Insn {
         companion object {
             @Serial
             private const val serialVersionUID: Long = 6621803040666534871L
         }
     }
 
-    data class BuildError(val type: String) : Insn {
+    data class PushError(val type: String) : Insn {
         companion object {
             @Serial
             private const val serialVersionUID: Long = 5115800999210780055L
+        }
+    }
+
+    data class PushClosure(val chunk: Chunk) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 8291564599520902997L
         }
     }
 
@@ -65,6 +72,20 @@ sealed interface Insn : Serializable {
         companion object {
             @Serial
             private const val serialVersionUID: Long = 5697746354967294939L
+        }
+    }
+
+    data class GetUpvalue(val index: Int) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 938595845341997197L
+        }
+    }
+
+    data class SetUpvalue(val index: Int) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -1665520782012138969L
         }
     }
 
@@ -183,6 +204,13 @@ sealed interface Insn : Serializable {
         companion object {
             @Serial
             private const val serialVersionUID: Long = -5424849480784621833L
+        }
+    }
+
+    data class CloseUpvalue(val upvalue: Upvalue) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -8172957473561045375L
         }
     }
 }

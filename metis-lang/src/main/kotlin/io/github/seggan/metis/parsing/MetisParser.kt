@@ -10,7 +10,7 @@ import io.github.seggan.metis.runtime.value.NumberValue
 import io.github.seggan.metis.runtime.value.StringValue
 import io.github.seggan.metis.runtime.value.Value
 import io.github.seggan.metis.util.escape
-import java.util.*
+import java.util.EnumSet
 
 /**
  * The Metis parser
