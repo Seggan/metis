@@ -5,6 +5,8 @@ import io.github.seggan.metis.debug.Breakpoint
 import io.github.seggan.metis.debug.DebugInfo
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.StepResult
+import io.github.seggan.metis.runtime.modules.DefaultModuleManager
+import io.github.seggan.metis.runtime.modules.ModuleManager
 import io.github.seggan.metis.runtime.value.*
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
@@ -21,6 +23,8 @@ class State {
     var debugMode = false
     val breakpoints = mutableListOf<Breakpoint>()
 
+    var moduleManager: ModuleManager = DefaultModuleManager(this)
+
     init {
         globals["true"] = BooleanValue.TRUE
         globals["false"] = BooleanValue.FALSE
@@ -36,6 +40,12 @@ class State {
         globals["float"] = NumberValue.Float.metatable
         globals["string"] = StringValue.metatable
         globals["table"] = TableValue.metatable
+
+        val pkg = TableValue()
+        pkg["loaders"] = ListValue().also(moduleManager::addDefaultLoaders)
+        pkg["loaded"] = TableValue()
+        pkg["path"] = mutableListOf("./".metis(), "/usr/lib/metis/".metis()).metis()
+        globals["package"] = pkg
     }
 
     fun loadStandardLibrary() {
@@ -107,7 +117,7 @@ class State {
             "metatable".metis(),
             "Could not find metatable for value"
         )
-        val method = metatable.getInHierarchy(metamethod.metis()) ?: throw MetisKeyError(
+        val method = metatable.metaGet(metamethod.metis()) ?: throw MetisKeyError(
             value,
             metamethod.metis(),
             "Could not find metamethod '$metamethod' in metatable"

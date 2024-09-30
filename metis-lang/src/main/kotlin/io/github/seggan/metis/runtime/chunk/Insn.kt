@@ -178,4 +178,11 @@ sealed interface Insn : Serializable {
         private const val serialVersionUID: Long = 5946180141308243873L
         private fun readResolve(): Any = Not
     }
+
+    data class Import(val module: String) : Insn {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -5424849480784621833L
+        }
+    }
 }

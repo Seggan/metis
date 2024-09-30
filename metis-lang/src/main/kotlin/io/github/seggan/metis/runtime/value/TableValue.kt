@@ -43,7 +43,7 @@ data class TableValue(
                 sb.toString().metis()
             }
             table[Metamethod.GET] = twoArgFunction(true) { self, key ->
-                self.getInHierarchy(key) ?: throw MetisKeyError(self, key, "Key '${key.metisToString()}' not found")
+                self.metaGet(key) ?: throw MetisKeyError(self, key, "Key '${key.metisToString()}' not found")
             }
             table[Metamethod.SET] = threeArgFunction(true) { self, key, value ->
                 if (!self.setDirect(key, value)) {

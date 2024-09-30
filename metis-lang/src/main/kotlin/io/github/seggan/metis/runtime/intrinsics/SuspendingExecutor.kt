@@ -56,7 +56,7 @@ abstract class SuspendingExecutor : CallableValue.Executor, Continuation<Value?>
     abstract suspend fun NativeScope.execute(): Value?
 
     private inner class NativeScopeImpl(override val state: State) : NativeScope {
-        override suspend fun stepWith(result: StepResult) {
+        override suspend fun continueStep(result: StepResult) {
             stepResult = result
             return suspendCoroutineUninterceptedOrReturn {
                 continuation = it

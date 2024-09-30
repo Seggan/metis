@@ -42,12 +42,22 @@ inline fun <reified T : Value> Value.into(): T {
     throw MetisTypeError(metisTypeName(T::class), metisTypeName(this::class))
 }
 
-fun Value.getInHierarchy(key: Value): Value? {
+fun Value.metaGet(key: Value): Value? {
     if (this === metatable) return getDirect(key)
-    return getDirect(key) ?: metatable?.getInHierarchy(key)
+    return getDirect(key) ?: metatable?.metaGet(key)
+}
+
+fun Value.getHierarchy(vararg keys: String): Value? {
+    var value = this
+    for (key in keys) {
+        value = value.metaGet(key.metis()) ?: return null
+    }
+    return value
 }
 
 fun Value.orNull(): Value? = if (this === Value.Null) null else this
+
+fun Value?.nullToValue(): Value = this ?: Value.Null
 
 internal fun TableValue.useNativeToString() {
     this[Metamethod.TO_STRING] = oneArgFunction(true) { it.toString().metis() }

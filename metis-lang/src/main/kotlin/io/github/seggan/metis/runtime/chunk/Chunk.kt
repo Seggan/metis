@@ -9,6 +9,7 @@ import io.github.seggan.metis.parsing.MetisLexer
 import io.github.seggan.metis.parsing.MetisParser
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.value.*
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
@@ -154,6 +155,12 @@ class Chunk(
                 is Insn.Is -> state.stack.push(BooleanValue.of(state.stack.pop() === state.stack.pop()))
                 is Insn.Not -> state.not()
 
+                is Insn.Import -> {
+                    state.stack.push(insn.module.metis())
+                    state.stack.push(importer)
+                    state.call(1, span = spans[ip])
+                }
+
                 is Insn.IllegalInsn -> throw IllegalStateException("Illegal instruction: $insn at ${spans[ip]}")
             }
             return StepResult.Continue
@@ -192,4 +199,20 @@ class Chunk(
             return MetisCompiler.compile(source.name, parsed)
         }
     }
+}
+
+private val importer = oneArgFunction { name ->
+    val loadedModules = state.moduleManager.loaded
+    val loaded = loadedModules[name]
+    if (loaded != null) {
+        return@oneArgFunction loaded
+    }
+    for (loader in state.moduleManager.loaders) {
+        val found = loader.callWith(name)
+        if (found != null) {
+            loadedModules[name] = found
+            return@oneArgFunction found
+        }
+    }
+    throw MetisImportError(name.stringValue)
 }

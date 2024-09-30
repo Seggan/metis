@@ -50,7 +50,7 @@ class MetisRuntimeException(
                 self.into<MetisRuntimeException>().message!!.metis()
             }
             table[Metamethod.CONTAINS] = twoArgFunction(true) { self, key ->
-                (self.getInHierarchy(key) != null).metis()
+                (self.metaGet(key) != null).metis()
             }
         }
     }
@@ -85,6 +85,17 @@ fun MetisKeyError(
     "KeyError",
     message,
     companionData.also { it["obj"] = obj; it["key"] = key },
+    cause
+)
+
+fun MetisImportError(
+    module: String,
+    companionData: TableValue = TableValue(),
+    cause: Throwable? = null
+) = MetisRuntimeException(
+    "ImportError",
+    "Could not find module $module",
+    companionData.also { it["module"] = module.metis() },
     cause
 )
 

@@ -3,7 +3,9 @@ package io.github.seggan.metis.runtime.intrinsics
 import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
+import io.github.seggan.metis.runtime.value.CallableValue
 import io.github.seggan.metis.runtime.value.Value
+import io.github.seggan.metis.runtime.value.orNull
 import io.github.seggan.metis.runtime.value.stringValue
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
@@ -12,14 +14,24 @@ interface NativeScope {
 
     val state: State
 
-    suspend fun stepWith(result: StepResult)
+    suspend fun continueStep(result: StepResult)
 
-    suspend fun yield() = stepWith(StepResult.Yielded)
+    suspend fun yield() = continueStep(StepResult.Yielded)
 
     suspend fun Value.metisToString(): String {
         state.stack.push(this)
         state.metaCall(0, Metamethod.TO_STRING)
-        stepWith(StepResult.Continue)
+        continueStep(StepResult.Continue)
         return state.stack.pop().stringValue
+    }
+
+    suspend fun CallableValue.callWith(vararg args: Value, selfProvided: Boolean = arity.needsSelf): Value? {
+        for (arg in args) {
+            state.stack.push(arg)
+        }
+        state.stack.push(this)
+        state.call(args.size, selfProvided)
+        continueStep(StepResult.Continue)
+        return state.stack.pop().orNull()
     }
 }

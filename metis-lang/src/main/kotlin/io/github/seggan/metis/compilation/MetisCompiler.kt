@@ -88,7 +88,16 @@ class MetisCompiler private constructor(
             is AstNode.DoExcept -> TODO()
             is AstNode.For -> TODO()
             is AstNode.If -> compileIf(statement)
-            is AstNode.Import -> TODO()
+            is AstNode.Import -> buildInsns(statement) {
+                val name = statement.name
+                +Insn.Import(name)
+                if (statement.global) {
+                    +Insn.SetGlobal(name, true)
+                } else {
+                    locals.push(Local(name, locals.size, scope))
+                }
+            }
+
             is AstNode.Raise -> TODO()
             is AstNode.Return -> buildInsns(statement) {
                 +compileExpression(statement.value)
@@ -236,7 +245,18 @@ class MetisCompiler private constructor(
                 +Insn.WrapTable(expression.values.size)
             }
 
-            is AstNode.TernaryOp -> TODO()
+            is AstNode.TernaryOp -> buildInsns(expression) {
+                +compileExpression(expression.condition)
+                val falseLabel = Insn.Label()
+                +Insn.RawJumpIf(falseLabel, condition = false)
+                +compileExpression(expression.trueExpr)
+                val endLabel = Insn.Label()
+                +Insn.RawDirectJump(endLabel)
+                +falseLabel
+                +compileExpression(expression.falseExpr)
+                +endLabel
+            }
+
             is AstNode.UnaryOp -> buildInsns(expression) {
                 +compileExpression(expression.expr)
                 if (expression.op == UnOp.NOT) {
