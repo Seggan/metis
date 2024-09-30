@@ -83,7 +83,7 @@ class State {
             stack.pop()
             stack[0] = stack[0].metatable ?: Value.Null
         } else {
-            metaCall(2, Metamethod.GET)
+            metaCall(1, Metamethod.GET)
         }
     }
 
@@ -95,7 +95,7 @@ class State {
             val value = stack.pop()
             value.metatable = metatable.into<TableValue>()
         } else {
-            metaCall(3, Metamethod.SET)
+            metaCall(2, Metamethod.SET)
         }
     }
 
@@ -111,7 +111,7 @@ class State {
     }
 
     fun metaCall(nargs: Int, metamethod: String, span: Span? = null) {
-        checkStack(nargs + 1)
+        checkStack(nargs)
         val value = stack.peek()
         val metatable = value.metatable ?: throw MetisKeyError(
             value,
@@ -131,8 +131,10 @@ class State {
         var numArgs = nargs
         if (selfProvided && !arity.needsSelf) {
             stack.removeAt(nargs)
+            numArgs--
         } else if (!selfProvided && arity.needsSelf) {
             stack.add(nargs, Value.Null)
+            numArgs++
         }
         while (numArgs > arity.nargs) {
             stack.pop()

@@ -32,11 +32,15 @@ data class TableValue(
             table[Metamethod.TO_STRING] = oneArgFunction(true) { self ->
                 val sb = StringBuilder()
                 sb.append('{')
+                var first = true
                 for ((key, value) in self.tableValue.entries) {
-                    sb.append(", ")
+                    if (!first) {
+                        sb.append(", ")
+                    }
                     sb.append(key.metisToString())
                     sb.append(" = ")
                     sb.append(value.metisToString())
+                    first = false
                 }
                 sb.delete(sb.length - 2, sb.length)
                 sb.append('}')
@@ -65,6 +69,23 @@ data class TableValue(
 
             table.metatable = table
         }
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb.append('{')
+        var first = true
+        for ((key, value) in entries) {
+            if (!first) {
+                sb.append(", ")
+            }
+            sb.append(key.toString())
+            sb.append(" = ")
+            sb.append(value.toString())
+            first = false
+        }
+        sb.append('}')
+        return sb.toString()
     }
 
     override fun equals(other: Any?): Boolean {

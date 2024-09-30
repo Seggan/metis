@@ -65,7 +65,11 @@ class MetisCompiler private constructor(
 
     private fun compileStatement(statement: AstNode.Statement): List<FullInsn> {
         return when (statement) {
-            is AstNode.Expression -> compileExpression(statement)
+            is AstNode.Expression -> buildInsns(statement) {
+                +compileExpression(statement)
+                +Insn.Pop
+            }
+
             is AstNode.Block -> compileBlock(statement)
             is AstNode.Break -> buildInsns(statement) {
                 if (loops.isEmpty()) {
@@ -212,7 +216,7 @@ class MetisCompiler private constructor(
                 for (arg in expression.args) {
                     +compileExpression(arg)
                 }
-                +Insn.CopyUnder(args.size)
+                +Insn.CopyUnder(expression.args.size)
                 +Insn.Push(expression.name)
                 +Insn.GetIndex
                 +Insn.Call(expression.args.size + 1, true)

@@ -4,39 +4,27 @@ import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.util.MetisException
 
-@Suppress("ControlFlowWithEmptyBody")
 class Debugger(private val state: State, private val sourceName: String) {
 
     private val commands = listOf(
         DebugCommand("step", "s") { stepOnce() },
         DebugCommand("verboseStep", "vs", "v") {
             stepOnce()
-            print("Current instruction: ")
+            print("Previous instruction: ")
             println(debugInfo?.insn ?: error("No debug info yet available"))
             println("\nCall stack: ")
             printStacktrace(this)
         },
-        DebugCommand("next", "n") {
-            val currentSpan = debugInfo?.span ?: error("No debug info yet available")
-            var nextSpan = currentSpan
-            while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
-                stepOnce()
-                nextSpan = debugInfo?.span ?: error("No debug info yet available")
-            }
-        },
+        DebugCommand("next", "n") { next() },
         DebugCommand("verboseNext", "vn") {
-            val currentSpan = debugInfo?.span ?: error("No debug info yet available")
-            var nextSpan = currentSpan
-            while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
-                stepOnce()
-                nextSpan = debugInfo?.span ?: error("No debug info yet available")
-            }
-            print("Current instruction: ")
-            println(debugInfo?.insn ?: error("No debug info yet available"))
+            next()
+            print("Previous instruction: ")
+            println(dbg.insn)
             println("\nCall stack: ")
             printStacktrace(this)
         },
         DebugCommand("continue", "c") {
+            @Suppress("ControlFlowWithEmptyBody")
             while (stepOnce() == StepResult.Continue) {
             }
         },
@@ -74,14 +62,14 @@ class Debugger(private val state: State, private val sourceName: String) {
         DebugCommand("stack", "st") {
             val bottoms = callStack.map { it.stackBottom }
             for ((i, value) in stack.withIndex()) {
-                if (i in bottoms) {
+                if (stack.size - i in bottoms) {
                     println("---")
                 }
                 println(value)
             }
         },
         DebugCommand("instruction", "insn", "is") {
-            println(debugInfo?.insn ?: error("No debug info yet available"))
+            println(dbg.insn)
         },
     )
 
@@ -125,3 +113,14 @@ class Debugger(private val state: State, private val sourceName: String) {
 }
 
 private val locationRegex = """(?:(?<name>[a-zA-Z0-9_.]+):)?(?<line>[0-9]+)""".toRegex()
+
+private val State.dbg: DebugInfo get() = debugInfo ?: error("No debug info yet available")
+
+private fun State.next() {
+    val currentSpan = dbg.span
+    var nextSpan = currentSpan
+    while (currentSpan.line == nextSpan.line || currentSpan.source != nextSpan.source) {
+        stepOnce()
+        nextSpan = dbg.span
+    }
+}
