@@ -381,6 +381,7 @@ class State(val parentState: State? = null) {
         if (callable is CallableValue) {
             callValue(callable, nargs, selfProvided, span)
         } else {
+            stack.add(stack.size - nargs, callable)
             metaCall(nargs, "__call__")
         }
     }
