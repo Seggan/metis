@@ -28,11 +28,11 @@ inline fun nArgFunction(
 inline fun zeroArgFunction(crossinline block: suspend NativeScope.() -> Value?): CallableValue =
     object : CallableValue {
         override var metatable: TableValue? = mapOf(Metamethod.TO_STRING to "zeroArgFunction".metis()).metis()
-    override val arity = CallableValue.Arity(0, false)
-    override fun call() = object : SuspendingExecutor() {
-        override suspend fun NativeScope.execute(): Value? = block()
+        override val arity = CallableValue.Arity(0, false)
+        override fun call() = object : SuspendingExecutor() {
+            override suspend fun NativeScope.execute(): Value? = block()
+        }
     }
-}
 
 inline fun oneArgFunction(
     needsSelf: Boolean = false,

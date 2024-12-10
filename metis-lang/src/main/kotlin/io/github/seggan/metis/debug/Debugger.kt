@@ -41,8 +41,8 @@ class Debugger(private val state: State, private val sourceName: String) {
             }
         },
         DebugCommand("delete", "del", "d") {
-            val index = it.firstOrNull()?.toIntOrNull() ?: error("No breakpoint specified")
-            state.breakpoints.removeAt(index)
+            val line = it.firstOrNull()?.toIntOrNull() ?: error("No breakpoint specified")
+            state.breakpoints.removeIf { it.line == line }
         },
         DebugCommand("into", "i") {
             val startSize = state.callStack.size
@@ -69,7 +69,12 @@ class Debugger(private val state: State, private val sourceName: String) {
             }
         },
         DebugCommand("instruction", "insn", "is") {
-            println(dbg.insn)
+            println("Previous instruction: " + dbg.insn)
+        },
+        DebugCommand("globals", "gs") {
+            for ((key, value) in globals) {
+                println("$key: $value")
+            }
         },
     )
 

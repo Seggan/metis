@@ -41,3 +41,8 @@ fun String.escape(): String {
 }
 
 val BigDecimal.isInteger: Boolean get() = stripTrailingZeros().scale() <= 0
+
+inline fun <I, O> Iterator<I>.map(crossinline block: (I) -> O): Iterator<O> = object : Iterator<O> {
+    override fun hasNext(): Boolean = this@map.hasNext()
+    override fun next(): O = block(this@map.next())
+}

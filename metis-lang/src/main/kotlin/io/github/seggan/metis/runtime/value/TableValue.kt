@@ -42,7 +42,6 @@ data class TableValue(
                     sb.append(value.metisToString())
                     first = false
                 }
-                sb.delete(sb.length - 2, sb.length)
                 sb.append('}')
                 sb.toString().metis()
             }

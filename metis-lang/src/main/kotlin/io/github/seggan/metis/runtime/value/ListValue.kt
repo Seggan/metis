@@ -44,19 +44,6 @@ data class ListValue(
                 sb.append(']')
                 sb.toString().metis()
             }
-            table[Metamethod.GET] = twoArgFunction(true) { self, key ->
-                self.metaGet(key) ?: throw MetisKeyError(self, key, "Index '${key.metisToString()}' not found")
-            }
-            table[Metamethod.SET] = threeArgFunction(true) { self, key, value ->
-                if (!self.setDirect(key, value)) {
-                    throw MetisKeyError(
-                        self,
-                        key,
-                        "Cannot set index '${key.metisToString()}' on value of type ${metisTypeName(self::class)}"
-                    )
-                }
-                null
-            }
             table["size"] = oneArgFunction(true) { self -> self.listValue.size.metis() }
             table[Metamethod.CONTAINS] = twoArgFunction(true) { self, key ->
                 (key in self.listValue).metis()

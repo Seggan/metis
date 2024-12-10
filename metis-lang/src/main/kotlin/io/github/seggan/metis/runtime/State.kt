@@ -3,6 +3,7 @@ package io.github.seggan.metis.runtime
 import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.debug.Breakpoint
 import io.github.seggan.metis.debug.DebugInfo
+import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
@@ -43,6 +44,13 @@ class State(val parentState: State? = null) {
         }
     }
 
+    private fun loadFromResources(path: String) {
+        val chunk = Chunk.load(CodeSource.resource(path))
+        pushChunk(chunk)
+        call(0)
+        runTillComplete()
+    }
+
     fun loadCoreGlobals() {
         globals["boolean"] = BooleanValue.metatable
         globals["bytes"] = BytesValue.metatable
@@ -58,6 +66,8 @@ class State(val parentState: State? = null) {
         pkg["loaded"] = TableValue()
         pkg["path"] = mutableListOf("./".metis(), "/usr/lib/metis/".metis()).metis()
         globals["package"] = pkg
+
+        loadFromResources("/core.metis")
     }
 
     fun loadStandardLibrary() {
@@ -66,7 +76,12 @@ class State(val parentState: State? = null) {
 
     fun stepOnce(): StepResult {
         if (_callStack.isEmpty()) return StepResult.Finished
-        val result = _callStack.peek().executor.step(this)
+        val result = try {
+            _callStack.peek().executor.step(this)
+        } catch (e: MetisRuntimeException) {
+            _callStack.peek().span?.let(e::addStackFrame)
+            throw e
+        }
         if (result is StepResult.Finished) {
             _callStack.pop()
             return if (_callStack.isEmpty()) StepResult.Finished else StepResult.Continue
@@ -110,6 +125,7 @@ class State(val parentState: State? = null) {
             stack.pop()
             val value = stack.pop()
             value.metatable = metatable.into<TableValue>()
+            stack.push(Value.Null)
         } else {
             metaCall(2, Metamethod.SET)
         }
@@ -128,7 +144,7 @@ class State(val parentState: State? = null) {
 
     fun metaCall(nargs: Int, metamethod: String, span: Span? = null) {
         checkStack(nargs)
-        val value = stack.peek()
+        val value = stack[nargs]
         val metatable = value.metatable ?: throw MetisKeyError(
             value,
             "metatable".metis(),
@@ -139,7 +155,11 @@ class State(val parentState: State? = null) {
             metamethod.metis(),
             "Could not find metamethod '$metamethod' in metatable"
         )
-        callValue(method.into(), nargs + 1, true, span)
+        if (method is CallableValue) {
+            callValue(method.into(), nargs + 1, true, span)
+        } else {
+            stack.push(method)
+        }
     }
 
     private fun callValue(value: CallableValue, nargs: Int, selfProvided: Boolean, span: Span?) {

@@ -1,7 +1,8 @@
 package io.github.seggan.metis.parsing
 
-import java.lang.ref.WeakReference
+import java.lang.ref.SoftReference
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.readText
 
 /**
@@ -12,13 +13,13 @@ import kotlin.io.path.readText
  */
 class CodeSource(val name: String, private val textGetter: (String) -> String) {
 
-    private var textRef: WeakReference<String> = WeakReference(null)
+    private var textRef: SoftReference<String> = SoftReference(null)
 
     /**
      * The source code
      */
     val text: String
-        get() = textRef.get() ?: textGetter(name).also { textRef = WeakReference(it) }
+        get() = textRef.get() ?: textGetter(name).also { textRef = SoftReference(it) }
 
     override fun equals(other: Any?) = other is CodeSource && other.name == name
 
@@ -45,5 +46,19 @@ class CodeSource(val name: String, private val textGetter: (String) -> String) {
          * @return The created [CodeSource].
          */
         fun fromPath(path: Path) = CodeSource(path.fileName.toString()) { path.readText() }
+
+        /**
+         * Creates a [CodeSource] from a resource. Will use the base filename as the name.
+         *
+         * @param path The path to the resource.
+         * @param contextClass The class to use for the resource lookup. Defaults to [CodeSource].
+         * @return The created [CodeSource].
+         */
+        fun resource(path: String, contextClass: Class<*> = CodeSource::class.java) =
+            CodeSource(Path(path).fileName.toString()) {
+                val resource = contextClass.getResource(path)
+                checkNotNull(resource) { "Resource not found: $path" }
+                resource.readText()
+            }
     }
 }

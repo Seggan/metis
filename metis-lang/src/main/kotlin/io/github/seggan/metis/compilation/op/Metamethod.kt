@@ -28,5 +28,7 @@ object Metamethod {
     const val GET = "__get__"
     const val SET = "__set__"
 
+    const val ITERATOR = "__iter__"
+
     const val CALL = "__call__"
 }

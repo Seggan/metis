@@ -24,7 +24,7 @@ data class BytesValue(val value: ByteArray) : Value {
         if (key !is NumberValue.Int) return false
         val index = key.intValue.intValueExact()
         if (index < 0 || index >= this.value.size) return false
-        this.value[index] = value.intValue.toInt().toByte()
+        this.value[index] = value.intValue.byteValueExact()
         return true
     }
 

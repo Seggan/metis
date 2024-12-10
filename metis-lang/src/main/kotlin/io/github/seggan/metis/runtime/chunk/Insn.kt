@@ -46,6 +46,14 @@ sealed interface Insn : Serializable {
             @Serial
             private const val serialVersionUID: Long = 8291564599520902997L
         }
+
+        override fun toString(): String {
+            val sb = StringBuilder("PushClosure:\n")
+            for (line in chunk.toString().lines()) {
+                sb.appendLine("  $line")
+            }
+            return sb.toString()
+        }
     }
 
     data object Pop : Insn {

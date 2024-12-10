@@ -105,7 +105,7 @@ class MetisCompiler private constructor(
             }
 
             is AstNode.DoExcept -> TODO()
-            is AstNode.For -> TODO()
+            is AstNode.For -> compileFor(statement)
             is AstNode.If -> compileIf(statement)
             is AstNode.Import -> buildInsns(statement) {
                 val name = statement.name
@@ -154,36 +154,37 @@ class MetisCompiler private constructor(
                 if (assignment.type != null) {
                     assignment.type.op.generateCode(
                         this,
-                        listOf(variable.getInsn(this@MetisCompiler) to assignment.span),
+                        listOf(variable.getInsn to assignment.span),
                         compileExpression(assignment.value)
                     )
                 } else {
                     +compileExpression(assignment.value)
                 }
-                +variable.setInsn(this@MetisCompiler)
+                +variable.setInsn
             }
 
             is AstNode.Index -> {
                 +compileExpression(target.target)
-                val targetLocal = pushLocal("")
-                +compileExpression(target.index)
-                val indexLocal = pushLocal("")
-                if (assignment.type != null) {
-                    assignment.type.op.generateCode(
-                        this,
-                        buildInsns(assignment) {
-                            +Insn.GetLocal(targetLocal.index)
-                            +Insn.GetLocal(indexLocal.index)
-                            +Insn.GetIndex
-                        },
-                        compileExpression(assignment.value)
-                    )
-                } else {
-                    +compileExpression(assignment.value)
+                withValueAsLocal { targetLocal ->
+                    +compileExpression(target.index)
+                    withValueAsLocal { indexLocal ->
+                        if (assignment.type != null) {
+                            assignment.type.op.generateCode(
+                                this,
+                                buildInsns(assignment) {
+                                    +Insn.GetLocal(targetLocal.index)
+                                    +Insn.GetLocal(indexLocal.index)
+                                    +Insn.GetIndex
+                                },
+                                compileExpression(assignment.value)
+                            )
+                        } else {
+                            +compileExpression(assignment.value)
+                        }
+                        +Insn.SetIndex
+                        +Insn.Pop
+                    }
                 }
-                locals.pop()
-                locals.pop()
-                +Insn.SetIndex
             }
         }
     }
@@ -204,16 +205,53 @@ class MetisCompiler private constructor(
         }
     }
 
+    private fun compileFor(node: AstNode.For) = buildInsns(node) {
+        +compileExpression(node.iterable)
+        +Insn.MetaCall(0, Metamethod.ITERATOR)
+        withValueAsLocal { iteratorLocal ->
+            val start = Insn.Label()
+            val end = Insn.Label()
+            loops.push(Loop(start, end, scope))
+
+            +start
+            +iteratorLocal.getInsn
+            +Insn.CopyUnder(0)
+            +Insn.Push("hasNext")
+            +Insn.GetIndex
+            +Insn.Call(1, true)
+            +Insn.RawJumpIf(end, condition = false)
+
+            scope++
+            +iteratorLocal.getInsn
+            +Insn.CopyUnder(0)
+            +Insn.Push("next")
+            +Insn.GetIndex
+            +Insn.Call(1, true)
+            withValueAsLocal(node.name) { valueLocal ->
+                +compileBlock(node.body)
+                valueLocal.cleanUp(span)
+            }
+            scope--
+
+            +Insn.RawDirectJump(start)
+            +end
+
+            loops.pop()
+        }
+    }
+
     private fun compileWhile(node: AstNode.While) = buildInsns(node) {
         val start = Insn.Label()
         val end = Insn.Label()
         loops.push(Loop(start, end, scope))
+
         +start
         +compileExpression(node.condition)
         +Insn.RawJumpIf(end, condition = false)
         +compileBlock(node.body)
         +Insn.RawDirectJump(start)
         +end
+
         loops.pop()
     }
 
@@ -233,7 +271,7 @@ class MetisCompiler private constructor(
                 +Insn.GetIndex
             }
 
-            is AstNode.Var -> listOf(getVariable(expression.name).getInsn(this) to expression.span)
+            is AstNode.Var -> listOf(getVariable(expression.name).getInsn to expression.span)
 
             is AstNode.Call -> buildInsns(expression) {
                 for (arg in expression.args) {
@@ -310,10 +348,24 @@ class MetisCompiler private constructor(
         }
     }
 
-    private fun pushLocal(name: String, scope: Int = this.scope): VarType.Local {
+    private fun pushLocal(name: String): VarType.Local {
         val local = VarType.Local(name, locals.size, scope)
         locals.push(local)
         return local
+    }
+
+    private inline fun withValueAsLocal(name: String = "", block: (VarType.Local) -> Unit) {
+        val local = pushLocal(name)
+        block(local)
+        locals.pop()
+    }
+
+    private fun VarType.Local.cleanUp(span: Span) = buildInsns(span) {
+        if (capturer != null) {
+            +Insn.CloseUpvalue(capturer!!)
+        } else {
+            +Insn.Pop
+        }
     }
 
     private fun getLocal(name: String): VarType.Local? {
@@ -355,29 +407,31 @@ class MetisCompiler private constructor(
 
     private sealed interface VarType {
 
-        fun getInsn(compiler: MetisCompiler): Insn
-        fun setInsn(compiler: MetisCompiler): Insn
-
         data class Local(
             val name: String,
             val index: Int,
             val scope: Int,
             var capturer: io.github.seggan.metis.runtime.chunk.Upvalue? = null
-        ) : VarType {
-            override fun getInsn(compiler: MetisCompiler): Insn = Insn.GetLocal(index)
-            override fun setInsn(compiler: MetisCompiler): Insn = Insn.SetLocal(index)
-        }
+        ) : VarType
 
-        data class Upvalue(val upvalue: io.github.seggan.metis.runtime.chunk.Upvalue) : VarType {
-            override fun getInsn(compiler: MetisCompiler): Insn = Insn.GetUpvalue(compiler.upvalues.indexOf(upvalue))
-            override fun setInsn(compiler: MetisCompiler): Insn = Insn.SetUpvalue(compiler.upvalues.indexOf(upvalue))
-        }
+        data class Upvalue(val upvalue: io.github.seggan.metis.runtime.chunk.Upvalue) : VarType
 
-        data class Global(val name: String) : VarType {
-            override fun getInsn(compiler: MetisCompiler): Insn = Insn.GetGlobal(this.name)
-            override fun setInsn(compiler: MetisCompiler): Insn = Insn.SetGlobal(this.name, false)
-        }
+        data class Global(val name: String) : VarType
     }
+
+    private val VarType.getInsn: Insn
+        get() = when (this) {
+            is VarType.Local -> Insn.GetLocal(index)
+            is VarType.Global -> Insn.GetGlobal(name)
+            is VarType.Upvalue -> Insn.GetUpvalue(upvalues.indexOf(upvalue))
+        }
+
+    private val VarType.setInsn: Insn
+        get() = when (this) {
+            is VarType.Local -> Insn.SetLocal(index)
+            is VarType.Global -> Insn.SetGlobal(name, false)
+            is VarType.Upvalue -> Insn.SetUpvalue(upvalues.indexOf(upvalue))
+        }
 }
 
 private data class Loop(val start: Insn.Label, val end: Insn.Label, val scope: Int)
