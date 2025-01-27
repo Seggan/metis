@@ -57,7 +57,4 @@ inline fun buildInsns(node: AstNode, block: InsnsBuilder.() -> Unit): List<FullI
     return buildInsns(node.span, block)
 }
 
-/**
- * A pair of an [Insn] and a [Span].
- */
 typealias FullInsn = Pair<Insn, Span>

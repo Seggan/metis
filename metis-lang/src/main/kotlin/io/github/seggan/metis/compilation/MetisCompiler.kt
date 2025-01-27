@@ -23,6 +23,7 @@ class MetisCompiler private constructor(
     private val id = UUID.randomUUID()
 
     private val locals = ArrayDeque<VarType.Local>()
+    private val allLocalsCount: Int get() = locals.size + (enclosingCompiler?.allLocalsCount ?: 0)
     private var scope = 0
     private val upvalues = mutableListOf<Upvalue>()
     private val loops = ArrayDeque<Loop>()
@@ -51,7 +52,7 @@ class MetisCompiler private constructor(
             backpatched,
             upvalues,
             id
-        )
+        ).also(Chunk::verify)
     }
 
     private fun compileBlock(block: AstNode.Block): List<FullInsn> {
@@ -155,7 +156,8 @@ class MetisCompiler private constructor(
                     assignment.type.op.generateCode(
                         this,
                         listOf(variable.getInsn to assignment.span),
-                        compileExpression(assignment.value)
+                        compileExpression(assignment.value),
+                        allLocalsCount
                     )
                 } else {
                     +compileExpression(assignment.value)
@@ -176,7 +178,8 @@ class MetisCompiler private constructor(
                                     +Insn.GetLocal(indexLocal.index)
                                     +Insn.GetIndex
                                 },
-                                compileExpression(assignment.value)
+                                compileExpression(assignment.value),
+                                allLocalsCount
                             )
                         } else {
                             +compileExpression(assignment.value)
@@ -190,12 +193,12 @@ class MetisCompiler private constructor(
     }
 
     private fun compileIf(node: AstNode.If) = buildInsns(node) {
-        val end = Insn.Label()
+        val end = Insn.Label(allLocalsCount)
         +compileExpression(node.condition)
         +Insn.RawJumpIf(end, condition = false)
         +compileBlock(node.body)
         if (node.elseBody != null) {
-            val elseEnd = Insn.Label()
+            val elseEnd = Insn.Label(allLocalsCount)
             +Insn.RawDirectJump(elseEnd)
             +end
             +compileBlock(node.elseBody)
@@ -209,8 +212,8 @@ class MetisCompiler private constructor(
         +compileExpression(node.iterable)
         +Insn.MetaCall(0, Metamethod.ITERATOR)
         withValueAsLocal { iteratorLocal ->
-            val start = Insn.Label()
-            val end = Insn.Label()
+            val start = Insn.Label(allLocalsCount)
+            val end = Insn.Label(allLocalsCount)
             loops.push(Loop(start, end, scope))
 
             +start
@@ -241,8 +244,8 @@ class MetisCompiler private constructor(
     }
 
     private fun compileWhile(node: AstNode.While) = buildInsns(node) {
-        val start = Insn.Label()
-        val end = Insn.Label()
+        val start = Insn.Label(allLocalsCount)
+        val end = Insn.Label(allLocalsCount)
         loops.push(Loop(start, end, scope))
 
         +start
@@ -261,7 +264,8 @@ class MetisCompiler private constructor(
                 expression.op.generateCode(
                     this,
                     compileExpression(expression.left),
-                    compileExpression(expression.right)
+                    compileExpression(expression.right),
+                    allLocalsCount
                 )
             }
 
@@ -327,10 +331,10 @@ class MetisCompiler private constructor(
 
             is AstNode.TernaryOp -> buildInsns(expression) {
                 +compileExpression(expression.condition)
-                val falseLabel = Insn.Label()
+                val falseLabel = Insn.Label(allLocalsCount)
                 +Insn.RawJumpIf(falseLabel, condition = false)
                 +compileExpression(expression.trueExpr)
-                val endLabel = Insn.Label()
+                val endLabel = Insn.Label(allLocalsCount + 1)
                 +Insn.RawDirectJump(endLabel)
                 +falseLabel
                 +compileExpression(expression.falseExpr)

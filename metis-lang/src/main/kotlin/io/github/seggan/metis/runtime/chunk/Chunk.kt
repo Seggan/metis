@@ -11,9 +11,11 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.value.*
+import io.github.seggan.metis.util.MetisException
 import io.github.seggan.metis.util.peek
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
+import java.io.Serial
 import java.util.UUID
 
 class Chunk(
@@ -26,6 +28,8 @@ class Chunk(
 
     private val insns: List<Insn>
     private val spans: List<Span>
+
+    private val verifiedSizes = mutableListOf<Int?>()
 
     init {
         val unzipped = insns.unzip()
@@ -207,8 +211,42 @@ class Chunk(
                 append("; ")
                 append(span)
                 append(')')
+                append(" | ")
+                append(verifiedSizes.getOrNull(i)?.toString() ?: "???")
                 appendLine()
             }
+        }
+    }
+
+    internal fun verify() {
+        var stackSize: Int? = arity.nargs
+        for ((idx, insn) in insns.withIndex()) {
+            if (insn is Insn.Label) {
+                if (stackSize == null) {
+                    stackSize = insn.expectedStackSize // Reset stack size
+                }
+                if (stackSize != insn.expectedStackSize) {
+                    throw VerificationException(
+                        "Label stack size mismatch: expected ${insn.expectedStackSize}, got $stackSize",
+                        this,
+                        idx
+                    )
+                }
+            } else if (insn is Insn.UnconditionalJump) {
+                stackSize = null // Reset stack size
+            } else if (stackSize == null) {
+                throw VerificationException("Illegal instruction after unconditional jump", this, idx)
+            } else {
+                stackSize += insn.stackSizeChange
+                if (stackSize < 0) {
+                    throw VerificationException("Stack underflow", this, idx)
+                }
+            }
+            verifiedSizes.add(stackSize)
+        }
+
+        if (stackSize != null) {
+            throw VerificationException("Chunk did not end with a return", this, insns.size - 1)
         }
     }
 
@@ -217,6 +255,24 @@ class Chunk(
             val lexed = MetisLexer.lex(source)
             val parsed = MetisParser.parse(lexed, source)
             return MetisCompiler.compile(source.name, parsed)
+        }
+    }
+
+    class VerificationException(message: String, chunk: Chunk, index: Int) :
+        MetisException(createMessage(message, chunk, index), mutableListOf(chunk.spans[index])) {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -2261038399226882866L
+
+            private fun createMessage(message: String, chunk: Chunk, index: Int): String {
+                return """
+                   Verification of chunk failed: $message
+                        at instruction $index: ${chunk.insns[index]}
+                        
+                   Chunk dump:
+                   %s
+                """.trimIndent().format(chunk)
+            }
         }
     }
 }

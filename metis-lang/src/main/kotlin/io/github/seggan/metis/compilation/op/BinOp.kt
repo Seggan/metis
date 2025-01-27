@@ -5,7 +5,7 @@ import io.github.seggan.metis.compilation.InsnsBuilder
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.value.Value
 
-enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
+enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>, Int) -> Unit) {
     PLUS(Metamethod.PLUS),
     MINUS(Metamethod.MINUS),
     TIMES(Metamethod.TIMES),
@@ -21,13 +21,13 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     SHL(Metamethod.SHL),
     SHR(Metamethod.SHR),
     SHRU(Metamethod.USHR),
-    IN({ left, right ->
+    IN({ left, right, _ ->
         +right
         +left
         +Insn.MetaCall(1, Metamethod.CONTAINS)
     }),
     NOT_IN(IN),
-    IS({ left, right ->
+    IS({ left, right, _ ->
         +left
         +right
         +Insn.Is
@@ -39,46 +39,46 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     LESS_EQ(1, true),
     GREATER(1),
     GREATER_EQ(-1, true),
-    AND({ left, right ->
+    AND({ left, right, locals ->
         +left
-        val end = Insn.Label()
+        val end = Insn.Label(locals + 1)
         +Insn.RawJumpIf(end, condition = false, consume = false)
         +Insn.Pop
         +right
         +end
     }),
-    OR({ left, right ->
+    OR({ left, right, locals ->
         +left
-        val end = Insn.Label()
+        val end = Insn.Label(locals + 1)
         +Insn.RawJumpIf(end, condition = true, consume = false)
         +Insn.Pop
         +right
         +end
     }),
-    ELVIS({ left, right ->
+    ELVIS({ left, right, locals ->
         +left
         +Insn.CopyUnder(0)
         +Insn.Push(Value.Null)
         +Insn.Is
-        val end = Insn.Label()
+        val end = Insn.Label(locals + 1)
         +Insn.RawJumpIf(end, condition = false)
         +Insn.Pop
         +right
         +end
     });
 
-    constructor(metamethod: String) : this({ left, right ->
+    constructor(metamethod: String) : this({ left, right, _ ->
         +left
         +right
         +Insn.MetaCall(1, metamethod)
     })
 
-    constructor(op: BinOp) : this({ left, right ->
-        op.generateCode(this, left, right)
+    constructor(op: BinOp) : this({ left, right, locals ->
+        op.generateCode(this, left, right, locals)
         +Insn.Not
     })
 
-    constructor(number: Int, inverse: Boolean = false) : this({ left, right ->
+    constructor(number: Int, inverse: Boolean = false) : this({ left, right, _ ->
         +left
         +right
         +Insn.MetaCall(1, Metamethod.COMPARE)
