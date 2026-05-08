@@ -13,7 +13,7 @@ abstract class MetisException(
     message: String,
     val backtrace: MutableList<Span>,
     cause: Throwable? = null
-) : RuntimeException(message, cause) {
+) : RuntimeException(message, cause, false, false) {
 
     /**
      * Returns a string representation of this exception.
