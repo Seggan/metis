@@ -1,5 +1,6 @@
 package io.github.seggan.metis.parsing
 
+import io.github.seggan.metis.util.StringView
 import org.intellij.lang.annotations.Language
 
 /**
@@ -112,12 +113,12 @@ object Lexer {
      */
     fun lex(source: CodeSource): List<Token> {
         val tokens = mutableListOf<Token>()
-        val code = StringBuilder(source.text)
+        var code: CharSequence = StringView(source.text)
         var pos = 0
         while (code.isNotEmpty()) {
             val matched = mutableListOf<Pair<TokenMatcher.Match, Token>>()
             for (matcher in matchers) {
-                val match = matcher.parse(code, pos)
+                val match = matcher.parse(code)
                 if (match != null) {
                     matched.add(
                         match to Token(
@@ -138,7 +139,7 @@ object Lexer {
             tokens.add(bestMatch.second)
             val length = bestMatch.first.length
             pos += length
-            code.delete(0, length)
+            code = code.subSequence(length, code.length)
         }
         return tokens + Token(Token.Type.EOF, "", Span(pos, pos, source))
     }
@@ -148,10 +149,10 @@ private sealed interface TokenMatcher {
 
     val type: Token.Type
 
-    fun parse(nextText: CharSequence, pos: Int): Match?
+    fun parse(nextText: CharSequence): Match?
 
     class Text(private val text: String, override val type: Token.Type) : TokenMatcher {
-        override fun parse(nextText: CharSequence, pos: Int): Match? {
+        override fun parse(nextText: CharSequence): Match? {
             if (nextText.startsWith(text)) {
                 return text.toMatch()
             }
@@ -163,7 +164,7 @@ private sealed interface TokenMatcher {
 
         private val regex = "^$regex".toRegex()
 
-        override fun parse(nextText: CharSequence, pos: Int): Match? {
+        override fun parse(nextText: CharSequence): Match? {
             val match = regex.find(nextText)
             if (match != null) {
                 return match.value.toMatch()
@@ -173,7 +174,7 @@ private sealed interface TokenMatcher {
     }
 
     class Keyword(private val keyword: String, override val type: Token.Type) : TokenMatcher {
-        override fun parse(nextText: CharSequence, pos: Int): Match? {
+        override fun parse(nextText: CharSequence): Match? {
             if (nextText.startsWith(keyword) && !nextText.getOrElse(keyword.length) { '\u0000' }.isLetterOrDigit()) {
                 return keyword.toMatch()
             }
@@ -182,7 +183,7 @@ private sealed interface TokenMatcher {
     }
 
     class StringyLiteral(private val delim: Char, override val type: Token.Type) : TokenMatcher {
-        override fun parse(nextText: CharSequence, pos: Int): Match? {
+        override fun parse(nextText: CharSequence): Match? {
             if (nextText.startsWith(delim)) {
                 var escaped = false
                 var i = 1
