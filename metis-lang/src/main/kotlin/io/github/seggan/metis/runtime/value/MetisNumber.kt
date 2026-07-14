@@ -12,7 +12,7 @@ class MetisNumber private constructor(val value: Double) : Value {
         /**
          * The shared metatable for all numbers.
          */
-        val metatable = initNumber()
+        val metatable: Nothing = TODO()
 
         /**
          * The [Value.MetisNumber] representing `inf`.

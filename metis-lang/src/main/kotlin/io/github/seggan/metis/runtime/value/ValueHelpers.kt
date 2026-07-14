@@ -2,7 +2,6 @@
 
 package io.github.seggan.metis.runtime.value
 
-import kotlin.collections.set
 import kotlin.reflect.KClass
 
 
@@ -26,7 +25,7 @@ fun Value.lookUp(key: Value): Value? {
  */
 fun Value.set(key: Value, value: Value): Boolean {
     if (this === metatable) return setDirect(key, value)
-    return setDirect(key, value) || metatable?.set(key, value) ?: false
+    return setDirect(key, value) || (metatable as? Value)?.set(key, value) ?: false
 }
 
 /**

@@ -26,7 +26,7 @@ data class MetisString(val value: String) : Value {
          * The shared metatable for all strings.
          */
         // lazy because of a mutual dependency between initTable and String
-        val metatable by lazy(::initString)
+        val metatable: Nothing by lazy { TODO() }
     }
 
     override fun toString() = "\"$value\""

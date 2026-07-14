@@ -39,6 +39,6 @@ data class MetisBytes(val value: ByteArray, override var metatable: MetisTable? 
         /**
          * The shared metatable for all byte arrays.
          */
-        val metatable = initBytes()
+        val metatable: Nothing = TODO()
     }
 }

@@ -33,7 +33,7 @@ class MetisBoolean private constructor(val value: Boolean) : Value {
          * The shared metatable for all booleans.
          */
         // lazy because of a mutual dependency between initTable and Boolean
-        val metatable by lazy(::initBoolean)
+        val metatable: Nothing by lazy { TODO() }
     }
 
     override fun toString() = value.toString()

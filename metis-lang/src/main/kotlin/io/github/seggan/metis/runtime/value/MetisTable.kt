@@ -23,7 +23,7 @@ data class MetisTable(
         /**
          * The shared super-metatable for all tables.
          */
-        val metatable = initTable()
+        val metatable: Nothing = TODO()
     }
 
     override fun toString(): String {
