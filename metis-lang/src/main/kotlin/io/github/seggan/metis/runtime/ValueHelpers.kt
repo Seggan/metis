@@ -2,7 +2,22 @@
 
 package io.github.seggan.metis.runtime
 
+import io.github.seggan.metis.runtime.Value.String
 import io.github.seggan.metis.runtime.intrinsics.Coroutine
+import kotlin.AssertionError
+import kotlin.Boolean
+import kotlin.ByteArray
+import kotlin.Double
+import kotlin.Int
+import kotlin.String
+import kotlin.Unit
+import kotlin.also
+import kotlin.collections.Collection
+import kotlin.collections.MutableMap
+import kotlin.collections.mapKeysTo
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.toMutableList
 import kotlin.reflect.KClass
 
 
@@ -132,23 +147,6 @@ fun Value.lookUpHierarchy(vararg keys: String): Value? {
 }
 
 /**
- * If this is a [Value.Native], returns the native object, otherwise throws an error.
- *
- * @param T The type to convert to.
- * @throws MetisRuntimeException If the value cannot be converted.
- */
-inline fun <reified T> Value.asObj(): T {
-    val value = convertTo<Value.Native>().value
-    if (value is T) {
-        return value
-    }
-    throw MetisRuntimeException(
-        "TypeError",
-        "Failed to unpack native object; expected ${T::class.qualifiedName}, got ${value::class.qualifiedName}"
-    )
-}
-
-/**
  * Builds a [Value.Table]
  *
  * @param init The function to initialize the table.
@@ -176,7 +174,6 @@ fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
     Value.Table::class -> "table"
     Value.List::class -> "list"
     Value.Bytes::class -> "bytes"
-    Value.Native::class -> "native"
     Value.Null::class -> "null"
     MetisRuntimeException::class -> "error"
     Coroutine::class -> "coroutine"

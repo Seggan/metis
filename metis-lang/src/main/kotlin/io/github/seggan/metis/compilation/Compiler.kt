@@ -8,13 +8,33 @@ import io.github.seggan.metis.runtime.Arity
 import io.github.seggan.metis.runtime.MetisRuntimeException
 import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Chunk
-import io.github.seggan.metis.runtime.chunk.ErrorHandler
 import io.github.seggan.metis.runtime.chunk.Insn
-import io.github.seggan.metis.runtime.chunk.Upvalue
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 import java.util.*
 import kotlin.collections.ArrayDeque
+import kotlin.collections.List
+import kotlin.collections.MutableList
+import kotlin.collections.emptyList
+import kotlin.collections.filter
+import kotlin.collections.filterTo
+import kotlin.collections.first
+import kotlin.collections.firstOrNull
+import kotlin.collections.flatMap
+import kotlin.collections.forEach
+import kotlin.collections.indexOfFirst
+import kotlin.collections.indices
+import kotlin.collections.isNotEmpty
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mutableListOf
+import kotlin.collections.plus
+import kotlin.collections.unzip
+import kotlin.collections.withIndex
+import kotlin.collections.zip
+import kotlin.ranges.first
+import kotlin.sequences.first
+import kotlin.text.first
 
 /**
  * A compiler for Metis code. You may not call [compileCode] more than once.

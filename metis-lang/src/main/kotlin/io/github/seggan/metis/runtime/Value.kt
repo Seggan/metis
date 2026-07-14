@@ -299,16 +299,6 @@ interface Value {
     }
 
     /**
-     * Wraps a native object.
-     *
-     * @param value The native object to wrap.
-     * @param metatable The metatable of the value.
-     */
-    data class Native(val value: Any, override var metatable: Table? = null) : Value {
-        override fun toString() = "Native(value=$value)"
-    }
-
-    /**
      * A null value.
      */
     data object Null : Value {
