@@ -4,11 +4,11 @@ import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.parsing.SyntaxException
-import io.github.seggan.metis.runtime.Arity
-import io.github.seggan.metis.runtime.MetisRuntimeException
-import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.value.Arity
+import io.github.seggan.metis.runtime.value.MetisRuntimeException
+import io.github.seggan.metis.runtime.value.MetisTable
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
 import java.util.*
@@ -274,7 +274,7 @@ class Compiler private constructor(
         if (error.companionData != null) {
             +compileExpression(error.companionData)
         } else {
-            +Insn.Push(Value.Table())
+            +Insn.Push(MetisTable())
         }
         +Insn.PushError(error.type)
     }

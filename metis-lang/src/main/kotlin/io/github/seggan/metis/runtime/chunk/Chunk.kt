@@ -5,7 +5,7 @@ import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
-import io.github.seggan.metis.runtime.Arity
+import io.github.seggan.metis.runtime.value.Arity
 import java.util.*
 
 /**

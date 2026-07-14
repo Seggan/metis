@@ -1,6 +1,6 @@
 package io.github.seggan.metis.runtime.chunk
 
-import io.github.seggan.metis.runtime.CallableValue
+import io.github.seggan.metis.runtime.value.CallableValue
 
 /**
  * The result of stepping through a [CallableValue.Executor]

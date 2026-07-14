@@ -2,8 +2,8 @@ package io.github.seggan.metis.compilation.op
 
 import io.github.seggan.metis.compilation.FullInsn
 import io.github.seggan.metis.compilation.InsnsBuilder
-import io.github.seggan.metis.runtime.Value
 import io.github.seggan.metis.runtime.chunk.Insn
+import io.github.seggan.metis.runtime.value.MetisNull
 
 enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<FullInsn>) -> Unit) {
     PLUS("__plus__"),
@@ -57,7 +57,7 @@ enum class BinOp(internal val generateCode: InsnsBuilder.(List<FullInsn>, List<F
     }),
     ELVIS({ left, right ->
         +left
-        +Insn.Push(Value.Null)
+        +Insn.Push(MetisNull)
         +Insn.CopyUnder(1)
         +Insn.MetaCall(1, "__eq__")
         val end = Insn.Label()

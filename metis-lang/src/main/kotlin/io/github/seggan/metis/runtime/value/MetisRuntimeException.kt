@@ -1,4 +1,4 @@
-package io.github.seggan.metis.runtime
+package io.github.seggan.metis.runtime.value
 
 import io.github.seggan.metis.runtime.intrinsics.oneArgFunction
 import io.github.seggan.metis.runtime.intrinsics.twoArgFunction
@@ -15,11 +15,11 @@ import io.github.seggan.metis.util.MetisException
 open class MetisRuntimeException(
     val type: String,
     private val actualMessage: String,
-    private val companionData: Value.Table = Value.Table(),
+    private val companionData: MetisTable = MetisTable(),
     cause: Throwable? = null
 ) : MetisException("$type: $actualMessage", mutableListOf(), cause), Value {
 
-    override var metatable: Value.Table? = Companion.metatable
+    override var metatable: MetisTable? = Companion.metatable
 
     override fun lookUpDirect(key: Value): Value? {
         if (key == messageString) return actualMessage.metisValue()
@@ -40,10 +40,10 @@ open class MetisRuntimeException(
                 throw MetisRuntimeException("TypeError", "Cannot call error")
             }
             table["__eq__"] = twoArgFunction(true) { self, other ->
-                Value.Boolean.of(self === other)
+                MetisBoolean.of(self === other)
             }
             table["__contains__"] = twoArgFunction(true) { self, key ->
-                Value.Boolean.of(self.lookUp(key) != null)
+                MetisBoolean.of(self.lookUp(key) != null)
             }
         }
     }
@@ -53,4 +53,4 @@ open class MetisRuntimeException(
     }
 }
 
-private val messageString = Value.String("message")
+private val messageString = MetisString("message")

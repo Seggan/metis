@@ -5,7 +5,10 @@ import io.github.seggan.metis.compilation.op.AssignType
 import io.github.seggan.metis.compilation.op.BinOp
 import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.Token.Type.*
-import io.github.seggan.metis.runtime.Value
+import io.github.seggan.metis.runtime.value.MetisBytes
+import io.github.seggan.metis.runtime.value.MetisNull
+import io.github.seggan.metis.runtime.value.MetisNumber
+import io.github.seggan.metis.runtime.value.MetisString
 import io.github.seggan.metis.util.escape
 import java.util.*
 
@@ -27,7 +30,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private val next: Token
         get() = tokens[index]
 
-    private val stringConstantPool = mutableMapOf<String, Value.String>()
+    private val stringConstantPool = mutableMapOf<String, MetisString>()
 
     /**
      * Parses the tokens into an AST.
@@ -43,7 +46,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         }
         val returnSpan = Span(0, tokens.lastOrNull()?.span?.end ?: 0, source)
         return AstNode.Block(
-            statements + AstNode.Return(AstNode.Literal(Value.Null, returnSpan), returnSpan),
+            statements + AstNode.Return(AstNode.Literal(MetisNull, returnSpan), returnSpan),
             returnSpan
         )
     }
@@ -79,7 +82,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parseReturn(): AstNode.Return {
         val startSpan = consume(RETURN).span
-        val expr = tryParse(::parseExpression) ?: AstNode.Literal(Value.Null, startSpan)
+        val expr = tryParse(::parseExpression) ?: AstNode.Literal(MetisNull, startSpan)
         return AstNode.Return(expr, startSpan + expr.span)
     }
 
@@ -222,7 +225,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
                     } else {
                         AstNode.Index(
                             expr,
-                            AstNode.Literal(Value.String(name.text), name.span),
+                            AstNode.Literal(MetisString(name.text), name.span),
                             op.span + previous.span
                         )
                     }
@@ -260,21 +263,21 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private fun parseString(): AstNode.Literal {
         val token = consume(STRING)
         val text = token.text.substring(1, token.text.length - 1).escape()
-        val value = stringConstantPool.getOrPut(text) { Value.String(text) }
+        val value = stringConstantPool.getOrPut(text) { MetisString(text) }
         return AstNode.Literal(value, token.span)
     }
 
     private fun parseBytes(): AstNode.Literal {
         val token = consume(BYTES)
         return AstNode.Literal(
-            Value.Bytes(token.text.substring(1, token.text.length - 1).escape().encodeToByteArray()),
+            MetisBytes(token.text.substring(1, token.text.length - 1).escape().encodeToByteArray()),
             token.span
         )
     }
 
     private fun parseNumber(): AstNode.Literal {
         val token = consume(NUMBER)
-        return AstNode.Literal(Value.Number.of(token.text.toDouble()), token.span)
+        return AstNode.Literal(MetisNumber.of(token.text.toDouble()), token.span)
     }
 
     private fun parseList(): AstNode.ListLiteral {
@@ -315,7 +318,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         } else parseBlock(END)
         if (block.lastOrNull() !is AstNode.Return) {
             val nodes = block.toMutableList()
-            nodes.add(AstNode.Return(AstNode.Literal(Value.Null, block.span), block.span))
+            nodes.add(AstNode.Return(AstNode.Literal(MetisNull, block.span), block.span))
             block = AstNode.Block(nodes, block.span)
         }
         return AstNode.FunctionLiteral(args, block, name, startSpan + block.span)
@@ -361,7 +364,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         return AstNode.VarDecl(
             visibility,
             name,
-            value ?: AstNode.Literal(Value.Null, start.span + previous.span),
+            value ?: AstNode.Literal(MetisNull, start.span + previous.span),
             start.span + previous.span
         )
     }

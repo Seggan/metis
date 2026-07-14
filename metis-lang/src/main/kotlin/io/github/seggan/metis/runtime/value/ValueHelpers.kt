@@ -1,23 +1,8 @@
 @file:JvmName("ValueHelpers")
 
-package io.github.seggan.metis.runtime
+package io.github.seggan.metis.runtime.value
 
-import io.github.seggan.metis.runtime.Value.String
-import io.github.seggan.metis.runtime.intrinsics.Coroutine
-import kotlin.AssertionError
-import kotlin.Boolean
-import kotlin.ByteArray
-import kotlin.Double
-import kotlin.Int
-import kotlin.String
-import kotlin.Unit
-import kotlin.also
-import kotlin.collections.Collection
-import kotlin.collections.MutableMap
-import kotlin.collections.mapKeysTo
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
-import kotlin.collections.toMutableList
 import kotlin.reflect.KClass
 
 
@@ -58,9 +43,9 @@ fun Value.setOrError(key: Value, value: Value) {
 }
 
 /**
- * If this value is null, return [Value.Null], otherwise return this value.
+ * If this value is null, return [MetisNull], otherwise return this value.
  */
-fun Value?.orNull() = this ?: Value.Null
+fun Value?.orNull() = this ?: MetisNull
 
 /**
  * Converts this value to a [T], or throws an error if it cannot be converted.
@@ -80,56 +65,56 @@ inline fun <reified T : Value> Value.convertTo(): T {
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.intValue() = this.convertTo<Value.Number>().value.toInt()
+fun Value.intValue() = this.convertTo<MetisNumber>().value.toInt()
 
 /**
  * Converts this value to a [Double], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.doubleValue() = this.convertTo<Value.Number>().value
+fun Value.doubleValue() = this.convertTo<MetisNumber>().value
 
 /**
- * Converts this value to a [String], or throws an error if it cannot be converted.
+ * Converts this value to a [MetisString], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.stringValue() = this.convertTo<Value.String>().value
+fun Value.stringValue() = this.convertTo<MetisString>().value
 
 /**
- * Converts this value to a [kotlin.Boolean], or throws an error if it cannot be converted.
+ * Converts this value to a [Boolean], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.booleanValue() = this.convertTo<Value.Boolean>().value
+fun Value.booleanValue() = this.convertTo<MetisBoolean>().value
 
 /**
- * Converts this value to a [Value.Table], or throws an error if it cannot be converted.
+ * Converts this value to a [MetisTable], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.tableValue() = this.convertTo<Value.Table>().value
+fun Value.tableValue() = this.convertTo<MetisTable>().value
 
 /**
- * Converts this value to a [Value.List], or throws an error if it cannot be converted.
+ * Converts this value to a [MetisList], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.listValue() = this.convertTo<Value.List>().value
+fun Value.listValue() = this.convertTo<MetisList>().value
 
 /**
- * Converts this value to a [Value.Bytes], or throws an error if it cannot be converted.
+ * Converts this value to a [MetisBytes], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.bytesValue() = this.convertTo<Value.Bytes>().value
+fun Value.bytesValue() = this.convertTo<MetisBytes>().value
 
 operator fun MutableMap<Value, Value>.set(key: String, value: Value) {
-    this[Value.String(key)] = value
+    this[MetisString(key)] = value
 }
 
 operator fun MutableMap<Value, Value>.get(key: String): Value? {
-    return this[Value.String(key)]
+    return this[MetisString(key)]
 }
 
 /**
@@ -147,14 +132,14 @@ fun Value.lookUpHierarchy(vararg keys: String): Value? {
 }
 
 /**
- * Builds a [Value.Table]
+ * Builds a [MetisTable]
  *
  * @param init The function to initialize the table.
  */
-inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
+inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): MetisTable {
     val map = mutableMapOf<String, Value>()
     init(map)
-    return Value.Table(map.mapKeysTo(mutableMapOf()) { Value.String(it.key) }).also {
+    return MetisTable(map.mapKeysTo(mutableMapOf()) { MetisString(it.key) }).also {
         if (it.metatable == null) {
             throw AssertionError("Null Table metatable on init; this shouldn't happen!")
         }
@@ -168,48 +153,44 @@ inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): Value.Table {
  * @return The name of the class.
  */
 fun typeToName(clazz: KClass<out Value>): String = when (clazz) {
-    Value.Number::class -> "number"
-    Value.String::class -> "string"
-    Value.Boolean::class -> "boolean"
-    Value.Table::class -> "table"
-    Value.List::class -> "list"
-    Value.Bytes::class -> "bytes"
-    Value.Null::class -> "null"
+    MetisNumber::class -> "number"
+    MetisString::class -> "string"
+    MetisBoolean::class -> "boolean"
+    MetisTable::class -> "table"
+    MetisList::class -> "list"
+    MetisBytes::class -> "bytes"
+    MetisNull::class -> "null"
     MetisRuntimeException::class -> "error"
-    Coroutine::class -> "coroutine"
-    else -> if (CallableValue::class.java.isAssignableFrom(clazz.java)) {
-        "callable"
-    } else {
-        clazz.simpleName ?: "unknown"
-    }
+    else if (CallableValue::class.java.isAssignableFrom(clazz.java)) -> "callable"
+    else -> clazz.simpleName ?: "unknown"
 }
 
 /**
- * Converts an [Int] to a [Value.Number]
+ * Converts an [Int] to a [MetisNumber]
  */
-fun Int.metisValue() = Value.Number.of(this)
+fun Int.metisValue() = MetisNumber.of(this)
 
 /**
- * Converts a [Double] to a [Value.Number]
+ * Converts a [Double] to a [MetisNumber]
  */
-fun Double.metisValue() = Value.Number.of(this)
+fun Double.metisValue() = MetisNumber.of(this)
 
 /**
- * Converts a [String] to a [Value.String]
+ * Converts a [MetisString] to a [MetisString]
  */
-fun String.metisValue() = Value.String(this)
+fun String.metisValue() = MetisString(this)
 
 /**
- * Converts a [kotlin.Boolean] to a [Value.Boolean]
+ * Converts a [Boolean] to a [MetisBoolean]
  */
-fun Boolean.metisValue() = Value.Boolean.of(this)
+fun Boolean.metisValue() = MetisBoolean.of(this)
 
 /**
- * Converts a [Collection] of [Value]s to a [Value.List]
+ * Converts a [Collection] of [Value]s to a [MetisList]
  */
-fun Collection<Value>.metisValue() = Value.List(this.toMutableList())
+fun Collection<Value>.metisValue() = MetisList(this.toMutableList())
 
 /**
- * Converts a [ByteArray] to a [Value.Bytes]
+ * Converts a [ByteArray] to a [MetisBytes]
  */
-fun ByteArray.metisValue() = Value.Bytes(this)
+fun ByteArray.metisValue() = MetisBytes(this)
