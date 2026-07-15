@@ -1,5 +1,6 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.runtime.chunk.Insn
 
@@ -19,6 +20,11 @@ class InsnsBuilder(val span: Span) {
         list.add(this to span)
     }
 
+    operator fun Insn.DestInsn.unaryPlus(): Register {
+        list.add(this as Insn to span)
+        return this.dest
+    }
+
     /**
      * Adds an instruction-[Span] pair to the list.
      */
@@ -31,6 +37,11 @@ class InsnsBuilder(val span: Span) {
      */
     operator fun List<FullInsn>.unaryPlus() {
         list.addAll(this)
+    }
+
+    operator fun Pair<List<FullInsn>, Register>.unaryPlus(): Register {
+        list.addAll(this.first)
+        return this.second
     }
 
     /**
@@ -50,6 +61,15 @@ class InsnsBuilder(val span: Span) {
  */
 inline fun buildInsns(span: Span, block: InsnsBuilder.() -> Unit): List<FullInsn> {
     return InsnsBuilder(span).apply(block).build()
+}
+
+inline fun buildExpression(
+    expression: AstNode.Expression,
+    block: InsnsBuilder.() -> Register
+): Pair<List<FullInsn>, Register> {
+    val builder = InsnsBuilder(expression.span)
+    val register = builder.block()
+    return builder.build() to register
 }
 
 /**

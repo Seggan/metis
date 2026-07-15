@@ -1,0 +1,25 @@
+package io.github.seggan.metis.compilation.op
+
+object Metamethod {
+    const val PLUS = "__plus__"
+    const val MINUS = "__minus__"
+    const val TIMES = "__times__"
+    const val DIV = "__div__"
+    const val FLOORDIV = "__floordiv__"
+    const val MOD = "__mod__"
+    const val POW = "__pow__"
+    const val RANGE = "__range__"
+    const val INCLRANGE = "__inclRange__"
+    const val BAND = "__band__"
+    const val BOR = "__bor__"
+    const val BXOR = "__bxor__"
+    const val SHL = "__shl__"
+    const val SHR = "__shr__"
+    const val SHRU = "__shru__"
+    const val CONTAINS = "__contains__"
+    const val EQ = "__eq__"
+    const val CMP = "__cmp__"
+    const val NEG = "__neg__"
+    const val BNOT = "__bnot__"
+    const val METATABLE = "__metatable__"
+}

@@ -22,6 +22,7 @@ import kotlin.collections.first
 import kotlin.collections.firstOrNull
 import kotlin.collections.flatMap
 import kotlin.collections.forEach
+import kotlin.collections.indexOf
 import kotlin.collections.indexOfFirst
 import kotlin.collections.indices
 import kotlin.collections.isNotEmpty
@@ -34,52 +35,41 @@ import kotlin.collections.withIndex
 import kotlin.collections.zip
 import kotlin.ranges.first
 import kotlin.sequences.first
+import kotlin.sequences.indexOf
 import kotlin.text.first
+import kotlin.text.indexOf
 
-/**
- * A compiler for Metis code. You may not call [compileCode] more than once.
- */
 class Compiler private constructor(
     private val args: List<String>,
     private val enclosingCompiler: Compiler?
-) {
+) : RegisterHolder {
 
-    /**
-     * Creates a new compiler
-     */
-    constructor() : this(emptyList(), null)
+    private val id = UUID.randomUUID()
+
+    private val freeRegisters = ArrayDeque<Register>()
+    private var registerCount = 0
 
     private val localStack = ArrayDeque<Local>()
-    private val upvalues = mutableListOf<Upvalue>()
 
     private val loopStack = ArrayDeque<LoopInfo>()
     private val errorScopeStack = ArrayDeque<Int>()
-
-    private val id = UUID.randomUUID()
 
     private var scope = 0
 
     init {
         for ((i, arg) in args.withIndex()) {
-            localStack.addFirst(Local(arg, 0, i))
+            localStack.addFirst(Local(arg, 0, i, nextFreeRegister()))
         }
     }
 
-    /**
-     * Compiles the given [code] into a [Chunk] with the given [name]. May only be called once per instance.
-     *
-     * @param name The name of the chunk.
-     * @param code The code to compile.
-     * @return The compiled chunk.
-     */
-    fun compileCode(name: String, code: AstNode.Block): Chunk {
+    private fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
         val compiled = compileBlock(code, false).filterTo(mutableListOf()) { it.first != Insn.NoOp }
         for (marker in compiled.filter { it.first is Insn.Label }) {
             backpatch(compiled, marker.first as Insn.Label)
         }
         val (insns, spans) = compiled.unzip()
-        return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), upvalues, id, spans)
+        return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), id, spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -97,11 +87,6 @@ class Compiler private constructor(
             val local = it.next()
             if (local.scope == scope) {
                 if (remove) it.remove()
-                if (local.capturing != null) {
-                    +Insn.CloseUpvalue(local.capturing!!)
-                } else {
-                    +Insn.Pop
-                }
             }
         }
         if (remove) scope--
@@ -110,25 +95,24 @@ class Compiler private constructor(
     private inline fun earlyExitScope(span: Span, cond: (Int) -> Boolean) = buildInsns(span) {
         for (local in localStack) {
             if (cond(local.scope)) {
-                if (local.capturing != null) {
-                    +Insn.CloseUpvalue(local.capturing!!)
-                } else {
-                    +Insn.Pop
-                }
+                freeRegisters.add(local.register)
             }
         }
     }
 
     private fun compileStatement(statement: AstNode.Statement): List<FullInsn> {
         return when (statement) {
-            is AstNode.Expression -> compileExpression(statement) + (Insn.Pop to statement.span)
+            is AstNode.Expression -> {
+                val (expr, reg) = compileExpression(statement)
+                freeRegisters.add(reg)
+                expr
+            }
             is AstNode.VarDecl -> compileVarDecl(statement)
             is AstNode.VarAssign -> compileVarAssign(statement)
             is AstNode.Return -> buildInsns(statement.span) {
-                +compileExpression(statement.value)
-                +Insn.ToBeUsed
+                val reg = +compileExpression(statement.value)
                 +earlyExitScope(statement.span) { true }
-                +Insn.Return
+                +Insn.Return(reg)
             }
 
             is AstNode.While -> compileWhile(statement)
@@ -157,60 +141,58 @@ class Compiler private constructor(
             is AstNode.Block -> compileBlock(statement)
             is AstNode.DoExcept -> compileDoExcept(statement)
             is AstNode.Raise -> buildInsns(statement.span) {
-                +compileExpression(statement.value)
-                +Insn.ToBeUsed
+                val reg = +compileExpression(statement.value)
                 if (errorScopeStack.isNotEmpty()) {
                     val info = errorScopeStack.pop()
                     +earlyExitScope(statement.span) { it > info }
                 }
-                +Insn.Raise
+                TODO()
             }
 
             is AstNode.Import -> compileImport(statement)
         }
     }
 
-    private fun compileExpression(expression: AstNode.Expression): List<FullInsn> {
+    private fun compileExpression(expression: AstNode.Expression): Pair<List<FullInsn>, Register> {
         return when (expression) {
             is AstNode.UnaryOp -> compileUnOp(expression)
-            is AstNode.BinaryOp -> buildInsns(expression.span) {
+            is AstNode.BinaryOp -> buildExpression(expression) {
                 expression.op.generateCode(
                     this,
-                    compileExpression(expression.left),
-                    compileExpression(expression.right)
+                    this@Compiler,
+                    { compileExpression(expression.left) },
+                    { compileExpression(expression.right) }
                 )
             }
 
             is AstNode.TernaryOp -> compileTernaryOp(expression)
 
-            is AstNode.Call -> buildInsns(expression.span) {
-                expression.args.forEach { arg ->
+            is AstNode.Call -> buildExpression(expression) {
+                val registers = expression.args.map { arg ->
                     +compileExpression(arg)
                 }
-                +compileExpression(expression.expr)
-                +Insn.Call(expression.args.size, false)
+                val expr = +compileExpression(expression.expr)
+                freeRegisters(registers)
+                freeRegisters(expr)
+                +Insn.Call(nextFreeRegister(), expr, registers)
             }
 
-            is AstNode.Index -> buildInsns(expression.span) {
-                +compileExpression(expression.target)
-                +compileExpression(expression.index)
-                +Insn.Index
+            is AstNode.Index -> buildExpression(expression) {
+                val target = +compileExpression(expression.target)
+                val index = +compileExpression(expression.index)
+                freeRegisters(target, index)
+                +Insn.Index(nextFreeRegister(), target, index)
             }
 
-            is AstNode.CombinedCall -> buildInsns(expression.span) {
-                +compileExpression(expression.expr)
-                val args = expression.args.map(::compileExpression)
-                args.forEach { arg ->
-                    +arg
-                }
-                +Insn.CopyUnder(args.size)
-                +Insn.Push(expression.name)
-                +Insn.Index
-                +Insn.Call(args.size + 1, true)
+            is AstNode.CombinedCall -> buildExpression(expression) {
+                TODO()
             }
 
-            is AstNode.Literal -> listOf(Insn.Push(expression.value) to expression.span)
-            is AstNode.Var -> {
+            is AstNode.Literal -> buildExpression(expression) {
+                +Insn.SetValue(nextFreeRegister(), expression.value)
+            }
+
+            is AstNode.Var -> buildExpression(expression) {
                 val name = expression.name
                 resolveLocal(name)?.let { local ->
                     return listOf(Insn.GetLocal(local.index) to expression.span)
@@ -222,14 +204,14 @@ class Compiler private constructor(
             }
 
             is AstNode.FunctionLiteral -> compileFunctionDef(expression)
-            is AstNode.ListLiteral -> buildInsns(expression.span) {
+            is AstNode.ListLiteral -> buildExpression(expression) {
                 expression.values.forEach { value ->
                     +compileExpression(value)
                 }
                 +Insn.PushList(expression.values.size)
             }
 
-            is AstNode.TableLiteral -> buildInsns(expression.span) {
+            is AstNode.TableLiteral -> buildExpression(expression) {
                 expression.values.forEach { (key, value) ->
                     +compileExpression(key)
                     +compileExpression(value)
@@ -463,31 +445,31 @@ class Compiler private constructor(
         return localStack.firstOrNull { it.name == name }
     }
 
-    private fun resolveUpvalue(name: String): Upvalue? {
-        val found = upvalues.firstOrNull { it.name == name }
-        if (found != null) return found
-        if (enclosingCompiler == null) return null
-        val local = enclosingCompiler.resolveLocal(name)
-        if (local != null) {
-            if (local.capturing == null) {
-                local.capturing = Upvalue(name, local.index, enclosingCompiler.id)
-            }
-            val upvalue = local.capturing!!
-            upvalues.add(upvalue)
-            return upvalue
+    override fun nextFreeRegister(): Register = freeRegisters.removeFirstOrNull() ?: registerCount++
+
+    override fun freeRegisters(registers: List<Register>) {
+        for (register in registers) {
+            freeRegisters.add(register)
         }
-        val resolved = enclosingCompiler.resolveUpvalue(name)
-        if (resolved != null) {
-            upvalues.add(resolved)
-            return resolved
+    }
+
+    companion object {
+        /**
+         * Compiles the given [code] into a [Chunk] with the given [name]
+         *
+         * @param name The name of the chunk.
+         * @param code The code to compile.
+         * @return The compiled chunk.
+         */
+        fun compile(name: String, code: AstNode.Block): Chunk {
+            return Compiler(emptyList(), null).compileCode(name, code)
         }
-        return null
     }
 }
 
 private data class LoopInfo(val start: Insn.Label, val end: Insn.Label, val scope: Int)
 
-private data class Local(val name: String, val scope: Int, val index: Int, var capturing: Upvalue? = null)
+private data class Local(val name: String, val scope: Int, val index: Int, val register: Register)
 
 private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
     val markerIndex = insns.indexOfFirst { it.first == label }

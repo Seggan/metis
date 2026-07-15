@@ -193,3 +193,9 @@ fun Collection<Value>.metisValue() = MetisList(this.toMutableList())
  * Converts a [ByteArray] to a [MetisBytes]
  */
 fun ByteArray.metisValue() = MetisBytes(this)
+
+/**
+ * Converts null to [MetisNull]
+ */
+@Suppress("UnusedReceiverParameter")
+fun Nothing?.metisValue() = MetisNull

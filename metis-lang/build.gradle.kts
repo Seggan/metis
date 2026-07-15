@@ -8,6 +8,10 @@ tasks.dokkaHtml {
     outputDirectory.set(rootDir.resolve("gendocs/javadocs"))
 }
 
+kotlin {
+    compilerOptions.freeCompilerArgs = listOf("-Xcontext-parameters")
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
