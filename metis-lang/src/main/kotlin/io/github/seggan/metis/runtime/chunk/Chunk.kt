@@ -56,8 +56,7 @@ class Chunk(
          */
         fun load(source: CodeSource): Chunk {
             val parser = Parser(Lexer.lex(source), source)
-            val compiler = Compiler()
-            return compiler.compileCode(source.name, parser.parse())
+            return Compiler.compile(source.name, parser.parse())
         }
     }
 }

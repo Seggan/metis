@@ -1,5 +1,6 @@
 package io.github.seggan.metis.compilation
 
+import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.compilation.op.UnOp
 import io.github.seggan.metis.parsing.AstNode
 import io.github.seggan.metis.parsing.Span
@@ -7,7 +8,6 @@ import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
 import io.github.seggan.metis.runtime.value.Arity
-import io.github.seggan.metis.runtime.value.MetisRuntimeException
 import io.github.seggan.metis.runtime.value.MetisTable
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
@@ -18,26 +18,20 @@ import kotlin.collections.MutableList
 import kotlin.collections.emptyList
 import kotlin.collections.filter
 import kotlin.collections.filterTo
-import kotlin.collections.first
 import kotlin.collections.firstOrNull
 import kotlin.collections.flatMap
 import kotlin.collections.forEach
-import kotlin.collections.indexOf
 import kotlin.collections.indexOfFirst
 import kotlin.collections.indices
 import kotlin.collections.isNotEmpty
 import kotlin.collections.listOf
 import kotlin.collections.map
 import kotlin.collections.mutableListOf
+import kotlin.collections.mutableSetOf
 import kotlin.collections.plus
+import kotlin.collections.toList
 import kotlin.collections.unzip
 import kotlin.collections.withIndex
-import kotlin.collections.zip
-import kotlin.ranges.first
-import kotlin.sequences.first
-import kotlin.sequences.indexOf
-import kotlin.text.first
-import kotlin.text.indexOf
 
 class Compiler private constructor(
     private val args: List<String>,
@@ -46,7 +40,7 @@ class Compiler private constructor(
 
     private val id = UUID.randomUUID()
 
-    private val freeRegisters = ArrayDeque<Register>()
+    private val freeRegisters = mutableSetOf<Register>()
     private var registerCount = 0
 
     private val localStack = ArrayDeque<Local>()
@@ -58,7 +52,7 @@ class Compiler private constructor(
 
     init {
         for ((i, arg) in args.withIndex()) {
-            localStack.addFirst(Local(arg, 0, i, nextFreeRegister()))
+            localStack.addFirst(Local(arg, 0, nextFreeRegister()))
         }
     }
 
@@ -73,7 +67,7 @@ class Compiler private constructor(
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
-        return statements.flatMap(::compileStatement)
+        return statements.flatMap { compileStatement(it) + (Insn.Clear(freeRegisters.toList()) to it.span) }
     }
 
     private fun compileBlock(block: AstNode.Block, remove: Boolean = true): List<FullInsn> {
@@ -107,6 +101,7 @@ class Compiler private constructor(
                 freeRegisters.add(reg)
                 expr
             }
+
             is AstNode.VarDecl -> compileVarDecl(statement)
             is AstNode.VarAssign -> compileVarAssign(statement)
             is AstNode.Return -> buildInsns(statement.span) {
@@ -194,71 +189,80 @@ class Compiler private constructor(
 
             is AstNode.Var -> buildExpression(expression) {
                 val name = expression.name
-                resolveLocal(name)?.let { local ->
-                    return listOf(Insn.GetLocal(local.index) to expression.span)
+                val local = resolveLocal(name)
+                if (local != null) {
+                    +Insn.Move(local.register, nextFreeRegister())
+                } else {
+                    +Insn.GetGlobal(nextFreeRegister(), name)
                 }
-                resolveUpvalue(name)?.let { upvalue ->
-                    return listOf(Insn.GetUpvalue(upvalues.indexOf(upvalue)) to expression.span)
-                }
-                listOf(Insn.GetGlobal(name) to expression.span)
             }
 
             is AstNode.FunctionLiteral -> compileFunctionDef(expression)
             is AstNode.ListLiteral -> buildExpression(expression) {
-                expression.values.forEach { value ->
+                val values = expression.values.map { value ->
                     +compileExpression(value)
                 }
-                +Insn.PushList(expression.values.size)
+                freeRegisters(values)
+                +Insn.ConstructList(nextFreeRegister(), values)
             }
 
             is AstNode.TableLiteral -> buildExpression(expression) {
-                expression.values.forEach { (key, value) ->
-                    +compileExpression(key)
-                    +compileExpression(value)
+                val values = expression.values.map { (key, value) ->
+                    +compileExpression(key) to +compileExpression(value)
                 }
-                +Insn.PushTable(expression.values.size)
+                values.forEach { freeRegisters(it.first, it.second) }
+                +Insn.ConstructTable(nextFreeRegister(), values)
             }
 
             is AstNode.ErrorLiteral -> compileErrorLiteral(expression)
         }
     }
 
-    private fun compileUnOp(op: AstNode.UnaryOp) = buildInsns(op.span) {
-        +compileExpression(op.expr)
+    private fun compileUnOp(op: AstNode.UnaryOp) = buildExpression(op) {
+        val expr = +compileExpression(op.expr)
+        freeRegisters(expr)
         if (op.op == UnOp.NOT) {
-            +Insn.Not
+            +Insn.Not(nextFreeRegister(), expr)
         } else {
-            +Insn.MetaCall(0, op.op.metamethod!!)
+            +Insn.MetaCall(nextFreeRegister(), expr, op.op.metamethod!!, emptyList())
         }
     }
 
-    private fun compileTernaryOp(op: AstNode.TernaryOp) = buildInsns(op.span) {
+    private fun compileTernaryOp(op: AstNode.TernaryOp) = buildExpression(op) {
         val end = Insn.Label()
         val falseLabel = Insn.Label()
-        +compileExpression(op.condition)
-        +Insn.RawJumpIf(falseLabel, false)
-        +compileExpression(op.trueExpr)
+        val dest = +compileExpression(op.condition)
+        +Insn.RawJumpIf(falseLabel, condition = false, dest)
+        val trueExpr = +compileExpression(op.trueExpr)
+        +Insn.Move(trueExpr, dest)
+        freeRegisters(trueExpr)
         +Insn.RawJump(end)
         +falseLabel
-        +compileExpression(op.falseExpr)
+        val falseExpr = +compileExpression(op.falseExpr)
+        +Insn.Move(falseExpr, dest)
+        freeRegisters(falseExpr)
         +end
+        dest
     }
 
-    private fun compileFunctionDef(fn: AstNode.FunctionLiteral): List<FullInsn> {
+    private fun compileFunctionDef(fn: AstNode.FunctionLiteral): Pair<List<FullInsn>, Register> {
         val compiler = Compiler(fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
-        return listOf(Insn.PushClosure(chunk) to fn.span)
+        return TODO()
     }
 
-    private fun compileErrorLiteral(error: AstNode.ErrorLiteral) = buildInsns(error.span) {
-        +compileExpression(error.message)
-        +Insn.MetaCall(0, "__str__")
-        if (error.companionData != null) {
+    private fun compileErrorLiteral(error: AstNode.ErrorLiteral) = buildExpression(error) {
+        val expr = +compileExpression(error.message)
+        freeRegisters(expr)
+        val dest = nextFreeRegister()
+        +Insn.MetaCall(dest, expr, Metamethod.STR, emptyList())
+        val companion = if (error.companionData != null) {
             +compileExpression(error.companionData)
         } else {
-            +Insn.Push(MetisTable())
+            +Insn.SetValue(nextFreeRegister(), MetisTable())
         }
-        +Insn.PushError(error.type)
+        freeRegisters(companion)
+        +Insn.ConstructError(dest, error.type, dest, companion)
     }
 
     private fun compileWhile(statement: AstNode.While) = buildInsns(statement.span) {
@@ -266,46 +270,44 @@ class Compiler private constructor(
         val end = Insn.Label()
         loopStack.push(LoopInfo(start, end, scope))
         +start
-        +compileExpression(statement.condition)
-        +Insn.RawJumpIf(end, false)
+        val cond = +compileExpression(statement.condition)
+        +Insn.RawJumpIf(end, condition = false, cond)
         +compileBlock(statement.body)
         +Insn.RawJump(start)
         +end
+        freeRegisters(cond)
         loopStack.pop()
     }
 
     private fun compileFor(statement: AstNode.For) = buildInsns(statement.span) {
-        +compileExpression(statement.iterable)
-        +Insn.MetaCall(0, "__iter__")
-        localStack.addFirst(Local("", scope, localStack.size))
+        val iter = +compileExpression(statement.iterable)
+        +Insn.MetaCall(iter, iter, Metamethod.ITER, emptyList())
         val start = Insn.Label()
         val end = Insn.Label()
         loopStack.push(LoopInfo(start, end, scope))
         +start
-        +Insn.CopyUnder(0)
-        +Insn.CopyUnder(0)
-        +Insn.Push("hasNext")
-        +Insn.Index
-        +Insn.Call(1, true)
-        +Insn.RawJumpIf(end, false)
-        +Insn.CopyUnder(0)
-        +Insn.CopyUnder(0)
-        +Insn.Push("next")
-        +Insn.Index
-        +Insn.Call(1, true)
-        localStack.addFirst(Local(statement.name, scope + 1, localStack.size))
+        val temp = nextFreeRegister()
+        +Insn.SetValue(nextFreeRegister(), "hasNext")
+        +Insn.Index(dest = temp, target = iter, index = temp)
+        +Insn.Call(dest = temp, target = temp, args = listOf(temp))
+        +Insn.RawJumpIf(end, condition = false, temp)
+        +Insn.SetValue(temp, "next")
+        +Insn.Index(dest = temp, target = iter, index = temp)
+        +Insn.Call(dest = temp, target = temp, args = listOf(temp))
+        localStack.push(Local(statement.name, scope, temp))
         +compileBlock(statement.body)
+        localStack.pop()
         +Insn.RawJump(start)
         +end
         loopStack.pop()
-        localStack.removeFirst()
-        +Insn.Pop
+        freeRegisters(iter, temp)
     }
 
     private fun compileIf(statement: AstNode.If) = buildInsns(statement.span) {
-        +compileExpression(statement.condition)
+        val cond = +compileExpression(statement.condition)
         val end = Insn.Label()
-        +Insn.RawJumpIf(end, false)
+        +Insn.RawJumpIf(end, condition = false, cond)
+        freeRegisters(cond)
         +compileBlock(statement.body)
         if (statement.elseBody != null) {
             val realEnd = Insn.Label()
@@ -319,55 +321,13 @@ class Compiler private constructor(
     }
 
     private fun compileDoExcept(statement: AstNode.DoExcept) = buildInsns(statement.span) {
-        val excepts = statement.excepts.map {
-            val label = Insn.Label()
-            label to ErrorHandler(it.name, label)
-        }
-        for (except in excepts) {
-            +Insn.PushErrorHandler(except.second)
-        }
-        val finallyLabel = Insn.Label()
-        if (statement.finally != null) {
-            +Insn.PushFinally(finallyLabel)
-        }
-        val endLabels = mutableListOf<Insn.Label>()
-        val blockLabel = Insn.Label()
-        +Insn.RawJump(blockLabel)
-        for ((info, except) in excepts.zip(statement.excepts)) {
-            val end = Insn.Label()
-            endLabels.add(end)
-            +info.first
-            +Insn.PopErrorHandler
-            localStack.addFirst(Local(except.variable ?: "", scope + 1, localStack.size))
-            +compileBlock(except.body)
-            +Insn.RawJump(end)
-        }
-        +blockLabel
-        errorScopeStack.push(scope)
-        +compileBlock(statement.body)
-        errorScopeStack.pop()
-        if (excepts.isNotEmpty()) +Insn.PopErrorHandler
-        for (end in endLabels) {
-            +end
-        }
-        repeat(excepts.size - 1) {
-            +Insn.PopErrorHandler
-        }
-        if (statement.finally != null) {
-            +finallyLabel
-            +Insn.PopFinally
-            +compileBlock(statement.finally)
-            +Insn.Push(MetisRuntimeException.Finally())
-            +Insn.ToBeUsed
-            +Insn.Raise
-        }
+        TODO()
     }
 
     private fun compileImport(statement: AstNode.Import) = buildInsns(statement.span) {
-        +Insn.Import(statement.name)
-        +Insn.PostImport(statement.name, statement.global)
+        TODO()
         if (!statement.global) {
-            localStack.addFirst(Local(statement.name, scope, localStack.size))
+            //localStack.addFirst(Local(statement.name, scope, localStack.size))
         }
     }
 
@@ -376,67 +336,61 @@ class Compiler private constructor(
         if (oldLocal != null && oldLocal.scope == scope - 1) {
             throw SyntaxException("Variable '${decl.name}' has already been declared", 0, decl.span)
         }
-        localStack.addFirst(Local(decl.name, scope, localStack.size))
-        +compileExpression(decl.value)
+        val value = +compileExpression(decl.value)
         if (decl.visibility == Visibility.GLOBAL) {
-            +Insn.CopyUnder(0)
-            +Insn.SetGlobal(decl.name)
+            +Insn.SetGlobal(decl.name, value)
+        } else {
+            localStack.addFirst(Local(decl.name, scope, value))
         }
     }
 
     private fun compileVarAssign(assign: AstNode.VarAssign): List<FullInsn> {
         return when (val target = assign.target) {
             is AstNode.Index -> buildInsns(target.span) {
-                +compileExpression(target.target)
-                +compileExpression(target.index)
-                if (assign.type == null) {
+                val rTarget = +compileExpression(target.target)
+                val rIndex = +compileExpression(target.index)
+                val rValue = if (assign.type == null) {
                     +compileExpression(assign.value)
                 } else {
-                    +Insn.CopyUnder(1)
-                    +Insn.CopyUnder(1)
-                    +Insn.Index
                     assign.type.op.generateCode(
                         this,
-                        // This will just consume the value on the stack
-                        listOf(Insn.NoOp to assign.span),
-                        compileExpression(assign.value)
+                        this@Compiler,
+                        {
+                            buildExpression(target.target) {
+                                +Insn.Index(dest = nextFreeRegister(), target = rTarget, index = rIndex)
+                            }
+                        },
+                        { compileExpression(assign.value) }
                     )
                 }
-                +Insn.Set
+                freeRegisters(rTarget, rIndex, rValue)
+                +Insn.Set(target = rTarget, index = rIndex, value = rValue)
             }
 
             is AstNode.Var -> buildInsns(target.span) {
                 val name = target.name
+                val value = +compileExpression(assign.value)
                 val local = resolveLocal(name)
                 if (local != null) {
-                    if (assign.type == null) {
+                    val value = if (assign.type == null) {
                         +compileExpression(assign.value)
                     } else {
-                        +Insn.GetLocal(local.index)
                         assign.type.op.generateCode(
                             this,
-                            listOf(Insn.NoOp to assign.span),
-                            compileExpression(assign.value)
+                            this@Compiler,
+                            {
+                                buildExpression(assign.target) {
+                                    +Insn.Move(local.register, nextFreeRegister())
+                                }
+                            },
+                            { compileExpression(assign.value) }
                         )
                     }
-                    +Insn.SetLocal(local.index)
+                    +Insn.Move(value, local.register)
                 } else {
-                    resolveUpvalue(name)?.let { upvalue ->
-                        val index = upvalues.indexOf(upvalue)
-                        if (assign.type == null) {
-                            +compileExpression(assign.value)
-                        } else {
-                            +Insn.GetUpvalue(index)
-                            assign.type.op.generateCode(
-                                this,
-                                listOf(Insn.NoOp to assign.span),
-                                compileExpression(assign.value)
-                            )
-                        }
-                        +Insn.SetUpvalue(index)
-                    }
+                    +Insn.UpdateGlobal(name, value)
                 }
-                +Insn.UpdateGlobal(name)
+                freeRegisters(value)
             }
         }
     }
@@ -445,7 +399,13 @@ class Compiler private constructor(
         return localStack.firstOrNull { it.name == name }
     }
 
-    override fun nextFreeRegister(): Register = freeRegisters.removeFirstOrNull() ?: registerCount++
+    override fun nextFreeRegister(): Register {
+        val iter = freeRegisters.iterator()
+        if (iter.hasNext()) {
+            return iter.next().also { iter.remove() }
+        }
+        return registerCount++
+    }
 
     override fun freeRegisters(registers: List<Register>) {
         for (register in registers) {
@@ -469,7 +429,7 @@ class Compiler private constructor(
 
 private data class LoopInfo(val start: Insn.Label, val end: Insn.Label, val scope: Int)
 
-private data class Local(val name: String, val scope: Int, val index: Int, val register: Register)
+private data class Local(val name: String, val scope: Int, val register: Register)
 
 private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
     val markerIndex = insns.indexOfFirst { it.first == label }
@@ -478,7 +438,7 @@ private fun backpatch(insns: MutableList<FullInsn>, label: Insn.Label) {
         if (insn is Insn.RawJump && insn.label == label) {
             insns[i] = Insn.Jump(markerIndex - i - 1) to span
         } else if (insn is Insn.RawJumpIf && insn.label == label) {
-            insns[i] = Insn.JumpIf(markerIndex - i - 1, insn.condition, insn.consume) to span
+            insns[i] = Insn.JumpIf(markerIndex - i - 1, insn.condition, insn.register) to span
         }
     }
 }

@@ -8,7 +8,6 @@ import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
-import io.github.seggan.metis.debug.Debugger
 import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.runtime.State
@@ -55,15 +54,11 @@ private object Main : CliktCommand(name = "metis") {
                     println(chunk)
                 }
                 val state = State()
-                state.loadCoreGlobals()
-                state.loadStandardLibrary()
-                state.loadChunk(chunk)
-                state.call(0)
-                if (debug) {
-                    Debugger(state, source.name).debug()
-                } else {
-                    state.runTillComplete()
-                }
+//                state.loadCoreGlobals()
+//                state.loadStandardLibrary()
+//                state.loadChunk(chunk)
+//                state.call(0)
+//                    state.runTillComplete()
             }
         } catch (e: MetisException) {
             System.err.println(e.report(source.name))

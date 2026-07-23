@@ -38,6 +38,6 @@ data class MetisList(
         /**
          * The shared metatable for all lists.
          */
-        val metatable: Nothing = TODO()
+        val metatable = MetisTable()
     }
 }

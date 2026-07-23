@@ -12,20 +12,20 @@ class MetisBoolean private constructor(val value: Boolean) : Value {
     companion object {
 
         /**
-         * The [Value.MetisBoolean] representing `true`.
+         * The [MetisBoolean] representing `true`.
          */
         val TRUE = MetisBoolean(true)
 
         /**
-         * The [Value.MetisBoolean] representing `false`.
+         * The [MetisBoolean] representing `false`.
          */
         val FALSE = MetisBoolean(false)
 
         /**
-         * Turns a [Boolean] into a [Value.MetisBoolean].
+         * Turns a [Boolean] into a [MetisBoolean].
          *
-         * @param value The value to turn into a [Value.MetisBoolean].
-         * @return The [Value.MetisBoolean] representing the value.
+         * @param value The value to turn into a [MetisBoolean].
+         * @return The [MetisBoolean] representing the value.
          */
         fun of(value: Boolean) = if (value) TRUE else FALSE
 
@@ -33,7 +33,7 @@ class MetisBoolean private constructor(val value: Boolean) : Value {
          * The shared metatable for all booleans.
          */
         // lazy because of a mutual dependency between initTable and Boolean
-        val metatable: Nothing by lazy { TODO() }
+        val metatable by lazy { MetisTable() }
     }
 
     override fun toString() = value.toString()

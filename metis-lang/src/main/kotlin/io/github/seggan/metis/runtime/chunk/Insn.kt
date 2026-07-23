@@ -9,6 +9,8 @@ import io.github.seggan.metis.runtime.value.metisValue
  */
 sealed interface Insn {
 
+    data class Clear(val registers: List<Register>) : Insn
+
     data class Return(val register: Register) : Insn
 
     sealed interface DestInsn {
@@ -17,12 +19,23 @@ sealed interface Insn {
 
     data class SetValue(override val dest: Register, val value: Value) : DestInsn {
         constructor(dest: Register, value: Int) : this(dest, value.metisValue())
+        constructor(dest: Register, value: String) : this(dest, value.metisValue())
         constructor(dest: Register, value: Nothing?) : this(dest, value.metisValue())
     }
+
+    data class ConstructList(override val dest: Register, val elements: List<Register>) : DestInsn
+    data class ConstructTable(override val dest: Register, val elements: List<Pair<Register, Register>>) : DestInsn
+    data class ConstructError(
+        override val dest: Register,
+        val type: String,
+        val message: Register,
+        val companionData: Register
+    ) : DestInsn
 
     data class Move(val src: Register, override val dest: Register) : DestInsn
 
     data class Index(override val dest: Register, val target: Register, val index: Register) : DestInsn
+    data class Set(val target: Register, val index: Register, val value: Register) : Insn
 
     data class Call(override val dest: Register, val target: Register, val args: List<Register>) : DestInsn
     data class MetaCall(
@@ -34,6 +47,10 @@ sealed interface Insn {
 
     data class Is(override val dest: Register, val value1: Register, val value2: Register) : DestInsn
     data class Not(override val dest: Register, val value: Register) : DestInsn
+
+    data class GetGlobal(override val dest: Register, val name: String) : DestInsn
+    data class SetGlobal(val name: String, val value: Register) : Insn
+    data class UpdateGlobal(val name: String, val value: Register) : Insn
 
     class Label : Insn {
         override fun toString(): String = "Label@${hashCode().toString(16)}"

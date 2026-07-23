@@ -21,5 +21,7 @@ object Metamethod {
     const val CMP = "__cmp__"
     const val NEG = "__neg__"
     const val BNOT = "__bnot__"
+    const val STR = "__str__"
+    const val ITER = "__iter__"
     const val METATABLE = "__metatable__"
 }

@@ -30,7 +30,7 @@ open class MetisRuntimeException(
     }
 
     companion object {
-        val metatable: Nothing = TODO()
+        val metatable = MetisTable()
     }
 }
 
