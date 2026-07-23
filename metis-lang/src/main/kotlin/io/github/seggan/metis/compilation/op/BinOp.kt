@@ -41,12 +41,12 @@ enum class BinOp(internal val generateCode: (InsnsBuilder).(RegisterHolder, () -
         val left = +left()
         holder.freeRegisters(left)
         val dest = holder.nextFreeRegister()
-        +Insn.Move(left, dest)
+        +Insn.Move(dest, left)
         val end = Insn.Label()
         +Insn.RawJumpIf(end, condition = false, dest)
         val right = +right()
         holder.freeRegisters(right)
-        +Insn.Move(right, dest)
+        +Insn.Move(dest, right)
         +end
         dest
     }),
@@ -54,12 +54,12 @@ enum class BinOp(internal val generateCode: (InsnsBuilder).(RegisterHolder, () -
         val left = +left()
         holder.freeRegisters(left)
         val dest = holder.nextFreeRegister()
-        +Insn.Move(left, dest)
+        +Insn.Move(dest, left)
         val end = Insn.Label()
         +Insn.RawJumpIf(end, condition = true, dest)
         val right = +right()
         holder.freeRegisters(right)
-        +Insn.Move(right, dest)
+        +Insn.Move(dest, right)
         +end
         dest
     }),
@@ -67,7 +67,7 @@ enum class BinOp(internal val generateCode: (InsnsBuilder).(RegisterHolder, () -
         val left = +left()
         holder.freeRegisters(left)
         val dest = holder.nextFreeRegister()
-        +Insn.Move(left, dest)
+        +Insn.Move(dest, left)
 
         val chk = holder.nextFreeRegister()
         +Insn.SetValue(chk, null)
@@ -79,7 +79,7 @@ enum class BinOp(internal val generateCode: (InsnsBuilder).(RegisterHolder, () -
 
         val right = +right()
         holder.freeRegisters(right)
-        +Insn.Move(right, dest)
+        +Insn.Move(dest, right)
         +end
 
         dest

@@ -19,6 +19,7 @@ import java.util.*
 class Chunk(
     val name: String,
     val insns: List<Insn>,
+    val registers: Int,
     val arity: Arity,
     private val id: UUID,
     val spans: List<Span>

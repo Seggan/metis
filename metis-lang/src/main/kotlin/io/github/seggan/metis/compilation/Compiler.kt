@@ -17,7 +17,7 @@ import kotlin.collections.List
 import kotlin.collections.MutableList
 import kotlin.collections.emptyList
 import kotlin.collections.filter
-import kotlin.collections.filterTo
+import kotlin.collections.filterNotTo
 import kotlin.collections.firstOrNull
 import kotlin.collections.flatMap
 import kotlin.collections.forEach
@@ -58,12 +58,16 @@ class Compiler private constructor(
 
     private fun compileCode(name: String, code: AstNode.Block): Chunk {
         check(scope >= 0) { "Cannot use a Compiler more than once" }
-        val compiled = compileBlock(code, false).filterTo(mutableListOf()) { it.first != Insn.NoOp }
+        val compiled = compileBlock(code, false).filterNotTo(mutableListOf()) { (insn, _) ->
+            insn == Insn.NoOp ||
+                    (insn is Insn.Clear && insn.registers.isEmpty()) ||
+                    (insn is Insn.Move && insn.src == insn.dest)
+        }
         for (marker in compiled.filter { it.first is Insn.Label }) {
             backpatch(compiled, marker.first as Insn.Label)
         }
         val (insns, spans) = compiled.unzip()
-        return Chunk(name, insns, Arity(args.size, args.firstOrNull() == "self"), id, spans)
+        return Chunk(name, insns, registerCount, Arity(args.size, args.firstOrNull() == "self"), id, spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -191,7 +195,7 @@ class Compiler private constructor(
                 val name = expression.name
                 val local = resolveLocal(name)
                 if (local != null) {
-                    +Insn.Move(local.register, nextFreeRegister())
+                    +Insn.Move(nextFreeRegister(), local.register)
                 } else {
                     +Insn.GetGlobal(nextFreeRegister(), name)
                 }
@@ -234,12 +238,12 @@ class Compiler private constructor(
         val dest = +compileExpression(op.condition)
         +Insn.RawJumpIf(falseLabel, condition = false, dest)
         val trueExpr = +compileExpression(op.trueExpr)
-        +Insn.Move(trueExpr, dest)
+        +Insn.Move(dest, trueExpr)
         freeRegisters(trueExpr)
         +Insn.RawJump(end)
         +falseLabel
         val falseExpr = +compileExpression(op.falseExpr)
-        +Insn.Move(falseExpr, dest)
+        +Insn.Move(dest, falseExpr)
         freeRegisters(falseExpr)
         +end
         dest
@@ -341,6 +345,7 @@ class Compiler private constructor(
             +Insn.SetGlobal(decl.name, value)
         } else {
             localStack.addFirst(Local(decl.name, scope, value))
+            value.name = decl.name
         }
     }
 
@@ -380,13 +385,13 @@ class Compiler private constructor(
                             this@Compiler,
                             {
                                 buildExpression(assign.target) {
-                                    +Insn.Move(local.register, nextFreeRegister())
+                                    +Insn.Move(nextFreeRegister(), local.register)
                                 }
                             },
                             { compileExpression(assign.value) }
                         )
                     }
-                    +Insn.Move(value, local.register)
+                    +Insn.Move(local.register, value)
                 } else {
                     +Insn.UpdateGlobal(name, value)
                 }
@@ -404,7 +409,7 @@ class Compiler private constructor(
         if (iter.hasNext()) {
             return iter.next().also { iter.remove() }
         }
-        return registerCount++
+        return Register(registerCount++)
     }
 
     override fun freeRegisters(registers: List<Register>) {
