@@ -34,9 +34,6 @@ sealed interface Insn {
 
     data class Move(override val dest: Register, val src: Register) : DestInsn
 
-    data class Index(override val dest: Register, val target: Register, val index: Register) : DestInsn
-    data class Set(val target: Register, val index: Register, val value: Register) : Insn
-
     data class Call(override val dest: Register, val target: Register, val args: List<Register>) : DestInsn
     data class MetaCall(
         override val dest: Register,

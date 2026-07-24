@@ -8,7 +8,7 @@ interface Value {
     /**
      * The metatable of this value.
      */
-    var metatable: MetisTable?
+    var metatable: MetisTable
 
     /**
      * Look up a value in this value.

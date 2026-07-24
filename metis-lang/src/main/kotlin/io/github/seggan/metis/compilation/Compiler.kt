@@ -7,7 +7,6 @@ import io.github.seggan.metis.parsing.Span
 import io.github.seggan.metis.parsing.SyntaxException
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.Insn
-import io.github.seggan.metis.runtime.value.Arity
 import io.github.seggan.metis.runtime.value.MetisTable
 import io.github.seggan.metis.util.pop
 import io.github.seggan.metis.util.push
@@ -67,7 +66,7 @@ class Compiler private constructor(
             backpatch(compiled, marker.first as Insn.Label)
         }
         val (insns, spans) = compiled.unzip()
-        return Chunk(name, insns, registerCount, Arity(args.size, args.firstOrNull() == "self"), id, spans)
+        return Chunk(name, insns, registerCount, args.size, id, spans)
     }
 
     private fun compileStatements(statements: List<AstNode.Statement>): List<FullInsn> {
@@ -180,7 +179,7 @@ class Compiler private constructor(
                 val target = +compileExpression(expression.target)
                 val index = +compileExpression(expression.index)
                 freeRegisters(target, index)
-                +Insn.Index(nextFreeRegister(), target, index)
+                +Insn.MetaCall(nextFreeRegister(), target, Metamethod.INDEX, listOf(index))
             }
 
             is AstNode.CombinedCall -> buildExpression(expression) {
@@ -292,11 +291,11 @@ class Compiler private constructor(
         +start
         val temp = nextFreeRegister()
         +Insn.SetValue(nextFreeRegister(), "hasNext")
-        +Insn.Index(dest = temp, target = iter, index = temp)
+        +Insn.MetaCall(dest = temp, target = iter, method = Metamethod.INDEX, args = listOf(temp))
         +Insn.Call(dest = temp, target = temp, args = listOf(temp))
         +Insn.RawJumpIf(end, condition = false, temp)
         +Insn.SetValue(temp, "next")
-        +Insn.Index(dest = temp, target = iter, index = temp)
+        +Insn.MetaCall(dest = temp, target = iter, method = Metamethod.INDEX, args = listOf(temp))
         +Insn.Call(dest = temp, target = temp, args = listOf(temp))
         localStack.push(Local(statement.name, scope, temp))
         +compileBlock(statement.body)
@@ -362,14 +361,21 @@ class Compiler private constructor(
                         this@Compiler,
                         {
                             buildExpression(target.target) {
-                                +Insn.Index(dest = nextFreeRegister(), target = rTarget, index = rIndex)
+                                +Insn.MetaCall(
+                                    dest = nextFreeRegister(),
+                                    target = rTarget,
+                                    method = Metamethod.INDEX,
+                                    args = listOf(rIndex)
+                                )
                             }
                         },
                         { compileExpression(assign.value) }
                     )
                 }
                 freeRegisters(rTarget, rIndex, rValue)
-                +Insn.Set(target = rTarget, index = rIndex, value = rValue)
+                val trash = nextFreeRegister()
+                freeRegisters(trash)
+                +Insn.MetaCall(dest = trash, target = rTarget, method = Metamethod.SET, args = listOf(rIndex, rValue))
             }
 
             is AstNode.Var -> buildInsns(target.span) {

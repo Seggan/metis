@@ -1,30 +1,32 @@
 package io.github.seggan.metis.runtime.chunk
 
 import io.github.seggan.metis.runtime.value.CallableValue
+import io.github.seggan.metis.runtime.value.Value
 
 /**
  * The result of stepping through a [CallableValue.Executor]
  *
  * @see CallableValue.Executor
  */
-enum class StepResult {
+sealed interface StepResult {
+
     /**
      * Continue execution.
      */
-    CONTINUE,
+    data object Continue : StepResult
 
     /**
      * Execution has finished.
      */
-    FINISHED,
+    data class Finished(val result: Value) : StepResult
 
     /**
      * Execution has yielded.
      */
-    YIELDED,
+    data object Yielded : StepResult
 
     /**
      * A breakpoint has been hit.
      */
-    BREAKPOINT
+    data object Breakpoint : StepResult
 }

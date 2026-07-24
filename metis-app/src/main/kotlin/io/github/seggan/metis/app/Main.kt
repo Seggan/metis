@@ -12,6 +12,7 @@ import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.runtime.State
 import io.github.seggan.metis.runtime.chunk.Chunk
+import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.util.MetisException
 import org.unbescape.html.HtmlEscape
 import kotlin.io.path.absolutePathString
@@ -56,9 +57,10 @@ private object Main : CliktCommand(name = "metis") {
                 val state = State()
 //                state.loadCoreGlobals()
 //                state.loadStandardLibrary()
-//                state.loadChunk(chunk)
-//                state.call(0)
-//                    state.runTillComplete()
+                state.loadChunk(chunk)
+                @Suppress("ControlFlowWithEmptyBody")
+                while (state.step() !is StepResult.Finished) {
+                }
             }
         } catch (e: MetisException) {
             System.err.println(e.report(source.name))

@@ -8,7 +8,7 @@ package io.github.seggan.metis.runtime.value
  */
 data class MetisList(
     val value: MutableList<Value> = mutableListOf(),
-    override var metatable: MetisTable? = Companion.metatable
+    override var metatable: MetisTable = Companion.metatable
 ) : Value, MutableList<Value> by value {
 
     override fun lookUpDirect(key: Value): Value? {

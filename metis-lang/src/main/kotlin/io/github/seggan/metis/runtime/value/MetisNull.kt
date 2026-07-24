@@ -5,7 +5,7 @@ package io.github.seggan.metis.runtime.value
  */
 data object MetisNull : Value {
 
-    override var metatable: MetisTable? = MetisTable()
+    override var metatable = MetisTable()
 
     override fun toString() = "null"
 }

@@ -6,7 +6,7 @@ package io.github.seggan.metis.runtime.value
  * @param value The backing byte array of the value.
  * @param metatable The metatable of the value.
  */
-data class MetisBytes(val value: ByteArray, override var metatable: MetisTable? = Companion.metatable) : Value {
+data class MetisBytes(val value: ByteArray, override var metatable: MetisTable = Companion.metatable) : Value {
 
     override fun lookUpDirect(key: Value): Value? {
         if (key is MetisNumber) {

@@ -7,7 +7,7 @@ import io.github.seggan.metis.util.MutableLazy
  */
 class MetisBoolean private constructor(val value: Boolean) : Value {
 
-    override var metatable: MetisTable? by MutableLazy { Companion.metatable }
+    override var metatable: MetisTable by MutableLazy { Companion.metatable }
 
     companion object {
 

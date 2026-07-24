@@ -5,7 +5,7 @@ package io.github.seggan.metis.runtime.value
  */
 class MetisNumber private constructor(val value: Double) : Value {
 
-    override var metatable: MetisTable? = Companion.metatable
+    override var metatable = Companion.metatable
 
     companion object {
 

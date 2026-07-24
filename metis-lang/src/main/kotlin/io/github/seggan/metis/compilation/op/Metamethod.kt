@@ -23,5 +23,8 @@ object Metamethod {
     const val BNOT = "__bnot__"
     const val STR = "__str__"
     const val ITER = "__iter__"
+    const val CALL = "__call__"
+    const val INDEX = "__index__"
+    const val SET = "__set__"
     const val METATABLE = "__metatable__"
 }

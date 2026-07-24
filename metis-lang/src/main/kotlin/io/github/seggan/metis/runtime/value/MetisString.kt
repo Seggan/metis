@@ -9,7 +9,7 @@ import io.github.seggan.metis.util.MutableLazy
  */
 data class MetisString(val value: String) : Value {
 
-    override var metatable: MetisTable? by MutableLazy { Companion.metatable }
+    override var metatable by MutableLazy { Companion.metatable }
 
     override fun lookUpDirect(key: Value): Value? {
         if (key is MetisNumber) {

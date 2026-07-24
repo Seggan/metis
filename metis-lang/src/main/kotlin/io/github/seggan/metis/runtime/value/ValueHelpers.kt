@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
  */
 fun Value.lookUp(key: Value): Value? {
     if (this === metatable) return lookUpDirect(key)
-    return lookUpDirect(key) ?: metatable?.lookUp(key)
+    return lookUpDirect(key) ?: metatable.lookUp(key)
 }
 
 /**
@@ -56,7 +56,7 @@ inline fun <reified T : Value> Value.convertTo(): T {
     if (this is T) {
         return this
     }
-    throw MetisRuntimeException("TypeError", "Cannot convert ${typeToName(this::class)} to ${typeToName(T::class)}")
+    throw MetisTypeError("Cannot convert ${typeToName(this::class)} to ${typeToName(T::class)}")
 }
 
 /**

@@ -17,7 +17,7 @@ open class MetisRuntimeException(
     cause: Throwable? = null
 ) : MetisException("$type: $actualMessage", mutableListOf(), cause), Value {
 
-    override var metatable: MetisTable? = Companion.metatable
+    override var metatable = Companion.metatable
 
     override fun lookUpDirect(key: Value): Value? {
         if (key == messageString) return actualMessage.metisValue()
@@ -35,3 +35,19 @@ open class MetisRuntimeException(
 }
 
 private val messageString = MetisString("message")
+
+@Suppress("FunctionName")
+fun MetisGlobalError(message: String) = MetisRuntimeException("GlobalError", message)
+
+@Suppress("FunctionName")
+fun MetisInternalError(cause: Throwable) =
+    MetisRuntimeException("InternalError", "${cause::class.qualifiedName}: ${cause.message}", cause = cause)
+
+@Suppress("FunctionName")
+fun MetisIndexError(message: String) = MetisRuntimeException("IndexError", message)
+
+@Suppress("FunctionName")
+fun MetisValueError(message: String) = MetisRuntimeException("ValueError", message)
+
+@Suppress("FunctionName")
+fun MetisTypeError(message: String) = MetisRuntimeException("TypeError", message)
