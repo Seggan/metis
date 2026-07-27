@@ -403,6 +403,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private fun parseIf(): AstNode.If {
         val startSpan = previous.span
         val condition = parseExpression()
+        consume(DO)
         val then = parseBlock(ELSE, ELIF, END)
         return when (previous.type) {
             ELSE -> {
@@ -428,6 +429,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
     private fun parseWhile(): AstNode.While {
         val startSpan = consume(WHILE).span
         val condition = parseExpression()
+        consume(DO)
         val body = parseBlock(END)
         return AstNode.While(condition, body, startSpan + body.span)
     }
@@ -437,6 +439,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
         val name = parseId().text
         consume(IN)
         val expr = parseExpression()
+        consume(DO)
         val body = parseBlock(END)
         return AstNode.For(name, expr, body, startSpan + body.span)
     }
