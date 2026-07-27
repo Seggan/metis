@@ -31,6 +31,7 @@ sealed interface Insn {
         val message: Register,
         val companionData: Register
     ) : DestInsn
+    data class ConstructChunk(override val dest: Register, val chunk: Chunk) : DestInsn
 
     data class Move(override val dest: Register, val src: Register) : DestInsn
 

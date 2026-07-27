@@ -92,14 +92,14 @@ fun Value.booleanValue() = this.convertTo<MetisBoolean>().value
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.tableValue() = this.convertTo<MetisTable>().value
+fun Value.tableValue() = this.convertTo<MetisTable>()
 
 /**
  * Converts this value to a [MetisList], or throws an error if it cannot be converted.
  *
  * @throws MetisRuntimeException If the value cannot be converted.
  */
-fun Value.listValue() = this.convertTo<MetisList>().value
+fun Value.listValue() = this.convertTo<MetisList>()
 
 /**
  * Converts this value to a [MetisBytes], or throws an error if it cannot be converted.

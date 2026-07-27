@@ -32,4 +32,4 @@ inline fun oneShotFunction(crossinline func: Interpreter.(Value, Value) -> Value
     oneShotFunction(2) { (first, second) -> func(first, second) }
 
 inline fun oneShotFunction(crossinline func: Interpreter.(Value, Value, Value) -> Value) =
-    oneShotFunction(2) { (first, second, third) -> func(first, second, third) }
+    oneShotFunction(3) { (first, second, third) -> func(first, second, third) }

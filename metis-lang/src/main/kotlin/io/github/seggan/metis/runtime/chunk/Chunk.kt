@@ -167,9 +167,31 @@ private class ChunkExecutor(val chunk: ChunkInstance, args: List<Value>) : Calla
                     interpreter.call(metamethod, args)
                 }
 
-                is Insn.ConstructError -> TODO()
-                is Insn.ConstructList -> TODO()
-                is Insn.ConstructTable -> TODO()
+                is Insn.ConstructError -> {
+                    val message = registers[insn.message]!!.stringValue()
+                    val data = registers[insn.companionData]!!.tableValue()
+                    registers[insn.dest] = MetisRuntimeException(insn.type, message, data)
+                }
+
+                is Insn.ConstructList -> {
+                    val list = MetisList()
+                    for (value in insn.elements) {
+                        list.add(registers[value]!!)
+                    }
+                    registers[insn.dest] = list
+                }
+
+                is Insn.ConstructTable -> {
+                    val table = MetisTable()
+                    for ((key, value) in insn.elements) {
+                        table[registers[key]!!] = registers[value]!!
+                    }
+                    registers[insn.dest] = table
+                }
+
+                is Insn.ConstructChunk -> {
+                    registers[insn.dest] = ChunkInstance(insn.chunk)
+                }
 
                 is Insn.Is -> {
                     registers[insn.dest] = (registers[insn.value1]!! === registers[insn.value2]!!).metisValue()

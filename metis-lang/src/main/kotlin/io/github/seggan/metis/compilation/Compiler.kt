@@ -182,8 +182,15 @@ class Compiler private constructor(
                 +Insn.MetaCall(nextFreeRegister(), target, Metamethod.INDEX, listOf(index))
             }
 
-            is AstNode.CombinedCall -> buildExpression(expression) {
-                TODO()
+            is AstNode.ColonCall -> buildExpression(expression) {
+                val registers = expression.args.map { +compileExpression(it) }
+                val target = +compileExpression(expression.expr)
+                val callable = nextFreeRegister()
+                +Insn.SetValue(callable, expression.name)
+                +Insn.MetaCall(callable, target, Metamethod.INDEX, listOf(callable))
+                freeRegisters(registers)
+                freeRegisters(target, callable)
+                +Insn.Call(nextFreeRegister(), callable, listOf(target) + registers)
             }
 
             is AstNode.Literal -> buildExpression(expression) {
@@ -251,7 +258,9 @@ class Compiler private constructor(
     private fun compileFunctionDef(fn: AstNode.FunctionLiteral): Pair<List<FullInsn>, Register> {
         val compiler = Compiler(fn.args, this)
         val chunk = compiler.compileCode("<function>", fn.body)
-        return TODO()
+        return buildExpression(fn) {
+            +Insn.ConstructChunk(nextFreeRegister(), chunk)
+        }
     }
 
     private fun compileErrorLiteral(error: AstNode.ErrorLiteral) = buildExpression(error) {

@@ -1,5 +1,8 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
+import io.github.seggan.metis.runtime.value.intrinsics.oneShotFunction
+
 /**
  * A table.
  */
@@ -35,7 +38,16 @@ class MetisTable private constructor(
         /**
          * The shared super-metatable for all tables.
          */
-        val metatable = MetisTable(mutableMapOf(), Unit)
+        val metatable = MetisTable(mutableMapOf(), Unit).apply {
+            this[Metamethod.INDEX] = oneShotFunction { self, index ->
+                self.tableValue()[index] ?: MetisNull
+            }
+
+            this[Metamethod.SET] = oneShotFunction { self, index, value ->
+                self.tableValue()[index] = value
+                MetisNull
+            }
+        }
     }
 
     override fun toString(): String {

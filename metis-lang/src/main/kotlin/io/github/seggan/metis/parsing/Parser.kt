@@ -197,7 +197,7 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
 
     private fun parsePostfix(allowCalls: Boolean = true): AstNode.Expression {
         var expr = parsePrimary()
-        val allowed = arrayOf(OPEN_BRACKET, DOT) + if (allowCalls) arrayOf(OPEN_PAREN) else arrayOf()
+        val allowed = arrayOf(OPEN_BRACKET, DOT) + if (allowCalls) arrayOf(OPEN_PAREN, COLON) else arrayOf()
         while (true) {
             val op = tryConsume(*allowed) ?: break
             expr = when (op.type) {
@@ -213,22 +213,24 @@ class Parser(tokens: List<Token>, private val source: CodeSource) {
                     AstNode.Index(expr, index, op.span + previous.span)
                 }
 
+                COLON -> {
+                    val name = parseId()
+                    consume(OPEN_PAREN)
+                    AstNode.ColonCall(
+                        expr,
+                        name.text,
+                        parseArgList(CLOSE_PAREN, ::parseExpression),
+                        op.span + previous.span
+                    )
+                }
+
                 DOT -> {
                     val name = parseId()
-                    if (allowCalls && tryConsume(OPEN_PAREN) != null) {
-                        AstNode.CombinedCall(
-                            expr,
-                            name.text,
-                            parseArgList(CLOSE_PAREN, ::parseExpression),
-                            op.span + previous.span
-                        )
-                    } else {
-                        AstNode.Index(
-                            expr,
-                            AstNode.Literal(MetisString(name.text), name.span),
-                            op.span + previous.span
-                        )
-                    }
+                    AstNode.Index(
+                        expr,
+                        AstNode.Literal(MetisString(name.text), name.span),
+                        op.span + previous.span
+                    )
                 }
 
                 else -> throw AssertionError()

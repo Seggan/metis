@@ -3,6 +3,7 @@ package io.github.seggan.metis.runtime.value
 import io.github.seggan.metis.compilation.op.Metamethod
 import io.github.seggan.metis.runtime.value.intrinsics.oneShotFunction
 import kotlin.math.floor
+import kotlin.math.pow
 
 /**
  * A number.
@@ -35,6 +36,10 @@ class MetisNumber private constructor(val value: Double) : Value {
 
             this[Metamethod.FLOORDIV] = oneShotFunction { self, other ->
                 floor(self.doubleValue() / other.doubleValue()).metisValue()
+            }
+
+            this[Metamethod.POW] = oneShotFunction { self, other ->
+                self.doubleValue().pow(other.doubleValue()).metisValue()
             }
         }
 
