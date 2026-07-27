@@ -8,6 +8,10 @@ tasks.dokkaHtml {
     outputDirectory.set(rootDir.resolve("gendocs/javadocs"))
 }
 
+dependencies {
+    implementation(kotlin("reflect"))
+}
+
 kotlin {
     compilerOptions.freeCompilerArgs = listOf("-Xcontext-parameters")
 }

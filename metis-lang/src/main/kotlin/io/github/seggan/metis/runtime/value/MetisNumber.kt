@@ -1,5 +1,9 @@
 package io.github.seggan.metis.runtime.value
 
+import io.github.seggan.metis.compilation.op.Metamethod
+import io.github.seggan.metis.runtime.value.intrinsics.oneShotFunction
+import kotlin.math.floor
+
 /**
  * A number.
  */
@@ -12,20 +16,40 @@ class MetisNumber private constructor(val value: Double) : Value {
         /**
          * The shared metatable for all numbers.
          */
-        val metatable = MetisTable()
+        val metatable = buildTable {
+            this[Metamethod.PLUS] = oneShotFunction { self, other ->
+                (self.doubleValue() + other.doubleValue()).metisValue()
+            }
+
+            this[Metamethod.MINUS] = oneShotFunction { self, other ->
+                (self.doubleValue() - other.doubleValue()).metisValue()
+            }
+
+            this[Metamethod.TIMES] = oneShotFunction { self, other ->
+                (self.doubleValue() * other.doubleValue()).metisValue()
+            }
+
+            this[Metamethod.DIV] = oneShotFunction { self, other ->
+                (self.doubleValue() / other.doubleValue()).metisValue()
+            }
+
+            this[Metamethod.FLOORDIV] = oneShotFunction { self, other ->
+                floor(self.doubleValue() / other.doubleValue()).metisValue()
+            }
+        }
 
         /**
-         * The [Value.MetisNumber] representing `inf`.
+         * The [MetisNumber] representing `inf`.
          */
         val INF = MetisNumber(Double.POSITIVE_INFINITY)
 
         /**
-         * The [Value.MetisNumber] representing `-inf`.
+         * The [MetisNumber] representing `-inf`.
          */
         val NEG_INF = MetisNumber(Double.NEGATIVE_INFINITY)
 
         /**
-         * The [Value.MetisNumber] representing `nan`.
+         * The [MetisNumber] representing `nan`.
          */
         val NAN = MetisNumber(Double.NaN)
 

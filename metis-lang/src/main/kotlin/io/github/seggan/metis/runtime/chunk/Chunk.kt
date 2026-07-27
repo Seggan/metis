@@ -7,7 +7,7 @@ import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
 import io.github.seggan.metis.parsing.Parser
 import io.github.seggan.metis.parsing.Span
-import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.Interpreter
 import io.github.seggan.metis.runtime.value.*
 import java.util.*
 
@@ -90,11 +90,11 @@ private class ChunkExecutor(val chunk: ChunkInstance, args: List<Value>) : Calla
         }
     }
 
-    override fun step(state: State): StepResult {
+    override fun step(interpreter: Interpreter): StepResult {
         if (ip !in insns.indices) throw AssertionError("No Return insn was reached before running out of insns")
-        if (state.returnValue != null) {
-            registers[returnRegister] = state.returnValue
-            state.returnValue = null
+        if (interpreter.returnValue != null) {
+            registers[returnRegister] = interpreter.returnValue
+            interpreter.returnValue = null
         }
         try {
             when (val insn = insns[ip]) {
@@ -117,24 +117,21 @@ private class ChunkExecutor(val chunk: ChunkInstance, args: List<Value>) : Calla
                 }
 
                 is Insn.GetGlobal -> {
-                    val global = state.globals.lookUp(insn.name.metisValue())
-                    if (global == null) {
-                        throw MetisGlobalError("Global $global could not be found")
-                    }
+                    val global = interpreter.globals[insn.name]
+                        ?: throw MetisGlobalError("Global ${insn.name} could not be found")
                     registers[insn.dest] = global
                 }
 
                 is Insn.SetGlobal -> {
                     val value = registers[insn.value]!!
-                    state.globals[insn.name] = value
+                    interpreter.globals[insn.name] = value
                 }
 
                 is Insn.UpdateGlobal -> {
-                    val global = state.globals.lookUp(insn.name.metisValue())
-                    if (global == null) {
-                        throw MetisGlobalError("Global $global could not be found")
+                    if (insn.name.metisValue() !in interpreter.globals) {
+                        throw MetisGlobalError("Global ${insn.name} could not be found")
                     }
-                    state.globals[insn.name] = registers[insn.value]!!
+                    interpreter.globals[insn.name] = registers[insn.value]!!
                 }
 
                 is Insn.Call -> {
@@ -151,7 +148,7 @@ private class ChunkExecutor(val chunk: ChunkInstance, args: List<Value>) : Calla
                     } else {
                         target
                     }
-                    state.call(callable, args)
+                    interpreter.call(callable, args)
                 }
 
                 is Insn.MetaCall -> {
@@ -167,7 +164,7 @@ private class ChunkExecutor(val chunk: ChunkInstance, args: List<Value>) : Calla
                             add(registers[register]!!)
                         }
                     }
-                    state.call(metamethod, args)
+                    interpreter.call(metamethod, args)
                 }
 
                 is Insn.ConstructError -> TODO()

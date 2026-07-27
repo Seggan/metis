@@ -10,7 +10,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import io.github.seggan.metis.parsing.CodeSource
 import io.github.seggan.metis.parsing.Lexer
-import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.Interpreter
 import io.github.seggan.metis.runtime.chunk.Chunk
 import io.github.seggan.metis.runtime.chunk.StepResult
 import io.github.seggan.metis.util.MetisException
@@ -54,12 +54,12 @@ private object Main : CliktCommand(name = "metis") {
                 if (printChunk) {
                     println(chunk)
                 }
-                val state = State()
+                val interpreter = Interpreter()
 //                state.loadCoreGlobals()
 //                state.loadStandardLibrary()
-                state.loadChunk(chunk)
+                interpreter.loadChunk(chunk)
                 @Suppress("ControlFlowWithEmptyBody")
-                while (state.step() !is StepResult.Finished) {
+                while (interpreter.step() !is StepResult.Finished) {
                 }
             }
         } catch (e: MetisException) {

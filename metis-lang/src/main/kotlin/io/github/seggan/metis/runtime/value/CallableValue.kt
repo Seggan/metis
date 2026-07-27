@@ -1,6 +1,6 @@
 package io.github.seggan.metis.runtime.value
 
-import io.github.seggan.metis.runtime.State
+import io.github.seggan.metis.runtime.Interpreter
 import io.github.seggan.metis.runtime.chunk.StepResult
 
 /**
@@ -17,27 +17,27 @@ interface CallableValue : Value {
         /**
          * Executes the next step of the function.
          *
-         * @param state The state to execute in.
+         * @param interpreter The state to execute in.
          * @return The result of the step.
          */
-        fun step(state: State): StepResult
+        fun step(interpreter: Interpreter): StepResult
 
         /**
          * Handles an error that occurred during execution.
          *
-         * @param state The state to execute in.
+         * @param interpreter The state to execute in.
          * @param error The error that occurred.
          * @return Whether the error was handled.
          */
-        fun handleError(state: State, error: MetisRuntimeException): Boolean = false
+        fun handleError(interpreter: Interpreter, error: MetisRuntimeException): Boolean = false
 
         /**
          * Handles a `finally` block. Generally, you should use this to clean up resources.
          *
-         * @param state The state to execute in.
+         * @param interpreter The state to execute in.
          * @return Whether the `finally` block was handled.
          */
-        fun handleFinally(state: State): Boolean = false
+        fun handleFinally(interpreter: Interpreter): Boolean = false
     }
 
     /**
@@ -52,4 +52,15 @@ interface CallableValue : Value {
      * The arity of the function.
      */
     val arity: Int
+}
+
+fun padArguments(callable: CallableValue, args: List<Value>): List<Value> {
+    val args = args.toMutableList()
+    while (args.size > callable.arity) {
+        args.removeLast()
+    }
+    while (args.size < callable.arity) {
+        args.add(MetisNull)
+    }
+    return args
 }

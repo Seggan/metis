@@ -135,7 +135,7 @@ fun Value.lookUpHierarchy(vararg keys: String): Value? {
  *
  * @param init The function to initialize the table.
  */
-inline fun buildTable(init: (MutableMap<String, Value>) -> Unit): MetisTable {
+inline fun buildTable(init: MutableMap<String, Value>.() -> Unit): MetisTable {
     val map = mutableMapOf<String, Value>()
     init(map)
     return MetisTable(map.mapKeysTo(mutableMapOf()) { MetisString(it.key) }).also {
